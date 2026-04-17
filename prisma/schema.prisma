@@ -3,29 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-enum Role {
-  CLIENT
-  ADMIN
-}
-
-enum OrderStatus {
-  PENDING_PAYMENT
-  PAID
-  AWAITING_DOCUMENTS
-  PROCESSING
-  COMPLETED
-  CANCELLED
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  EXPIRED
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -34,18 +14,17 @@ model User {
   email                String               @unique
   password             String
   phone                String?
-  lgpdAccepted         Boolean              @default(false)
-  lgpdAcceptedAt       DateTime?
   role                 Role                 @default(CLIENT)
-  legalLogs            LegalAcceptanceLog[]
-  termsAcceptedAt      DateTime?
-  privacyAcceptedAt    DateTime?
-  legalAcceptedVersion String?              @db.VarChar(30)
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
-
-  orders        Order[]
-  uploadedFiles UploadedFile[]
+  legalAcceptedVersion String?              @db.VarChar(30)
+  privacyAcceptedAt    DateTime?
+  termsAcceptedAt      DateTime?
+  lgpdAccepted         Boolean              @default(false)
+  lgpdAcceptedAt       DateTime?
+  legalLogs            LegalAcceptanceLog[]
+  orders               Order[]
+  uploadedFiles        UploadedFile[]
 }
 
 model Service {
@@ -54,41 +33,34 @@ model Service {
   description  String?
   price        Float
   active       Boolean  @default(true)
-  codePrefix   String?  @db.VarChar(10)
-  requiredDocs Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  orders Order[]
+  codePrefix   String?  @db.VarChar(10)
+  requiredDocs Json?
+  orders       Order[]
 }
 
 model Order {
-  id          String      @id @default(uuid())
-  orderCode   String?     @unique
-  userId      String
-  serviceId   String
-  status      OrderStatus @default(PENDING_PAYMENT)
-  totalAmount Float
-
-  termsAccepted   Boolean   @default(false)
-  termsAcceptedAt DateTime?
-
-  privacyAccepted   Boolean   @default(false)
-  privacyAcceptedAt DateTime?
-
-  legalAcceptedVersion String? @db.VarChar(30)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-
-  payments      Payment[]
-  uploadedFiles UploadedFile[]
-  histories     OrderStatusHistory[]
-  documents     Document[]
-  resultFiles   OrderResultFile[]
+  id                   String               @id @default(uuid())
+  orderCode            String?              @unique
+  userId               String
+  serviceId            String
+  status               OrderStatus          @default(PENDING_PAYMENT)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  legalAcceptedVersion String?              @db.VarChar(30)
+  privacyAcceptedAt    DateTime?
+  termsAcceptedAt      DateTime?
+  totalAmount          Float
+  privacyAccepted      Boolean              @default(false)
+  termsAccepted        Boolean              @default(false)
+  documents            Document[]
+  service              Service              @relation(fields: [serviceId], references: [id])
+  user                 User                 @relation(fields: [userId], references: [id])
+  resultFiles          OrderResultFile[]
+  histories            OrderStatusHistory[]
+  payments             Payment[]
+  uploadedFiles        UploadedFile[]
 
   @@index([userId])
   @@index([serviceId])
@@ -101,8 +73,7 @@ model OrderStatusHistory {
   orderId   String
   status    OrderStatus
   createdAt DateTime    @default(now())
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([createdAt])
@@ -114,8 +85,7 @@ model Document {
   fileUrl   String
   orderId   String
   createdAt DateTime @default(now())
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
 }
@@ -123,16 +93,15 @@ model Document {
 model Payment {
   id                    String        @id @default(uuid())
   orderId               String
-  provider              String        @default("STRIPE")
-  amount                Float
   status                PaymentStatus @default(PENDING)
   stripeSessionId       String?       @unique
   stripePaymentIntentId String?
-  checkoutUrl           String?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  amount                Float
+  checkoutUrl           String?
+  provider              String        @default("STRIPE")
+  order                 Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([status])
@@ -142,16 +111,15 @@ model UploadedFile {
   id           String   @id @default(uuid())
   userId       String
   orderId      String
-  type         String
   originalName String
   savedName    String
   mimeType     String
   size         Int
   url          String
   createdAt    DateTime @default(now())
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  type         String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([orderId])
@@ -176,8 +144,7 @@ model OrderResultFile {
   url          String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([createdAt])
@@ -214,12 +181,32 @@ model LegalAcceptanceLog {
   id             String   @id @default(cuid())
   userId         String
   orderId        String?
-  type           String // "REGISTER" | "CHECKOUT"
+  type           String
   termsVersion   String
   privacyVersion String
   acceptedAt     DateTime @default(now())
   ip             String?
   userAgent      String?
+  user           User     @relation(fields: [userId], references: [id])
+}
 
-  user User @relation(fields: [userId], references: [id])
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  AWAITING_DOCUMENTS
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
 }
