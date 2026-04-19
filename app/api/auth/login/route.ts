@@ -55,12 +55,15 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Erro ao fazer login:", error);
+} catch (error) {
+  console.error("[LOGIN] erro ao fazer login:", error);
 
-    return NextResponse.json(
-      { error: "Erro interno ao fazer login." },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(
+    {
+      error: "Erro interno ao fazer login.",
+      details: error instanceof Error ? error.message : "Erro desconhecido",
+    },
+    { status: 500 }
+  );
+}
 }

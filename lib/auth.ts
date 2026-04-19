@@ -8,8 +8,10 @@ function getSecretKey() {
   const secretKey = process.env.AUTH_SECRET;
 
   if (!secretKey) {
-    throw new Error("AUTH_SECRET não foi definido no .env");
+    throw new Error("AUTH_SECRET não foi definido no ambiente");
   }
+
+  console.log("[AUTH] AUTH_SECRET encontrado");
 
   return new TextEncoder().encode(secretKey);
 }
@@ -26,10 +28,20 @@ export async function createSession(payload: {
   role: "CLIENT" | "ADMIN";
 }) {
   try {
+    console.log("[AUTH] createSession iniciado", {
+      userId: payload.userId,
+      email: payload.email,
+      role: payload.role,
+      nodeEnv: process.env.NODE_ENV,
+    });
+
     const key = getSecretKey();
+
     const expiresAt = new Date(
       Date.now() + 1000 * 60 * 60 * 24 * SESSION_DURATION_IN_DAYS
     );
+
+    console.log("[AUTH] gerando JWT...");
 
     const session = await new SignJWT({
       userId: payload.userId,
@@ -41,7 +53,11 @@ export async function createSession(payload: {
       .setExpirationTime(`${SESSION_DURATION_IN_DAYS}d`)
       .sign(key);
 
+    console.log("[AUTH] JWT gerado com sucesso");
+
     const cookieStore = await cookies();
+
+    console.log("[AUTH] gravando cookie...");
 
     cookieStore.set(COOKIE_NAME, session, {
       httpOnly: true,
@@ -50,9 +66,11 @@ export async function createSession(payload: {
       expires: expiresAt,
       path: "/",
     });
+
+    console.log("[AUTH] cookie gravado com sucesso");
   } catch (error) {
-    console.error("Erro ao criar sessão:", error);
-    throw new Error("Não foi possível criar a sessão");
+    console.error("[AUTH] erro ao criar sessão:", error);
+    throw error;
   }
 }
 
@@ -78,15 +96,11 @@ export async function verifySession(): Promise<SessionPayload | null> {
     }
 
     return payload as SessionPayload;
-        } catch (error) {
-          console.error("Sessão inválida, limpando cookie:", error);
-
-      const cookieStore = await cookies();
-       cookieStore.delete("govhelper_session");
-
-       return null;
-      }
-      }
+  } catch (error) {
+    console.error("[AUTH] sessão inválida:", error);
+    return null;
+  }
+}
 
 export async function deleteSession() {
   try {
@@ -100,7 +114,7 @@ export async function deleteSession() {
       path: "/",
     });
   } catch (error) {
-    console.error("Erro ao deletar sessão:", error);
+    console.error("[AUTH] erro ao deletar sessão:", error);
     throw new Error("Não foi possível encerrar a sessão");
   }
 }
