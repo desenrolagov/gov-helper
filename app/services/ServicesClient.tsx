@@ -38,6 +38,16 @@ function getDefaultDocuments(serviceName: string) {
   return ["Documento com foto", "CPF", "Comprovantes do atendimento"];
 }
 
+function getServiceBadge(serviceName: string) {
+  const name = serviceName.toLowerCase();
+
+  if (name.includes("cpf")) {
+    return "Serviço principal";
+  }
+
+  return "Atendimento";
+}
+
 export default function ServicesClient({ user }: { user: User }) {
   const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
@@ -144,23 +154,28 @@ export default function ServicesClient({ user }: { user: User }) {
     <div className="min-h-screen bg-slate-50">
       <AppNav user={user} />
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <section className="mb-8">
-          <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr] lg:gap-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
               <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                Área do cliente
+                DesenrolaGov
               </div>
 
-              <h1 className="mt-4 text-3xl font-bold text-slate-900">
-                Escolha um serviço para começar
+              <h1 className="mt-4 text-2xl font-bold text-slate-900 sm:text-3xl">
+                Escolha o serviço para iniciar sua regularização
               </h1>
 
-              <p className="mt-3 text-sm text-slate-600">
-                Antes do pagamento, você consegue ver o valor do serviço, o tipo
-                de entrega e a documentação necessária para evitar dúvidas no
-                atendimento.
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Nossa oferta principal é a regularização de CPF com atendimento
+                privado, fluxo organizado e acompanhamento do pedido em cada
+                etapa.
               </p>
+
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                <strong>Atenção:</strong> a DesenrolaGov é uma assessoria
+                privada e não possui vínculo com órgãos do governo.
+              </div>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -168,7 +183,7 @@ export default function ServicesClient({ user }: { user: User }) {
                     1. Contrate
                   </p>
                   <p className="mt-1 text-xs leading-5 text-slate-600">
-                    Gere seu pedido com um clique.
+                    Gere seu pedido com poucos cliques.
                   </p>
                 </div>
 
@@ -177,7 +192,7 @@ export default function ServicesClient({ user }: { user: User }) {
                     2. Pague com segurança
                   </p>
                   <p className="mt-1 text-xs leading-5 text-slate-600">
-                    Pagamento processado via Stripe.
+                    Pagamento online com confirmação automática.
                   </p>
                 </div>
 
@@ -186,7 +201,7 @@ export default function ServicesClient({ user }: { user: User }) {
                     3. Envie documentos
                   </p>
                   <p className="mt-1 text-xs leading-5 text-slate-600">
-                    Acompanhe o andamento até a conclusão.
+                    Acompanhe tudo até a conclusão.
                   </p>
                 </div>
               </div>
@@ -194,7 +209,7 @@ export default function ServicesClient({ user }: { user: User }) {
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => router.refresh()}
-                  className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+                  className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Atualizar serviços
                 </button>
@@ -203,15 +218,17 @@ export default function ServicesClient({ user }: { user: User }) {
                   onClick={() =>
                     router.push(user.role === "ADMIN" ? "/admin/orders" : "/orders")
                   }
-                  className="rounded-2xl border px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   Ver meus pedidos
                 </button>
               </div>
             </div>
 
-            <div className="rounded-3xl border bg-white p-6 shadow-sm">
-              <p className="text-xs text-slate-500">Resumo</p>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <p className="text-xs uppercase tracking-wide text-slate-500">
+                Resumo
+              </p>
 
               <div className="mt-4">
                 <p className="text-3xl font-bold text-slate-900">
@@ -227,8 +244,17 @@ export default function ServicesClient({ user }: { user: User }) {
                   Mais clareza antes da compra
                 </p>
                 <p className="mt-1 text-xs leading-5 text-emerald-800">
-                  Esta etapa deixa mais visível o que será solicitado depois do
-                  pagamento, reduzindo dúvidas e retrabalho.
+                  Veja valor, documentos normalmente solicitados e próximas
+                  etapas antes de seguir para o pagamento.
+                </p>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-900">
+                  Serviço inicial recomendado
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Regularização de CPF
                 </p>
               </div>
             </div>
@@ -247,18 +273,30 @@ export default function ServicesClient({ user }: { user: User }) {
             const isCreating = creatingOrderId === service.id;
             const suggestedDocuments = getDefaultDocuments(service.name);
             const accepted = legalAcceptedByService[service.id] || false;
+            const isCpfService = service.name.toLowerCase().includes("cpf");
 
             return (
               <div
                 key={service.id}
-                className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+                className={`rounded-3xl border bg-white p-5 shadow-sm sm:p-6 ${
+                  isCpfService
+                    ? "border-blue-200 ring-1 ring-blue-100"
+                    : "border-slate-200"
+                }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-lg font-semibold text-slate-900">
                     {service.name}
                   </h3>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                    Atendimento
+
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      isCpfService
+                        ? "bg-blue-50 text-blue-700"
+                        : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {getServiceBadge(service.name)}
                   </span>
                 </div>
 
@@ -279,6 +317,7 @@ export default function ServicesClient({ user }: { user: User }) {
                     <p>• Pedido criado na hora</p>
                     <p>• Pagamento online com confirmação automática</p>
                     <p>• Upload dos documentos logo após o pagamento</p>
+                    <p>• Acompanhamento dentro da área do cliente</p>
                   </div>
                 </div>
 
@@ -336,9 +375,13 @@ export default function ServicesClient({ user }: { user: User }) {
                 <button
                   onClick={() => handleCreateOrder(service.id)}
                   disabled={isCreating}
-                  className="mt-5 w-full rounded-2xl bg-slate-900 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  className="mt-5 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
                 >
-                  {isCreating ? "Criando pedido..." : "Contratar serviço"}
+                  {isCreating
+                    ? "Criando pedido..."
+                    : isCpfService
+                    ? "Iniciar regularização"
+                    : "Contratar serviço"}
                 </button>
 
                 <p className="mt-3 text-center text-xs leading-5 text-slate-500">
