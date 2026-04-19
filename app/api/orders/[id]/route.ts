@@ -146,13 +146,13 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
     const requiredDocuments = serviceDocuments.filter((doc) => doc.required);
 
-    const uploadedTypes = [
-      ...new Set(
-        order.uploadedFiles
-          .map((file) => file.type)
-          .filter((value): value is string => Boolean(value))
-      ),
-    ];
+      const uploadedTypes = [
+        ...new Set(
+         order.uploadedFiles
+      .map((file: { type: string | null }) => file.type)
+      .filter((value: string | null): value is string => Boolean(value))
+          ),
+        ];
 
     const hasAllRequiredDocuments =
       requiredDocuments.length > 0 &&
