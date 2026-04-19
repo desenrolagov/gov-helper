@@ -11,40 +11,50 @@ type User = {
 };
 
 export default function AppNav({ user }: { user: User }) {
+  const links =
+    user.role === "CLIENT"
+      ? [
+          { href: "/", label: "Início" },
+          { href: "/dashboard", label: "Dashboard" },
+          { href: "/services", label: "Serviços" },
+          { href: "/dashboard/documents", label: "Documentos" },
+        ]
+      : [
+          { href: "/", label: "Início" },
+          { href: "/admin", label: "Painel Admin" },
+          { href: "/admin/orders", label: "Pedidos" },
+          { href: "/admin/services", label: "Serviços" },
+        ];
+
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "16px 24px",
-        borderBottom: "1px solid #ddd",
-        marginBottom: "24px",
-      }}
-    >
-      <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-        <Link href="/">Início</Link>
+    <nav className="mb-6 border-b border-slate-200 bg-white">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-full px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
 
-        {user.role === "CLIENT" && (
-          <>
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/services">Serviços</Link>
-            <Link href="/dashboard/documents">Documentos</Link>
-          </>
-        )}
+        <div className="flex flex-col gap-3 border-t border-slate-100 pt-3 md:flex-row md:items-center md:gap-4 md:border-t-0 md:pt-0">
+          <div className="min-w-0">
+            <p className="text-sm text-slate-500">Olá,</p>
+            <p className="truncate text-sm font-semibold text-slate-900 md:max-w-[220px]">
+              {user.name}
+            </p>
+          </div>
 
-        {user.role === "ADMIN" && (
-          <>
-            <Link href="/admin">Painel Admin</Link>
-            <Link href="/admin/orders">Pedidos</Link>
-            <Link href="/admin/services">Serviços</Link>
-          </>
-        )}
-      </div>
-
-      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        <span>Olá, {user.name}</span>
-        <LogoutButton />
+          <div className="w-full md:w-auto">
+            <LogoutButton />
+          </div>
+        </div>
       </div>
     </nav>
   );

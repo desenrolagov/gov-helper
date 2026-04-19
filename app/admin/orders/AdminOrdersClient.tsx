@@ -272,14 +272,14 @@ async function updateStatus(id: string, status: OrderStatus) {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-6">
-      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+    <div className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6 sm:py-6">
+      <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
             Administração
           </div>
 
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">
+          <h1 className="mt-3 text-2xl font-bold text-slate-900 sm:mt-4 sm:text-3xl">
             Painel de pedidos
           </h1>
 
@@ -409,156 +409,157 @@ async function updateStatus(id: string, status: OrderStatus) {
             order.status === "PROCESSING" || order.status === "COMPLETED";
 
           return (
-            <article
-              key={order.id}
-              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-            >
-              <div className="grid gap-5 xl:grid-cols-[1.4fr_0.9fr_260px]">
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <OrderStatusBadge status={order.status} />
-                    <OrderCodeBadge
-                      code={order.orderCode}
-                      fallback={order.id.slice(0, 8).toUpperCase()}
-                    />
-                    <span className="text-xs text-slate-500">
-                      Criado em {formatDate(order.createdAt)}
-                    </span>
-                  </div>
+        <article
+  key={order.id}
+  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+>
+  <div className="space-y-4">
+    <div className="flex flex-wrap items-center gap-2">
+      <OrderStatusBadge status={order.status} />
+      <OrderCodeBadge
+        code={order.orderCode}
+        fallback={order.id.slice(0, 8).toUpperCase()}
+      />
+      <span className="text-xs text-slate-500">
+        Criado em {formatDate(order.createdAt)}
+      </span>
+    </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500">
-                        Cliente
-                      </p>
-                      <p className="font-semibold text-slate-900">
-                        {order.user.name}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        {order.user.email}
-                      </p>
-                    </div>
+    <div className="grid gap-4 lg:grid-cols-[1.3fr_0.9fr]">
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-wide text-slate-500">
+              Cliente
+            </p>
+            <p className="truncate font-semibold text-slate-900">
+              {order.user.name}
+            </p>
+            <p className="truncate text-sm text-slate-600">
+              {order.user.email}
+            </p>
+          </div>
 
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-slate-500">
-                        Serviço
-                      </p>
-                      <p className="font-semibold text-slate-900">
-                        {order.service.name}
-                      </p>
-                    </div>
-                  </div>
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-wide text-slate-500">
+              Serviço
+            </p>
+            <p className="text-sm font-semibold text-slate-900 sm:text-base">
+              {order.service.name}
+            </p>
+          </div>
+        </div>
 
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs text-slate-500">Valor</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">
-                        {formatCurrency(Number(order.totalAmount))}
-                      </p>
-                    </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-500">Valor</p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              {formatCurrency(Number(order.totalAmount))}
+            </p>
+          </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs text-slate-500">Uploads</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">
-                        {order.uploadedFiles.length}
-                      </p>
-                    </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-500">Uploads</p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              {order.uploadedFiles.length}
+            </p>
+          </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs text-slate-500">Próximo passo</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-900">
-                        {nextOptions.length > 0
-                          ? "Atualizar fluxo"
-                          : "Sem ação de status"}
-                      </p>
-                    </div>
-                  </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs text-slate-500">Próximo passo</p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">
+              {nextOptions.length > 0
+                ? "Atualizar fluxo"
+                : "Sem ação de status"}
+            </p>
+          </div>
+        </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-sm font-semibold text-slate-900">
-                      Leitura rápida do pedido
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {getFlowHint(order)}
-                    </p>
-                  </div>
-                </div>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm font-semibold text-slate-900">
+            Leitura rápida do pedido
+          </p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            {getFlowHint(order)}
+          </p>
+        </div>
+      </div>
 
-                <div className="space-y-3">
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                    <p className="text-xs uppercase tracking-wide text-blue-700">
-                      Operação
-                    </p>
-                    <p className="mt-2 text-sm text-blue-900">
-                      Use apenas as transições abaixo para evitar quebra de fluxo
-                      e retrabalho com o cliente.
-                    </p>
-                  </div>
+      <div className="space-y-3">
+        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+          <p className="text-xs uppercase tracking-wide text-blue-700">
+            Operação
+          </p>
+          <p className="mt-2 text-sm leading-6 text-blue-900">
+            Use apenas as transições abaixo para evitar quebra de fluxo e retrabalho com o cliente.
+          </p>
+        </div>
 
-                  <Link
-                    href={`/admin/orders/${order.id}`}
-                    className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Abrir detalhe admin
-                  </Link>
+        <select
+          value=""
+          disabled={updatingId === order.id || nextOptions.length === 0}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (!value) return;
+            updateStatus(order.id, value as OrderStatus);
+          }}
+          className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <option value="">
+            {nextOptions.length > 0
+              ? "Atualizar status"
+              : "Sem transições disponíveis"}
+          </option>
+          {nextOptions.map((status) => (
+            <option key={status} value={status}>
+              {getOrderStatusLabel(status)}
+            </option>
+          ))}
+        </select>
 
-                  <Link
-                    href={`/orders/${order.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                  >
-                    Abrir visão do cliente
-                  </Link>
+        {updatingId === order.id ? (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            Atualizando status...
+          </div>
+        ) : null}
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setExpandedId((current) =>
-                        current === order.id ? null : order.id
-                      )
-                    }
-                    className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-                  >
-                    {expanded ? "Fechar ações" : "Abrir ações do pedido"}
-                  </button>
-                </div>
+        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+          <Link
+            href={`/admin/orders/${order.id}`}
+            className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Abrir detalhe admin
+          </Link>
 
-                <div className="space-y-3">
-                  <select
-                    value=""
-                    disabled={updatingId === order.id || nextOptions.length === 0}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (!value) return;
-                      updateStatus(order.id, value as OrderStatus);
-                    }}
-                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <option value="">
-                      {nextOptions.length > 0
-                        ? "Atualizar status"
-                        : "Sem transições disponíveis"}
-                    </option>
-                    {nextOptions.map((status) => (
-                      <option key={status} value={status}>
-                        {getOrderStatusLabel(status)}
-                      </option>
-                    ))}
-                  </select>
+          <Link
+            href={`/orders/${order.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Abrir visão do cliente
+          </Link>
 
-                  {updatingId === order.id ? (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                      Atualizando status...
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+          <button
+            type="button"
+            onClick={() =>
+              setExpandedId((current) =>
+                current === order.id ? null : order.id
+              )
+            }
+            className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            {expanded ? "Fechar ações" : "Abrir ações do pedido"}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
               {expanded ? (
-                <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                <div className="mt-5 grid gap-4 lg:grid-cols-2">
                   <div className="space-y-6">
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
                       <h3 className="text-base font-semibold text-slate-900">
                         Documentos enviados pelo cliente
                       </h3>
@@ -624,7 +625,7 @@ async function updateStatus(id: string, status: OrderStatus) {
                       </div>
                     )}
 
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
                       <h3 className="text-base font-semibold text-slate-900">
                         Observação operacional
                       </h3>
