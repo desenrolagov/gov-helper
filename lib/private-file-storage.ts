@@ -3,11 +3,16 @@ import { createClient } from "@supabase/supabase-js";
 export type PrivateBucket = "uploads" | "result";
 
 const SUPABASE_BUCKET_NAME =
-  process.env.PRIVATE_FILES_BUCKET || "documentos privados";
+  process.env.PRIVATE_FILES_BUCKET || "documentos-privados";
 
 function getSupabaseAdminClient() {
   const supabaseUrl = process.env.SUPABASE_URL?.trim();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  console.log("ENV CHECK:", {
+  url: process.env.SUPABASE_URL,
+  key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+  });
 
   if (!supabaseUrl) {
     throw new Error("SUPABASE_URL não configurada.");
@@ -65,21 +70,32 @@ export async function savePrivateFile(
   savedName: string,
   buffer: Buffer
 ) {
-  const supabase = getSupabaseAdminClient();
-  const objectPath = buildObjectPath(bucket, savedName);
+  try {
+    const supabase = getSupabaseAdminClient();
+    const objectPath = buildObjectPath(bucket, savedName);
 
-  const { error } = await supabase.storage
-    .from(SUPABASE_BUCKET_NAME)
-    .upload(objectPath, buffer, {
-      upsert: true,
-      contentType: "application/octet-stream",
+    const { error } = await supabase.storage
+      .from(SUPABASE_BUCKET_NAME)
+      .upload(objectPath, buffer, {
+        upsert: true,
+        contentType: "application/octet-stream",
+      });
+
+    if (error) {
+      throw new Error(
+        `Erro ao enviar arquivo para o Supabase: ${error.message}`
+      );
+    }
+
+    return objectPath;
+  } catch (error) {
+    console.error("Falha no savePrivateFile:", {
+      bucket: SUPABASE_BUCKET_NAME,
+      originalError: error,
     });
 
-  if (error) {
-    throw new Error(`Erro ao enviar arquivo para o Supabase: ${error.message}`);
+    throw error;
   }
-
-  return objectPath;
 }
 
 export async function readPrivateFile(
