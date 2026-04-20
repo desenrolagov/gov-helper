@@ -267,7 +267,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const baseUrl = getAppUrl();
+    const baseUrl = await getAppUrl();
     const orderCode = order.orderCode || order.id.slice(0, 8).toUpperCase();
     const checkoutDescription = buildCheckoutDescription(
       order.service.name,

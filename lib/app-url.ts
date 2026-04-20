@@ -1,27 +1,35 @@
-export function getAppUrl() {
-  const value = process.env.NEXT_PUBLIC_APP_URL?.trim();
+import { headers } from "next/headers";
 
-  if (!value) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("NEXT_PUBLIC_APP_URL não configurada em produção.");
+export async function getAppUrl() {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (envUrl) {
+    const normalized = envUrl.endsWith("/")
+      ? envUrl.slice(0, -1)
+      : envUrl;
+
+    try {
+      const parsed = new URL(normalized);
+
+      if (process.env.NODE_ENV === "production" && parsed.protocol !== "https:") {
+        throw new Error("NEXT_PUBLIC_APP_URL deve usar HTTPS em produção.");
+      }
+
+      return normalized;
+    } catch {
+      throw new Error("NEXT_PUBLIC_APP_URL inválida.");
     }
-
-    return "http://localhost:3000";
   }
 
-  const normalized = value.endsWith("/") ? value.slice(0, -1) : value;
+  const headersList = await headers();
+  const host = headersList.get("host");
 
-  let parsed: URL;
-
-  try {
-    parsed = new URL(normalized);
-  } catch {
-    throw new Error("NEXT_PUBLIC_APP_URL inválida.");
+  if (!host) {
+    throw new Error("Não foi possível determinar o host da aplicação.");
   }
 
-  if (process.env.NODE_ENV === "production" && parsed.protocol !== "https:") {
-    throw new Error("NEXT_PUBLIC_APP_URL deve usar HTTPS em produção.");
-  }
+  const protocol =
+    process.env.NODE_ENV === "production" ? "https" : "http";
 
-  return normalized;
+  return `${protocol}://${host}`;
 }
