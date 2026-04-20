@@ -15,6 +15,17 @@ type RouteContext = {
   }>;
 };
 
+function buildContentDisposition(filename: string) {
+  const safeFallback = filename
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]/g, "_");
+
+  const encoded = encodeURIComponent(filename);
+
+  return `inline; filename="${safeFallback}"; filename*=UTF-8''${encoded}`;
+}
+
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
     const user = await getCurrentUser();
@@ -71,9 +82,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       headers: {
         "Content-Type": file.mimeType || "application/octet-stream",
         "Content-Length": String(file.size || buffer.length),
-        "Content-Disposition": `inline; filename="${encodeURIComponent(
-          file.originalName
-        )}"`,
+        "Content-Disposition": buildContentDisposition(file.originalName),
         "Cache-Control": "private, no-store, max-age=0",
         "X-Robots-Tag": "noindex, nofollow",
       },

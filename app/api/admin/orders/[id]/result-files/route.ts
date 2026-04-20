@@ -9,6 +9,7 @@ import {
   deletePrivateFile,
   savePrivateFile,
 } from "@/lib/private-file-storage";
+import { validateFile } from "@/lib/uploadValidation";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -99,10 +100,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     if (session.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Acesso negado." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
     }
 
     const { id: orderId } = await context.params;
@@ -169,6 +167,15 @@ export async function POST(req: NextRequest, context: RouteContext) {
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
         { error: "Nenhum arquivo válido foi enviado." },
+        { status: 400 }
+      );
+    }
+
+    const validation = validateFile(file);
+
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.error || "Arquivo inválido." },
         { status: 400 }
       );
     }
