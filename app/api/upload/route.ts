@@ -93,9 +93,8 @@ function buildDocumentsReceivedEmailHtml(data: {
   name: string;
   orderId: string;
   withinBusinessHours: boolean;
+  appUrl: string;
 }) {
-  const appUrl = getAppUrl();
-
   const statusText = data.withinBusinessHours
     ? "Recebemos seus documentos com sucesso e seu pedido já foi encaminhado para análise da equipe."
     : "Recebemos seus documentos com sucesso. Como o envio foi realizado fora do horário comercial, seu pedido ficará na fila e será assumido pela equipe no próximo período de atendimento.";
@@ -122,7 +121,7 @@ function buildDocumentsReceivedEmailHtml(data: {
         </div>
 
         <a
-          href="${appUrl}/orders/${data.orderId}"
+          href="${data.appUrl}/orders/${data.orderId}"
           style="display:inline-block;margin-top:16px;padding:12px 20px;background:#111827;color:#fff;border-radius:8px;text-decoration:none;"
         >
           Acompanhar pedido
@@ -157,6 +156,8 @@ async function sendDocumentsReceivedEmail(data: {
 
     if (!order?.user?.email) return;
 
+    const appUrl = await getAppUrl();
+
     await sendEmail({
       to: order.user.email,
       subject: data.withinBusinessHours
@@ -166,6 +167,7 @@ async function sendDocumentsReceivedEmail(data: {
         name: order.user.name,
         orderId: order.id,
         withinBusinessHours: data.withinBusinessHours,
+        appUrl,
       }),
     });
   } catch (error) {
@@ -381,13 +383,13 @@ export async function POST(req: Request) {
       },
     });
 
-           const uploadedTypesBefore = [
-        ...new Set(
+    const uploadedTypesBefore = [
+      ...new Set(
         uploadedFilesBefore
-      .map((item: { type: string | null }) => item.type)
-      .filter((value: string | null): value is string => Boolean(value))
-  ),
-];
+          .map((item: { type: string | null }) => item.type)
+          .filter((value: string | null): value is string => Boolean(value))
+      ),
+    ];
 
     const hadAllRequiredDocsBefore =
       requiredDocs.length > 0 &&

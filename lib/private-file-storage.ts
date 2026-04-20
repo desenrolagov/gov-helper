@@ -1,14 +1,28 @@
-import { mkdir, readFile, rm, writeFile } from "fs/promises";
-import path from "path";
+import { createClient } from "@supabase/supabase-js";
 
 export type PrivateBucket = "uploads" | "result";
 
-function getProjectRootDir() {
-  return process.cwd();
-}
+const SUPABASE_BUCKET_NAME =
+  process.env.PRIVATE_FILES_BUCKET || "documentos privados";
 
-function getPrivateRootDir() {
-  return path.join(getProjectRootDir(), "storage", "private");
+function getSupabaseAdminClient() {
+  const supabaseUrl = process.env.SUPABASE_URL?.trim();
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  if (!supabaseUrl) {
+    throw new Error("SUPABASE_URL não configurada.");
+  }
+
+  if (!serviceRoleKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada.");
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
 }
 
 function assertValidSavedName(savedName: string) {
@@ -16,27 +30,34 @@ function assertValidSavedName(savedName: string) {
     throw new Error("Nome de arquivo privado inválido.");
   }
 
-  if (savedName.includes("..") || savedName.includes("/") || savedName.includes("\\")) {
+  if (
+    savedName.includes("..") ||
+    savedName.includes("/") ||
+    savedName.includes("\\")
+  ) {
     throw new Error("Nome de arquivo privado inseguro.");
   }
 }
 
+function buildObjectPath(bucket: PrivateBucket, savedName: string) {
+  assertValidSavedName(savedName);
+  return `${bucket}/${savedName}`;
+}
+
 export async function ensurePrivateRootDir() {
-  await mkdir(getPrivateRootDir(), { recursive: true });
+  return;
 }
 
 export function getPrivateBucketDir(bucket: PrivateBucket) {
-  return path.join(getPrivateRootDir(), bucket);
+  return bucket;
 }
 
 export function getPrivateFilePath(bucket: PrivateBucket, savedName: string) {
-  assertValidSavedName(savedName);
-  return path.join(getPrivateBucketDir(bucket), savedName);
+  return buildObjectPath(bucket, savedName);
 }
 
 export async function ensurePrivateBucket(bucket: PrivateBucket) {
-  await ensurePrivateRootDir();
-  await mkdir(getPrivateBucketDir(bucket), { recursive: true });
+  return bucket;
 }
 
 export async function savePrivateFile(
@@ -44,20 +65,40 @@ export async function savePrivateFile(
   savedName: string,
   buffer: Buffer
 ) {
-  await ensurePrivateBucket(bucket);
+  const supabase = getSupabaseAdminClient();
+  const objectPath = buildObjectPath(bucket, savedName);
 
-  const filePath = getPrivateFilePath(bucket, savedName);
-  await writeFile(filePath, buffer);
+  const { error } = await supabase.storage
+    .from(SUPABASE_BUCKET_NAME)
+    .upload(objectPath, buffer, {
+      upsert: true,
+      contentType: "application/octet-stream",
+    });
 
-  return filePath;
+  if (error) {
+    throw new Error(`Erro ao enviar arquivo para o Supabase: ${error.message}`);
+  }
+
+  return objectPath;
 }
 
 export async function readPrivateFile(
   bucket: PrivateBucket,
   savedName: string
 ) {
-  const filePath = getPrivateFilePath(bucket, savedName);
-  return await readFile(filePath);
+  const supabase = getSupabaseAdminClient();
+  const objectPath = buildObjectPath(bucket, savedName);
+
+  const { data, error } = await supabase.storage
+    .from(SUPABASE_BUCKET_NAME)
+    .download(objectPath);
+
+  if (error) {
+    throw new Error(`Erro ao ler arquivo privado: ${error.message}`);
+  }
+
+  const arrayBuffer = await data.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 export async function deletePrivateFile(
@@ -66,10 +107,14 @@ export async function deletePrivateFile(
 ) {
   if (!savedName) return;
 
-  try {
-    const filePath = getPrivateFilePath(bucket, savedName);
-    await rm(filePath, { force: true });
-  } catch {
-    // não bloqueia o fluxo se o arquivo já não existir
+  const supabase = getSupabaseAdminClient();
+  const objectPath = buildObjectPath(bucket, savedName);
+
+  const { error } = await supabase.storage
+    .from(SUPABASE_BUCKET_NAME)
+    .remove([objectPath]);
+
+  if (error) {
+    console.error("Erro ao remover arquivo privado do Supabase:", error.message);
   }
 }
