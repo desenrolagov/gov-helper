@@ -29,6 +29,25 @@ function getClientIp(req: NextRequest) {
   return null;
 }
 
+function buildCheckoutDescription(serviceName: string, orderCode: string) {
+  const normalized = serviceName.toLowerCase();
+
+  if (normalized.includes("cpf")) {
+    return [
+      "Assessoria privada para regularização de CPF.",
+      "Atendimento 100% online.",
+      `Pedido: ${orderCode}.`,
+      "A DesenrolaGov não possui vínculo com órgãos do governo.",
+    ].join(" ");
+  }
+
+  return [
+    "Assessoria privada com atendimento online.",
+    `Pedido: ${orderCode}.`,
+    "Acompanhamento do fluxo dentro da plataforma.",
+  ].join(" ");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const rateLimitResult = rateLimit(buildRateLimitKey("checkout", req), {
@@ -208,11 +227,15 @@ export async function POST(req: NextRequest) {
 
     const baseUrl = getAppUrl();
     const orderCode = order.orderCode || order.id.slice(0, 8).toUpperCase();
+    const checkoutDescription = buildCheckoutDescription(
+      order.service.name,
+      orderCode
+    );
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      success_url: `${baseUrl}/payment?orderId=${order.id}&success=1`,
-      cancel_url: `${baseUrl}/payment?orderId=${order.id}&canceled=1`,
+      success_url: `${baseUrl}/payment/success?orderId=${order.id}`,
+      cancel_url: `${baseUrl}/payment/cancel?orderId=${order.id}`,
       customer_email: user.email,
       metadata: {
         orderId: order.id,
@@ -230,9 +253,7 @@ export async function POST(req: NextRequest) {
             unit_amount: unitAmount,
             product_data: {
               name: `${order.service.name} • Pedido ${orderCode}`,
-              description:
-                order.service.description?.trim() ||
-                `Código do pedido: ${orderCode}`,
+              description: checkoutDescription,
             },
           },
           quantity: 1,
