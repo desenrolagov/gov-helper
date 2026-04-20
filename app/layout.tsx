@@ -5,7 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 export const metadata: Metadata = {
   title: "DesenrolaGov",
   description:
-    "Plataforma para contratação de serviços, pagamento, envio de documentos e acompanhamento do atendimento.",
+    "Assessoria privada para contratação de serviços documentais, pagamento, envio de documentos e acompanhamento do atendimento.",
 };
 
 export default function RootLayout({
