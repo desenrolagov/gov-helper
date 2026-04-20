@@ -278,7 +278,7 @@ export default function ServicesClient({ user }: { user: User }) {
             return (
               <div
                 key={service.id}
-                className={`rounded-3xl border bg-white p-5 shadow-sm sm:p-6 ${
+                className={`flex h-full flex-col rounded-3xl border bg-white p-5 shadow-sm sm:p-6 ${
                   isCpfService
                     ? "border-blue-200 ring-1 ring-blue-100"
                     : "border-slate-200"
@@ -290,7 +290,7 @@ export default function ServicesClient({ user }: { user: User }) {
                   </h3>
 
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
                       isCpfService
                         ? "bg-blue-50 text-blue-700"
                         : "bg-slate-100 text-slate-700"
@@ -300,13 +300,32 @@ export default function ServicesClient({ user }: { user: User }) {
                   </span>
                 </div>
 
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {service.description}
-                </p>
+                <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Descrição do serviço
+                  </p>
 
-                <p className="mt-4 text-2xl font-bold text-slate-900">
-                  {formatCurrency(service.price)}
-                </p>
+                  <div className="mt-3 max-h-[260px] overflow-y-auto pr-1 text-sm leading-7 text-slate-600 whitespace-pre-line">
+                    {service.description}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-end justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Valor
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-slate-900">
+                      {formatCurrency(service.price)}
+                    </p>
+                  </div>
+
+                  {isCpfService ? (
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      Ativo
+                    </span>
+                  ) : null}
+                </div>
 
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -372,22 +391,24 @@ export default function ServicesClient({ user }: { user: User }) {
                   </p>
                 </div>
 
-                <button
-                  onClick={() => handleCreateOrder(service.id)}
-                  disabled={isCreating}
-                  className="mt-5 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
-                >
-                  {isCreating
-                    ? "Criando pedido..."
-                    : isCpfService
-                    ? "Iniciar regularização"
-                    : "Contratar serviço"}
-                </button>
+                <div className="mt-auto pt-5">
+                  <button
+                    onClick={() => handleCreateOrder(service.id)}
+                    disabled={isCreating}
+                    className="w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {isCreating
+                      ? "Criando pedido..."
+                      : isCpfService
+                      ? "Iniciar regularização"
+                      : "Contratar serviço"}
+                  </button>
 
-                <p className="mt-3 text-center text-xs leading-5 text-slate-500">
-                  Ao continuar, você verá o código do pedido, o valor da compra
-                  e seguirá para o checkout seguro.
-                </p>
+                  <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+                    Ao continuar, você verá o código do pedido, o valor da compra
+                    e seguirá para o checkout seguro.
+                  </p>
+                </div>
               </div>
             );
           })}
