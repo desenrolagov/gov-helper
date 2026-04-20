@@ -199,30 +199,72 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (existingPendingPayment?.checkoutUrl) {
-      await createAuditLog({
-        action: "CHECKOUT_REUSED",
-        entityType: "payment",
-        entityId: existingPendingPayment.id,
-        userId: user.id,
-        orderId: order.id,
-        message: "Checkout pendente reaproveitado.",
-        metadata: {
-          checkoutUrl: existingPendingPayment.checkoutUrl,
-          stripeSessionId: existingPendingPayment.stripeSessionId,
-          legalAcceptedVersion: acceptedVersion,
-          ip: clientIp,
-          userAgent,
-        },
-      });
+    if (
+      existingPendingPayment?.checkoutUrl &&
+      existingPendingPayment?.stripeSessionId
+    ) {
+      try {
+        const existingSession = await stripe.checkout.sessions.retrieve(
+          existingPendingPayment.stripeSessionId
+        );
 
-      return NextResponse.json(
-        {
-          url: existingPendingPayment.checkoutUrl,
-          reused: true,
-        },
-        { status: 200 }
-      );
+        if (existingSession.status === "open" && existingSession.url) {
+          await createAuditLog({
+            action: "CHECKOUT_REUSED",
+            entityType: "payment",
+            entityId: existingPendingPayment.id,
+            userId: user.id,
+            orderId: order.id,
+            message: "Checkout pendente reaproveitado.",
+            metadata: {
+              checkoutUrl: existingPendingPayment.checkoutUrl,
+              stripeSessionId: existingPendingPayment.stripeSessionId,
+              stripeSessionStatus: existingSession.status,
+              legalAcceptedVersion: acceptedVersion,
+              ip: clientIp,
+              userAgent,
+            },
+          });
+
+          return NextResponse.json(
+            {
+              url: existingPendingPayment.checkoutUrl,
+              reused: true,
+            },
+            { status: 200 }
+          );
+        }
+
+        await prisma.payment.update({
+          where: { id: existingPendingPayment.id },
+          data: {
+            status: "FAILED",
+          },
+        });
+
+        await createAuditLog({
+          action: "CHECKOUT_EXPIRED",
+          entityType: "payment",
+          entityId: existingPendingPayment.id,
+          userId: user.id,
+          orderId: order.id,
+          message:
+            "Checkout anterior não estava mais aberto e foi marcado como cancelado.",
+          metadata: {
+            checkoutUrl: existingPendingPayment.checkoutUrl,
+            stripeSessionId: existingPendingPayment.stripeSessionId,
+            stripeSessionStatus: existingSession.status,
+            legalAcceptedVersion: acceptedVersion,
+            ip: clientIp,
+            userAgent,
+          },
+        });
+      } catch (stripeError) {
+        console.error(
+          "Erro ao verificar sessão Stripe existente. Nova sessão será criada.",
+          stripeError
+        );
+      }
     }
 
     const baseUrl = getAppUrl();
@@ -234,8 +276,8 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      success_url: `${baseUrl}/payment/success?orderId=${order.id}`,
-      cancel_url: `${baseUrl}/payment/cancel?orderId=${order.id}`,
+      success_url: `${baseUrl}/payment?orderId=${order.id}&success=1`,
+      cancel_url: `${baseUrl}/payment?orderId=${order.id}&canceled=1`,
       customer_email: user.email,
       metadata: {
         orderId: order.id,

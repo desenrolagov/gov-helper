@@ -316,11 +316,11 @@ export default function PaymentClient() {
             <OrderCodeBadge code={order.orderCode} fallback="—" />
           ) : null}
 
-          <Link
-            href={orderId ? `/orders/${orderId}` : "/orders"}
+               <Link
+                 href="/orders"
             className="rounded-xl border px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
-            Voltar ao pedido
+            Ver meus pedidos
           </Link>
         </div>
       </div>
