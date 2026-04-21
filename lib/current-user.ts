@@ -5,7 +5,6 @@ export async function getCurrentUser() {
   try {
     const session = await verifySession();
 
-    // 🔒 Se não houver sessão válida
     if (!session || !session.userId) {
       return null;
     }
@@ -20,16 +19,12 @@ export async function getCurrentUser() {
       },
     });
 
-    // 🔒 Se usuário não existir (ex: deletado)
     if (!user) {
       return null;
     }
 
     return user;
-  } catch (error) {
-    console.error("Erro ao obter usuário atual:", error);
-
-    // 🔥 MUITO IMPORTANTE: nunca quebrar o server
+  } catch {
     return null;
   }
 }

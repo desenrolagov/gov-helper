@@ -32,6 +32,14 @@ export function getClientIp(request: Request): string {
   return "unknown";
 }
 
+function cleanupExpiredEntries(now: number) {
+  for (const [key, value] of store.entries()) {
+    if (now > value.resetAt) {
+      store.delete(key);
+    }
+  }
+}
+
 export function rateLimit(
   key: string,
   options: RateLimitOptions = {}
@@ -39,6 +47,8 @@ export function rateLimit(
   const limit = options.limit ?? 10;
   const windowMs = options.windowMs ?? 60_000;
   const now = Date.now();
+
+  cleanupExpiredEntries(now);
 
   const existing = store.get(key);
 
@@ -80,10 +90,16 @@ export function rateLimit(
 
 export function buildRateLimitKey(prefix: string, request: Request): string {
   const ip = getClientIp(request);
-  return `${prefix}:${ip}`;
+  const userAgent = request.headers.get("user-agent") || "unknown";
+  return `${prefix}:${ip}:${userAgent.slice(0, 80)}`;
 }
 
 export function createRateLimitResponse(result: RateLimitResult) {
+  const retryAfter = Math.max(
+    1,
+    Math.ceil((result.resetAt - Date.now()) / 1000)
+  ).toString();
+
   return new Response(
     JSON.stringify({
       error: "Muitas tentativas. Aguarde alguns instantes e tente novamente.",
@@ -92,7 +108,10 @@ export function createRateLimitResponse(result: RateLimitResult) {
       status: 429,
       headers: {
         "Content-Type": "application/json",
-        "Retry-After": Math.ceil((result.resetAt - Date.now()) / 1000).toString(),
+        "Retry-After": retryAfter,
+        "X-RateLimit-Limit": String(result.limit),
+        "X-RateLimit-Remaining": String(result.remaining),
+        "X-RateLimit-Reset": String(result.resetAt),
       },
     }
   );

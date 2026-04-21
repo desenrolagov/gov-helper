@@ -176,7 +176,7 @@ async function updateStatus(id: string, status: OrderStatus) {
     setError("");
     setToast("");
 
-    const res = await fetch(`/api/orders/${id}/status`, {
+    const res = await fetch(`/api/admin/orders/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -193,7 +193,8 @@ async function updateStatus(id: string, status: OrderStatus) {
       return;
     }
 
-    const updatedOrder = data && typeof data === "object" ? data : null;
+    const updatedOrder =
+       data && typeof data === "object" && data.order ? data.order : null;
     const updatedStatus = updatedOrder?.status ?? status;
 
     setOrders((prev) =>

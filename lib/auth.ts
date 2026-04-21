@@ -5,7 +5,7 @@ const COOKIE_NAME = "govhelper_session";
 const SESSION_DURATION_IN_DAYS = 7;
 
 function getSecretKey() {
-  const secretKey = process.env.AUTH_SECRET;
+  const secretKey = process.env.AUTH_SECRET?.trim();
 
   if (!secretKey) {
     throw new Error("AUTH_SECRET não foi definido no ambiente");
