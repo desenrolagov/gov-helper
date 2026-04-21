@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { usePathname } from "next/navigation";
 
 type Props = {
   phone?: string;
@@ -12,13 +13,31 @@ function buildWhatsAppHref(phone: string, message: string) {
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
 
+function shouldHideOnPath(pathname: string) {
+  const hiddenPrefixes = [
+    "/admin",
+    "/login",
+    "/register",
+    "/checkout",
+    "/payment",
+  ];
+
+  return hiddenPrefixes.some((prefix) => pathname.startsWith(prefix));
+}
+
 export default function WhatsAppFloatingButton({
   phone = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "5517991762888",
   message = "Olá! Preciso de ajuda com meu atendimento no DesenrolaGov.",
 }: Props) {
+  const pathname = usePathname();
+
   const href = useMemo(() => {
     return buildWhatsAppHref(phone, message);
   }, [phone, message]);
+
+  if (shouldHideOnPath(pathname)) {
+    return null;
+  }
 
   return (
     <a
