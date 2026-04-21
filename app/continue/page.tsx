@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import ContinueClient from "./ContinueClient";
+import ContinueClient from "./continue-client";
 
 export const dynamic = "force-dynamic";
 
