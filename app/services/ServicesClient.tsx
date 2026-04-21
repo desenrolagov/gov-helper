@@ -21,6 +21,10 @@ type Service = {
   active: boolean;
 };
 
+type Props = {
+  user: User | null;
+};
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -48,7 +52,7 @@ function getServiceBadge(serviceName: string) {
   return "Atendimento";
 }
 
-export default function ServicesClient({ user }: { user: User }) {
+export default function ServicesClient({ user }: Props) {
   const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,10 +73,10 @@ export default function ServicesClient({ user }: { user: User }) {
           cache: "no-store",
         });
 
-        const data = await res.json();
+        const data = await res.json().catch(() => null);
 
         if (!res.ok) {
-          setError(data.error || "Erro ao buscar serviços.");
+          setError(data?.error || "Erro ao buscar serviços.");
           setServices([]);
           return;
         }
@@ -100,8 +104,13 @@ export default function ServicesClient({ user }: { user: User }) {
 
       if (!legalAcceptedByService[serviceId]) {
         setError(
-          "Para criar o pedido, aceite os Termos de Uso e a Política de Privacidade no card do serviço."
+          "Para continuar, aceite os Termos de Uso e a Política de Privacidade no card do serviço."
         );
+        return;
+      }
+
+      if (!user) {
+        router.push(`/continue?serviceId=${serviceId}`);
         return;
       }
 
@@ -120,10 +129,10 @@ export default function ServicesClient({ user }: { user: User }) {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(data.error || "Erro ao criar pedido.");
+        setError(data?.error || "Erro ao criar pedido.");
         return;
       }
 
@@ -152,7 +161,7 @@ export default function ServicesClient({ user }: { user: User }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AppNav user={user} />
+      {user ? <AppNav user={user} /> : null}
 
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <section className="mb-8">
@@ -214,14 +223,25 @@ export default function ServicesClient({ user }: { user: User }) {
                   Atualizar serviços
                 </button>
 
-                <button
-                  onClick={() =>
-                    router.push(user.role === "ADMIN" ? "/admin/orders" : "/orders")
-                  }
-                  className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                >
-                  Ver meus pedidos
-                </button>
+                {user ? (
+                  <button
+                    onClick={() =>
+                      router.push(
+                        user.role === "ADMIN" ? "/admin/orders" : "/orders"
+                      )
+                    }
+                    className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Ver meus pedidos
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => router.push("/support")}
+                    className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Tirar dúvidas antes de contratar
+                  </button>
+                )}
               </div>
             </div>
 
@@ -257,6 +277,18 @@ export default function ServicesClient({ user }: { user: User }) {
                   Regularização de CPF
                 </p>
               </div>
+
+              {!user ? (
+                <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                  <p className="text-sm font-semibold text-blue-900">
+                    Cadastro rápido no momento da contratação
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-blue-800">
+                    Você escolhe o serviço primeiro e cria sua conta só ao
+                    continuar o atendimento.
+                  </p>
+                </div>
+              ) : null}
             </div>
           </div>
         </section>
@@ -305,7 +337,7 @@ export default function ServicesClient({ user }: { user: User }) {
                     Descrição do serviço
                   </p>
 
-                  <div className="mt-3 max-h-[260px] overflow-y-auto pr-1 text-sm leading-7 text-slate-600 whitespace-pre-line">
+                  <div className="mt-3 max-h-[260px] overflow-y-auto pr-1 whitespace-pre-line text-sm leading-7 text-slate-600">
                     {service.description}
                   </div>
                 </div>
@@ -382,7 +414,7 @@ export default function ServicesClient({ user }: { user: User }) {
                       >
                         Política de Privacidade
                       </Link>{" "}
-                      para criar este pedido.
+                      para continuar.
                     </span>
                   </label>
 
@@ -395,18 +427,19 @@ export default function ServicesClient({ user }: { user: User }) {
                   <button
                     onClick={() => handleCreateOrder(service.id)}
                     disabled={isCreating}
-                    className="w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                    className="w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isCreating
-                      ? "Criando pedido..."
+                      ? "Continuando..."
                       : isCpfService
                       ? "Iniciar regularização"
                       : "Contratar serviço"}
                   </button>
 
                   <p className="mt-3 text-center text-xs leading-5 text-slate-500">
-                    Ao continuar, você verá o código do pedido, o valor da compra
-                    e seguirá para o checkout seguro.
+                    {user
+                      ? "Ao continuar, você verá o código do pedido, o valor da compra e seguirá para o checkout seguro."
+                      : "Ao continuar, você criará seu acesso e seguirá direto para o pagamento do serviço selecionado."}
                   </p>
                 </div>
               </div>

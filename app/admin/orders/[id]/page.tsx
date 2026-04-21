@@ -28,6 +28,7 @@ type TimelineItem = {
   title: string;
   description?: string | null;
   timestamp: string;
+  sortDate?: string | Date | null;
   tone?: "slate" | "blue" | "amber" | "green" | "red";
   badge?: string | null;
 };
@@ -87,6 +88,37 @@ function getStatusLabel(status: string) {
   return map[status] || status;
 }
 
+function getClientFriendlyStatusTitle(status: string) {
+  const map: Record<string, string> = {
+    PENDING_PAYMENT: "Pedido criado",
+    PAID: "Pagamento aprovado",
+    AWAITING_DOCUMENTS: "Aguardando documentos do cliente",
+    PROCESSING: "Pedido em andamento",
+    COMPLETED: "Pedido concluído",
+    CANCELLED: "Pedido cancelado",
+  };
+
+  return map[status] || getStatusLabel(status);
+}
+
+function getStatusDescription(status: string) {
+  const map: Record<string, string> = {
+    PENDING_PAYMENT:
+      "O pedido foi criado e está aguardando a confirmação do pagamento.",
+    PAID: "O pagamento foi aprovado e o pedido já pode seguir para a próxima etapa.",
+    AWAITING_DOCUMENTS:
+      "Agora o cliente precisa enviar os documentos obrigatórios para continuidade.",
+    PROCESSING:
+      "Os documentos já foram recebidos e o pedido está em análise pela equipe.",
+    COMPLETED:
+      "O atendimento foi finalizado e o resultado está disponível para consulta.",
+    CANCELLED:
+      "O pedido foi encerrado e não seguirá para novas etapas.",
+  };
+
+  return map[status] || "O pedido avançou no fluxo operacional.";
+}
+
 function getStatusTone(
   status: string
 ): "slate" | "blue" | "amber" | "green" | "red" {
@@ -106,26 +138,90 @@ function getStatusTone(
   }
 }
 
-function getAuditTone(
-  action: string
-): "slate" | "blue" | "amber" | "green" | "red" {
-  if (
-    action.includes("COMPLETED") ||
-    action.includes("RESULT_FILE") ||
-    action.includes("FINAL")
-  ) {
-    return "green";
+function groupUploadsByMinute(files: UploadedFileItem[]) {
+  const grouped = new Map<string, UploadedFileItem[]>();
+
+  for (const file of files) {
+    const date = new Date(file.createdAt);
+    const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}-${date.getMinutes()}`;
+
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+
+    grouped.get(key)!.push(file);
   }
 
-  if (action.includes("PAYMENT") || action.includes("STATUS")) {
-    return "blue";
-  }
+  return [...grouped.values()];
+}
 
-  if (action.includes("DOCUMENT") || action.includes("UPLOAD")) {
-    return "amber";
-  }
+function createUploadTimelineItems(files: UploadedFileItem[]): TimelineItem[] {
+  const groups = groupUploadsByMinute(files);
 
-  return "slate";
+  return groups.map((group, index) => {
+    const first = group[0];
+    const count = group.length;
+
+    if (count === 1) {
+      const file = group[0];
+
+      return {
+        id: `upload-group-${index}-${file.id}`,
+        title: "Documento enviado pelo cliente",
+        description: `${file.originalName || "Arquivo"} • ${getDocumentLabel(
+          file.type
+        )}`,
+        timestamp: formatDate(file.createdAt),
+        sortDate: file.createdAt,
+        tone: "amber",
+        badge: "Upload",
+      };
+    }
+
+    const names = group
+      .slice(0, 3)
+      .map((file) => getDocumentLabel(file.type))
+      .join(", ");
+
+    return {
+      id: `upload-group-${index}-${first.id}`,
+      title: `${count} documentos enviados pelo cliente`,
+      description:
+        count <= 3
+          ? names
+          : `${names} e mais ${count - 3} outro(s) documento(s).`,
+      timestamp: formatDate(first.createdAt),
+      sortDate: first.createdAt,
+      tone: "amber",
+      badge: "Upload",
+    };
+  });
+}
+
+function createAuditTimelineItems(auditLogs: any[]): TimelineItem[] {
+  return auditLogs
+    .filter((log) => {
+      const action = String(log.action || "").toUpperCase();
+      const entityType = String(log.entityType || "").toLowerCase();
+
+      if (entityType === "payment") return false;
+      if (entityType === "uploaded_file") return false;
+      if (entityType === "order_result_file") return false;
+      if (action.includes("PAYMENT")) return false;
+      if (action.includes("UPLOAD")) return false;
+      if (action.includes("RESULT_FILE")) return false;
+
+      return true;
+    })
+    .map((log) => ({
+      id: `audit-${log.id}`,
+      title: log.message || "Evento administrativo registrado",
+      description: "Ação interna registrada no histórico do pedido.",
+      timestamp: formatDate(log.createdAt),
+      sortDate: log.createdAt,
+      tone: "slate" as const,
+      badge: "Auditoria",
+    }));
 }
 
 function getOperationalHint(
@@ -213,55 +309,54 @@ export default async function AdminOrderDetailsPage({ params }: PageProps) {
     (payment: { status: PaymentStatusValue }) => payment.status === "PAID"
   );
 
+  const uploadTimelineItems = createUploadTimelineItems(order.uploadedFiles);
+
   const timelineItems: TimelineItem[] = [
     ...order.histories.map((item): TimelineItem => ({
       id: `history-${item.id}`,
-      title: `Status alterado para ${getStatusLabel(item.status)}`,
-      description: "Mudança registrada no fluxo operacional do pedido.",
+      title: getClientFriendlyStatusTitle(item.status),
+      description: getStatusDescription(item.status),
       timestamp: formatDate(item.createdAt),
+      sortDate: item.createdAt,
       tone: getStatusTone(item.status),
       badge: "Status",
     })),
+
     ...order.payments.map((payment): TimelineItem => ({
       id: `payment-${payment.id}`,
       title:
         payment.status === "PAID"
           ? "Pagamento confirmado"
-          : `Pagamento ${payment.status.toLowerCase()}`,
+          : payment.status === "FAILED"
+          ? "Pagamento não aprovado"
+          : payment.status === "EXPIRED"
+          ? "Pagamento expirado"
+          : "Pagamento em processamento",
       description: `Valor ${formatCurrency(payment.amount)}.`,
       timestamp: formatDate(payment.createdAt),
-      tone: payment.status === "PAID" ? "green" : "amber",
+      sortDate: payment.createdAt,
+      tone:
+        payment.status === "PAID"
+          ? "green"
+          : payment.status === "FAILED"
+          ? "red"
+          : "amber",
       badge: "Pagamento",
     })),
-    ...order.uploadedFiles.map((file: UploadedFileItem): TimelineItem => ({
-      id: `upload-${file.id}`,
-      title: "Documento enviado pelo cliente",
-      description: `${file.originalName || "Arquivo"} • ${getDocumentLabel(
-        file.type
-      )}`,
-      timestamp: formatDate(file.createdAt),
-      tone: "amber",
-      badge: "Upload",
-    })),
+
+    ...uploadTimelineItems,
+
     ...order.resultFiles.map((file: ResultFileItem): TimelineItem => ({
       id: `result-${file.id}`,
-      title: "Resultado final enviado",
-      description: file.originalName || "Arquivo final",
+      title: "Resultado final disponível",
+      description: file.originalName || "Arquivo final enviado ao cliente.",
       timestamp: formatDate(file.createdAt),
+      sortDate: file.createdAt,
       tone: "green",
       badge: "Entrega final",
     })),
-    ...auditLogs.map((log): TimelineItem => ({
-      id: `audit-${log.id}`,
-      title: log.message || log.action,
-      description:
-        typeof log.entityType === "string"
-          ? `Evento em ${log.entityType}.`
-          : "Evento operacional registrado.",
-      timestamp: formatDate(log.createdAt),
-      tone: getAuditTone(log.action),
-      badge: "Auditoria",
-    })),
+
+    ...createAuditTimelineItems(auditLogs),
   ];
 
   const operationalSummary = [
@@ -519,8 +614,7 @@ export default async function AdminOrderDetailsPage({ params }: PageProps) {
                 Timeline do pedido
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Histórico visual de status, pagamento, uploads e eventos de
-                auditoria.
+                Histórico resumido e organizado do pedido, sem eventos técnicos duplicados.
               </p>
 
               <div className="mt-5">
