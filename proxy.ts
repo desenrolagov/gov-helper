@@ -19,13 +19,14 @@ const PUBLIC_ROUTES = [
   "/privacy",
   "/terms",
   "/about",
+  "/services",
+  "/continue",
 ];
 
 const ADMIN_ROUTES = ["/admin"];
 
 const AUTHENTICATED_ROUTES = [
   "/dashboard",
-  "/services",
   "/checkout",
   "/orders",
   "/payment",
@@ -85,16 +86,9 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  if (
-    session &&
-    (pathname === "/login" || pathname === "/register")
-  ) {
+  if (session && (pathname === "/login" || pathname === "/register")) {
     const target = session.role === "ADMIN" ? "/admin/orders" : "/dashboard";
     return NextResponse.redirect(new URL(target, req.url));
-  }
-
-  if (isPublicRoute || isAuthenticatedRoute || isAdminRoute) {
-    return NextResponse.next();
   }
 
   return NextResponse.next();
@@ -105,8 +99,9 @@ export const config = {
     "/",
     "/login",
     "/register",
-    "/dashboard/:path*",
     "/services/:path*",
+    "/continue/:path*",
+    "/dashboard/:path*",
     "/checkout/:path*",
     "/orders/:path*",
     "/payment/:path*",
