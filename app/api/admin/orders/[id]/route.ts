@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { verifySession } from "@/lib/auth";
 import type { OrderStatus } from "@/lib/order-flow";
 import { canTransitionOrderStatus } from "@/lib/order-status";
+import { syncOrderToProcessingIfReady } from "@/lib/order-processing";
 
 type RouteContext = {
   params: Promise<{
@@ -19,6 +20,39 @@ const VALID_ORDER_STATUSES: OrderStatus[] = [
   "CANCELLED",
 ];
 
+function isValidOrderStatus(value: string): value is OrderStatus {
+  return VALID_ORDER_STATUSES.includes(value as OrderStatus);
+}
+
+async function ensureAdminSession() {
+  const session = await verifySession();
+
+  if (!session) {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        { error: "Não autenticado." },
+        { status: 401 }
+      ),
+    };
+  }
+
+  if (session.role !== "ADMIN") {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        { error: "Acesso negado." },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return {
+    ok: true as const,
+    session,
+  };
+}
+
 async function ensureStatusHistory(orderId: string, status: OrderStatus) {
   const existing = await prisma.orderStatusHistory.findFirst({
     where: { orderId, status },
@@ -34,43 +68,43 @@ async function ensureStatusHistory(orderId: string, status: OrderStatus) {
 
 export async function GET(_req: NextRequest, context: RouteContext) {
   try {
-    const session = await verifySession();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "Não autenticado." },
-        { status: 401 }
-      );
-    }
-
-    if (session.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Acesso negado." },
-        { status: 403 }
-      );
-    }
+    const auth = await ensureAdminSession();
+    if (!auth.ok) return auth.response;
 
     const { id } = await context.params;
+
+    await syncOrderToProcessingIfReady(id);
 
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
-        user: true,
-        service: true,
-        uploadedFiles: {
-          orderBy: {
-            createdAt: "desc",
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
           },
         },
-        histories: {
-          orderBy: {
-            createdAt: "desc",
+        service: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            codePrefix: true,
           },
+        },
+        uploadedFiles: {
+          orderBy: { createdAt: "desc" },
         },
         resultFiles: {
-          orderBy: {
-            createdAt: "desc",
-          },
+          orderBy: { createdAt: "desc" },
+        },
+        payments: {
+          orderBy: { createdAt: "desc" },
+        },
+        histories: {
+          orderBy: { createdAt: "desc" },
         },
       },
     });
@@ -82,10 +116,9 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       );
     }
 
-    return NextResponse.json(order, { status: 200 });
+    return NextResponse.json(order);
   } catch (error) {
     console.error("Erro ao buscar pedido no admin:", error);
-
     return NextResponse.json(
       { error: "Erro ao buscar pedido." },
       { status: 500 }
@@ -95,34 +128,14 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
-    const session = await verifySession();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "Não autenticado." },
-        { status: 401 }
-      );
-    }
-
-    if (session.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Acesso negado." },
-        { status: 403 }
-      );
-    }
+    const auth = await ensureAdminSession();
+    if (!auth.ok) return auth.response;
 
     const { id } = await context.params;
     const body = await req.json().catch(() => null);
-    const nextStatus = body?.status as OrderStatus | undefined;
+    const nextStatus = typeof body?.status === "string" ? body.status.trim() : "";
 
-    if (!nextStatus) {
-      return NextResponse.json(
-        { error: "Status não informado." },
-        { status: 400 }
-      );
-    }
-
-    if (!VALID_ORDER_STATUSES.includes(nextStatus)) {
+    if (!isValidOrderStatus(nextStatus)) {
       return NextResponse.json(
         { error: "Status inválido." },
         { status: 400 }
@@ -132,7 +145,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
-        uploadedFiles: true,
+        uploadedFiles: {
+          select: { id: true },
+        },
+        resultFiles: {
+          select: { id: true },
+        },
       },
     });
 
@@ -146,15 +164,21 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
     const currentStatus = order.status as OrderStatus;
 
     if (currentStatus === nextStatus) {
-      return NextResponse.json(
-        { error: "O pedido já está com esse status." },
-        { status: 400 }
-      );
+      await ensureStatusHistory(order.id, nextStatus);
+
+      return NextResponse.json({
+        success: true,
+        unchanged: true,
+        orderId: order.id,
+        status: currentStatus,
+      });
     }
 
     if (!canTransitionOrderStatus(currentStatus, nextStatus)) {
       return NextResponse.json(
-        { error: "Transição de status inválida." },
+        {
+          error: `Transição inválida: ${currentStatus} → ${nextStatus}.`,
+        },
         { status: 400 }
       );
     }
@@ -172,6 +196,16 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       );
     }
 
+    if (nextStatus === "COMPLETED" && order.resultFiles.length <= 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Não é possível concluir o pedido sem anexar ao menos 1 arquivo final para o cliente.",
+        },
+        { status: 400 }
+      );
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: { status: nextStatus },
@@ -179,29 +213,28 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
         user: true,
         service: true,
         uploadedFiles: {
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-        histories: {
-          orderBy: {
-            createdAt: "desc",
-          },
+          orderBy: { createdAt: "desc" },
         },
         resultFiles: {
-          orderBy: {
-            createdAt: "desc",
-          },
+          orderBy: { createdAt: "desc" },
+        },
+        histories: {
+          orderBy: { createdAt: "desc" },
+        },
+        payments: {
+          orderBy: { createdAt: "desc" },
         },
       },
     });
 
-    await ensureStatusHistory(id, nextStatus);
+    await ensureStatusHistory(updatedOrder.id, nextStatus);
 
-    return NextResponse.json(updatedOrder, { status: 200 });
+    return NextResponse.json({
+      success: true,
+      order: updatedOrder,
+    });
   } catch (error) {
     console.error("Erro ao atualizar pedido no admin:", error);
-
     return NextResponse.json(
       { error: "Erro ao atualizar pedido." },
       { status: 500 }

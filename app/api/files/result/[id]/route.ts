@@ -15,18 +15,19 @@ type RouteContext = {
   }>;
 };
 
-function buildContentDisposition(filename: string) {
+function buildContentDisposition(filename: string, asAttachment: boolean) {
   const safeFallback = filename
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-zA-Z0-9._-]/g, "_");
 
   const encoded = encodeURIComponent(filename);
+  const type = asAttachment ? "attachment" : "inline";
 
-  return `inline; filename="${safeFallback}"; filename*=UTF-8''${encoded}`;
+  return `${type}; filename="${safeFallback}"; filename*=UTF-8''${encoded}`;
 }
 
-export async function GET(_req: NextRequest, context: RouteContext) {
+export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const user = await getCurrentUser();
 
@@ -35,6 +36,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params;
+    const asAttachment = req.nextUrl.searchParams.get("download") === "1";
 
     const file = await prisma.orderResultFile.findUnique({
       where: { id },
@@ -82,8 +84,14 @@ export async function GET(_req: NextRequest, context: RouteContext) {
       headers: {
         "Content-Type": file.mimeType || "application/octet-stream",
         "Content-Length": String(file.size || buffer.length),
-        "Content-Disposition": buildContentDisposition(file.originalName),
-        "Cache-Control": "private, no-store, max-age=0",
+        "Content-Disposition": buildContentDisposition(
+          file.originalName,
+          asAttachment
+        ),
+        "Cache-Control": "private, no-store, max-age=0, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+        "X-Content-Type-Options": "nosniff",
         "X-Robots-Tag": "noindex, nofollow",
       },
     });

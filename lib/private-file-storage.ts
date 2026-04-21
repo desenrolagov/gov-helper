@@ -3,16 +3,17 @@ import { createClient } from "@supabase/supabase-js";
 export type PrivateBucket = "uploads" | "result";
 
 const SUPABASE_BUCKET_NAME =
-  process.env.PRIVATE_FILES_BUCKET || "documentos-privados";
+  process.env.PRIVATE_FILES_BUCKET?.trim() || "documentos-privados";
+
+let cachedClient:
+  | ReturnType<typeof createClient>
+  | null = null;
 
 function getSupabaseAdminClient() {
+  if (cachedClient) return cachedClient;
+
   const supabaseUrl = process.env.SUPABASE_URL?.trim();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-
-  console.log("ENV CHECK:", {
-  url: process.env.SUPABASE_URL,
-  key: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-  });
 
   if (!supabaseUrl) {
     throw new Error("SUPABASE_URL não configurada.");
@@ -22,12 +23,14 @@ function getSupabaseAdminClient() {
     throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada.");
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
+  cachedClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
   });
+
+  return cachedClient;
 }
 
 function assertValidSavedName(savedName: string) {
@@ -68,34 +71,25 @@ export async function ensurePrivateBucket(bucket: PrivateBucket) {
 export async function savePrivateFile(
   bucket: PrivateBucket,
   savedName: string,
-  buffer: Buffer
+  buffer: Buffer,
+  contentType = "application/octet-stream"
 ) {
-  try {
-    const supabase = getSupabaseAdminClient();
-    const objectPath = buildObjectPath(bucket, savedName);
+  const supabase = getSupabaseAdminClient();
+  const objectPath = buildObjectPath(bucket, savedName);
 
-    const { error } = await supabase.storage
-      .from(SUPABASE_BUCKET_NAME)
-      .upload(objectPath, buffer, {
-        upsert: true,
-        contentType: "application/octet-stream",
-      });
-
-    if (error) {
-      throw new Error(
-        `Erro ao enviar arquivo para o Supabase: ${error.message}`
-      );
-    }
-
-    return objectPath;
-  } catch (error) {
-    console.error("Falha no savePrivateFile:", {
-      bucket: SUPABASE_BUCKET_NAME,
-      originalError: error,
+  const { error } = await supabase.storage
+    .from(SUPABASE_BUCKET_NAME)
+    .upload(objectPath, buffer, {
+      upsert: true,
+      contentType,
+      cacheControl: "0",
     });
 
-    throw error;
+  if (error) {
+    throw new Error(`Erro ao enviar arquivo para o Supabase: ${error.message}`);
   }
+
+  return objectPath;
 }
 
 export async function readPrivateFile(

@@ -11,8 +11,6 @@ function getSecretKey() {
     throw new Error("AUTH_SECRET não foi definido no ambiente");
   }
 
-  console.log("[AUTH] AUTH_SECRET encontrado");
-
   return new TextEncoder().encode(secretKey);
 }
 
@@ -27,51 +25,30 @@ export async function createSession(payload: {
   email: string;
   role: "CLIENT" | "ADMIN";
 }) {
-  try {
-    console.log("[AUTH] createSession iniciado", {
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role,
-      nodeEnv: process.env.NODE_ENV,
-    });
+  const key = getSecretKey();
+  const expiresAt = new Date(
+    Date.now() + SESSION_DURATION_IN_DAYS * 24 * 60 * 60 * 1000
+  );
 
-    const key = getSecretKey();
+  const session = await new SignJWT({
+    userId: payload.userId,
+    email: payload.email,
+    role: payload.role,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${SESSION_DURATION_IN_DAYS}d`)
+    .sign(key);
 
-    const expiresAt = new Date(
-      Date.now() + 1000 * 60 * 60 * 24 * SESSION_DURATION_IN_DAYS
-    );
+  const cookieStore = await cookies();
 
-    console.log("[AUTH] gerando JWT...");
-
-    const session = await new SignJWT({
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role,
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime(`${SESSION_DURATION_IN_DAYS}d`)
-      .sign(key);
-
-    console.log("[AUTH] JWT gerado com sucesso");
-
-    const cookieStore = await cookies();
-
-    console.log("[AUTH] gravando cookie...");
-
-    cookieStore.set(COOKIE_NAME, session, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      expires: expiresAt,
-      path: "/",
-    });
-
-    console.log("[AUTH] cookie gravado com sucesso");
-  } catch (error) {
-    console.error("[AUTH] erro ao criar sessão:", error);
-    throw error;
-  }
+  cookieStore.set(COOKIE_NAME, session, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    expires: expiresAt,
+    path: "/",
+  });
 }
 
 export async function verifySession(): Promise<SessionPayload | null> {
@@ -96,25 +73,19 @@ export async function verifySession(): Promise<SessionPayload | null> {
     }
 
     return payload as SessionPayload;
-  } catch (error) {
-    console.error("[AUTH] sessão inválida:", error);
+  } catch {
     return null;
   }
 }
 
 export async function deleteSession() {
-  try {
-    const cookieStore = await cookies();
+  const cookieStore = await cookies();
 
-    cookieStore.set(COOKIE_NAME, "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      expires: new Date(0),
-      path: "/",
-    });
-  } catch (error) {
-    console.error("[AUTH] erro ao deletar sessão:", error);
-    throw new Error("Não foi possível encerrar a sessão");
-  }
+  cookieStore.set(COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    expires: new Date(0),
+    path: "/",
+  });
 }
