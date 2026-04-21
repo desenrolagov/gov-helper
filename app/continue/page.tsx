@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
+export const dynamic = "force-dynamic";
+
 export default function ContinuePage() {
   const router = useRouter();
   const params = useSearchParams();
@@ -200,7 +202,7 @@ export default function ContinuePage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <label className="flex items-start gap-3 text-sm text-slate-700">
                 <input
                   type="checkbox"
