@@ -25,18 +25,82 @@ function shouldHideOnPath(pathname: string) {
   return hiddenPrefixes.some((prefix) => pathname.startsWith(prefix));
 }
 
+function getContextMessage(pathname: string, fallback?: string) {
+  if (fallback?.trim()) return fallback.trim();
+
+  if (pathname === "/") {
+    return "Olá! Quero tirar dúvidas sobre os serviços da DesenrolaGov.";
+  }
+
+  if (pathname.startsWith("/support")) {
+    return "Olá! Preciso de ajuda com meu atendimento na DesenrolaGov.";
+  }
+
+  if (pathname.startsWith("/orders/")) {
+    return "Olá! Preciso de ajuda com o andamento do meu pedido na DesenrolaGov.";
+  }
+
+  if (pathname.startsWith("/services")) {
+    return "Olá! Quero entender melhor como funciona o serviço da DesenrolaGov.";
+  }
+
+  if (pathname.startsWith("/dashboard")) {
+    return "Olá! Preciso de ajuda com minha área do cliente na DesenrolaGov.";
+  }
+
+  return "Olá! Preciso de ajuda com meu atendimento na DesenrolaGov.";
+}
+
+function getBubbleCopy(pathname: string) {
+  if (pathname === "/") {
+    return {
+      title: "Fale com a gente",
+      text: "Tire dúvidas sobre o serviço antes de contratar.",
+    };
+  }
+
+  if (pathname.startsWith("/support")) {
+    return {
+      title: "Suporte rápido",
+      text: "Se precisar, fale com nosso atendimento no WhatsApp.",
+    };
+  }
+
+  if (pathname.startsWith("/orders/")) {
+    return {
+      title: "Ajuda com seu pedido",
+      text: "Fale com o suporte sobre andamento e próximas etapas.",
+    };
+  }
+
+  return {
+    title: "Precisa de ajuda?",
+    text: "Fale com nosso atendimento no WhatsApp.",
+  };
+}
+
 export default function WhatsAppFloatingButton({
   phone = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP || "5517991762888",
-  message = "Olá! Preciso de ajuda com meu atendimento no DesenrolaGov.",
+  message,
 }: Props) {
   const pathname = usePathname();
   const [showBubble, setShowBubble] = useState(false);
 
+  const dynamicMessage = useMemo(() => {
+    return getContextMessage(pathname, message);
+  }, [pathname, message]);
+
+  const bubbleCopy = useMemo(() => {
+    return getBubbleCopy(pathname);
+  }, [pathname]);
+
   const href = useMemo(() => {
-    return buildWhatsAppHref(phone, message);
-  }, [phone, message]);
+    return buildWhatsAppHref(phone, dynamicMessage);
+  }, [phone, dynamicMessage]);
 
   useEffect(() => {
+    setShowBubble(false);
+
     const timer = setTimeout(() => {
       setShowBubble(true);
     }, 1200);
@@ -57,9 +121,9 @@ export default function WhatsAppFloatingButton({
             : "pointer-events-none translate-y-2 opacity-0"
         }`}
       >
-        <p className="font-semibold text-slate-900">Precisa de ajuda?</p>
+        <p className="font-semibold text-slate-900">{bubbleCopy.title}</p>
         <p className="mt-1 text-xs leading-5 text-slate-600">
-          Fale com nosso atendimento no WhatsApp.
+          {bubbleCopy.text}
         </p>
       </div>
 
