@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import RegisterClient from "./RegisterClient";
+import RegisterClient from "./register-client";
 
 export const dynamic = "force-dynamic";
 
