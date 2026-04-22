@@ -154,11 +154,8 @@ export default function ServicesClient({ user }: Props) {
   }, [services]);
 
   const otherServices = useMemo(() => {
-    if (!featuredService) return services;
-
-    return services.filter(
-      (service: Service) => service.id !== featuredService.id
-    );
+    if (!featuredService) return [];
+    return services.filter((service: Service) => service.id !== featuredService.id);
   }, [services, featuredService]);
 
   async function handleCreateOrder(serviceId: string) {
@@ -218,7 +215,7 @@ export default function ServicesClient({ user }: Props) {
 
   function renderLegalBlock(serviceId: string) {
     return (
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
         <label className="flex items-start gap-3">
           <input
             type="checkbox"
@@ -247,8 +244,8 @@ export default function ServicesClient({ user }: Props) {
               className="font-semibold text-slate-900 underline"
             >
               Política de Privacidade
-            </Link>{" "}
-            para continuar.
+            </Link>
+            .
           </span>
         </label>
 
@@ -265,69 +262,50 @@ export default function ServicesClient({ user }: Props) {
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-              Assessoria privada para regularização documental
+          <div className="rounded-3xl bg-[#041f4a] p-6 text-white shadow-sm sm:p-8">
+            <div className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+              Área do cliente • contratação rápida
             </div>
 
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Escolha o serviço e siga direto para a próxima etapa
+            <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-5xl">
+              Escolha o serviço ideal e avance para o pagamento em poucos passos
             </h1>
 
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-              Contrate online, pague com segurança, envie seus documentos no
-              local certo e acompanhe tudo pelo painel.
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
+              Atendimento privado com fluxo organizado, pagamento seguro,
+              documentos centralizados e acompanhamento do pedido até a
+              conclusão.
             </p>
+
+            <ul className="mt-6 space-y-2 text-sm text-slate-100">
+              <li>✔ Contratação rápida</li>
+              <li>✔ Pagamento seguro</li>
+              <li>✔ Envio de documentos no momento certo</li>
+            </ul>
+
+            <div className="mt-6 rounded-2xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-100">
+              A DesenrolaGov é uma assessoria privada e não possui vínculo com
+              órgãos públicos.
+            </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={() => {
-                  if (featuredService) {
-                    const section = document.getElementById("servicos-disponiveis");
-                    section?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }
+                  const section = document.getElementById("servicos-disponiveis");
+                  section?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
-                disabled={loading || !featuredService}
-                className="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={loading}
+                className="rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Carregando..." : "Ver serviços disponíveis"}
               </button>
 
               <Link
-                href={user ? "/orders" : "/login"}
-                className="rounded-2xl border border-slate-300 px-6 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                href="/orders"
+                className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/15"
               >
-                {user ? "Ver meus pedidos" : "Já tenho conta"}
+                Ver meus pedidos
               </Link>
-            </div>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-900">
-                  Solicitação simples
-                </p>
-                <p className="mt-1 text-xs leading-5 text-slate-600">
-                  Comece seu pedido sem burocracia desnecessária.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-900">
-                  Documentos organizados
-                </p>
-                <p className="mt-1 text-xs leading-5 text-slate-600">
-                  Envie arquivos no local certo e acompanhe tudo.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-900">
-                  Acompanhamento real
-                </p>
-                <p className="mt-1 text-xs leading-5 text-slate-600">
-                  Veja o andamento do pedido até a conclusão.
-                </p>
-              </div>
             </div>
           </div>
 
@@ -335,10 +313,10 @@ export default function ServicesClient({ user }: Props) {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-blue-700">
-                  Fluxo organizado
+                  Como funciona
                 </p>
                 <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                  Uma jornada mais clara para contratação online
+                  Uma jornada simples, rápida e clara
                 </h2>
               </div>
 
@@ -353,32 +331,32 @@ export default function ServicesClient({ user }: Props) {
                   1. Escolha o serviço
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Selecione a opção certa para sua necessidade.
+                  Veja a opção mais adequada para sua necessidade.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">
-                  2. Faça o pagamento
+                  2. Confirme a contratação
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Confirme sua contratação em ambiente seguro.
+                  Siga para o pagamento com ambiente seguro.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">
-                  3. Envie e acompanhe
+                  3. Envie documentos e acompanhe
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Organize documentos e acompanhe o andamento pelo seu painel.
+                  Tudo fica centralizado no seu painel.
                 </p>
               </div>
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
-                Pedido com acompanhamento
+                Atendimento privado
               </div>
               <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
                 Pagamento integrado
@@ -387,7 +365,7 @@ export default function ServicesClient({ user }: Props) {
                 Documentos centralizados
               </div>
               <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
-                Atendimento privado
+                Acompanhamento do pedido
               </div>
             </div>
           </div>
@@ -401,15 +379,15 @@ export default function ServicesClient({ user }: Props) {
         ) : null}
 
         <section id="servicos-disponiveis" className="mt-14">
-          <div>
+          <div className="flex flex-col gap-2">
             <p className="text-sm font-semibold text-blue-700">
               Serviços disponíveis
             </p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-900">
-              Escolha a opção ideal para seu atendimento
+            <h2 className="text-3xl font-black text-slate-900">
+              Escolha a opção ideal para continuar
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Todos os serviços ativos aparecem abaixo.
+            <p className="text-sm leading-6 text-slate-600">
+              Selecione abaixo e avance para a próxima etapa.
             </p>
           </div>
 
@@ -422,86 +400,158 @@ export default function ServicesClient({ user }: Props) {
               Nenhum serviço disponível no momento.
             </div>
           ) : (
-            <div className="mt-6 grid gap-6 lg:grid-cols-2">
-              {services.map((service: Service) => {
-                const highlights = normalizeHighlights(
-                  service.highlights,
-                  service.name
-                );
-                const documents = normalizeDocuments(
-                  service.documents,
-                  service.name
-                );
+            <>
+              {featuredService ? (
+                <div className="mt-6 rounded-3xl border border-blue-200 bg-white p-6 shadow-sm ring-1 ring-blue-100">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                      Serviço principal
+                    </span>
 
-                return (
-                  <div
-                    key={service.id}
-                    className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                        {service.id === featuredService?.id
-                          ? "Serviço principal"
-                          : "Serviço disponível"}
-                      </span>
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      Mais procurado
+                    </span>
+                  </div>
 
-                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                        Ativo
-                      </span>
-                    </div>
+                  <div className="mt-4 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                    <div>
+                      <h3 className="text-3xl font-black text-slate-900">
+                        {featuredService.name}
+                      </h3>
 
-                    <h3 className="mt-4 text-3xl font-bold text-slate-900">
-                      {service.name}
-                    </h3>
-
-                    <div className="mt-4 space-y-2 text-sm text-slate-700">
-                      {highlights.map((item) => (
-                        <p key={item}>• {item}</p>
-                      ))}
-                    </div>
-
-                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Valor
-                      </p>
-                      <p className="mt-2 text-3xl font-bold text-slate-900">
-                        {formatCurrency(service.price)}
-                      </p>
-                    </div>
-
-                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Documentos normalmente solicitados
-                      </p>
-
-                      <div className="mt-3 space-y-2 text-sm text-slate-700">
-                        {documents.map((item) => (
+                      <div className="mt-4 space-y-2 text-sm text-slate-700">
+                        {normalizeHighlights(
+                          featuredService.highlights,
+                          featuredService.name
+                        ).map((item) => (
                           <p key={item}>• {item}</p>
                         ))}
                       </div>
+
+                      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Valor
+                        </p>
+                        <p className="mt-2 text-4xl font-black text-slate-900">
+                          {formatCurrency(featuredService.price)}
+                        </p>
+                      </div>
                     </div>
 
-                    {renderLegalBlock(service.id)}
+                    <div>
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Documentos normalmente solicitados
+                        </p>
 
-                    <div className="mt-6">
-                      <button
-                        onClick={() => handleCreateOrder(service.id)}
-                        disabled={creatingOrderId === service.id}
-                        className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {creatingOrderId === service.id
-                          ? "Continuando..."
-                          : "Começar agora"}
-                      </button>
+                        <div className="mt-3 space-y-2 text-sm text-slate-700">
+                          {normalizeDocuments(
+                            featuredService.documents,
+                            featuredService.name
+                          ).map((item) => (
+                            <p key={item}>• {item}</p>
+                          ))}
+                        </div>
+                      </div>
 
-                      <p className="mt-3 text-center text-xs leading-5 text-slate-500">
-                        Próxima etapa: continuar o atendimento.
-                      </p>
+                      {renderLegalBlock(featuredService.id)}
+
+                      <div className="mt-5">
+                        <button
+                          onClick={() => handleCreateOrder(featuredService.id)}
+                          disabled={creatingOrderId === featuredService.id}
+                          className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {creatingOrderId === featuredService.id
+                            ? "Continuando..."
+                            : "Escolher este serviço"}
+                        </button>
+
+                        <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+                          Próxima etapa: seguir para pagamento.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              ) : null}
+
+              {otherServices.length > 0 ? (
+                <div className="mt-8">
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Outras opções disponíveis
+                  </h3>
+
+                  <div className="mt-4 grid gap-6 lg:grid-cols-2">
+                    {otherServices.map((service: Service) => (
+                      <div
+                        key={service.id}
+                        className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                            Serviço disponível
+                          </span>
+
+                          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            Ativo
+                          </span>
+                        </div>
+
+                        <h3 className="mt-4 text-2xl font-bold text-slate-900">
+                          {service.name}
+                        </h3>
+
+                        <div className="mt-4 space-y-2 text-sm text-slate-700">
+                          {normalizeHighlights(service.highlights, service.name).map(
+                            (item) => (
+                              <p key={item}>• {item}</p>
+                            )
+                          )}
+                        </div>
+
+                        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            Valor
+                          </p>
+                          <p className="mt-2 text-3xl font-black text-slate-900">
+                            {formatCurrency(service.price)}
+                          </p>
+                        </div>
+
+                        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            Documentos normalmente solicitados
+                          </p>
+
+                          <div className="mt-3 space-y-2 text-sm text-slate-700">
+                            {normalizeDocuments(service.documents, service.name).map(
+                              (item) => (
+                                <p key={item}>• {item}</p>
+                              )
+                            )}
+                          </div>
+                        </div>
+
+                        {renderLegalBlock(service.id)}
+
+                        <div className="mt-5">
+                          <button
+                            onClick={() => handleCreateOrder(service.id)}
+                            disabled={creatingOrderId === service.id}
+                            className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {creatingOrderId === service.id
+                              ? "Continuando..."
+                              : "Escolher este serviço"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </>
           )}
         </section>
       </main>
