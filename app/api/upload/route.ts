@@ -264,6 +264,7 @@ export async function POST(req: Request) {
             id: true,
             name: true,
             codePrefix: true,
+            type: true,
           },
         },
         payments: {
@@ -357,8 +358,8 @@ export async function POST(req: Request) {
 
     const isAllowed = await isDocumentAllowedForServiceDynamic(
       order.service.id,
-      type,
-      serviceType
+      serviceType,
+      type
     );
 
     if (!isAllowed) {

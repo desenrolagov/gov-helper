@@ -1,6 +1,17 @@
 import { prisma } from "@/lib/db";
 
 export type DocumentKey =
+  | "rg"
+  | "cpf"
+  | "CPF"
+  | "comprovante_residencia"
+  | "selfie_documento"
+  | "certidao_nascimento"
+  | "certidao_casamento"
+  | "documento_adicional"
+  | "DOCUMENTO_ADICIONAL"
+  | "documento_com_foto"
+  | "comprovante_cpf"
   | "DOCUMENTO_FOTO"
   | "SELFIE_COM_DOCUMENTO"
   | "CERTIDAO_CIVIL"
@@ -15,250 +26,384 @@ export type DocumentKey =
   | "COMPROVANTE_MEI";
 
 export type ServiceType =
-  | "CPF_REGULARIZATION"
-  | "CNH_SECOND_COPY"
-  | "NEGATIVE_CERTIFICATE"
-  | "MEI_REGULARIZATION";
+  | "CPF"
+  | "RG"
+  | "CNH"
+  | "CERTIDAO"
+  | "CNPJ"
+  | "MEI"
+  | "OUTRO";
 
 export type ServiceDocument = {
   key: DocumentKey;
   label: string;
   required: boolean;
+  description?: string;
 };
 
-export type ServiceResolverInput = {
+type MinimalService = {
   id?: string | null;
   name?: string | null;
+  type?: string | null;
   codePrefix?: string | null;
+  documents?: unknown;
 };
 
-export const SERVICE_REQUIRED_DOCUMENTS: Record<ServiceType, ServiceDocument[]> = {
-  CPF_REGULARIZATION: [
+const DEFAULT_DOCUMENTS_BY_TYPE: Record<ServiceType, ServiceDocument[]> = {
+  CPF: [
     {
       key: "DOCUMENTO_FOTO",
-      label: "Documento com foto (RG ou CNH)",
+      label: "Documento com foto",
       required: true,
+      description: "RG ou CNH legível, frente e verso.",
     },
     {
       key: "SELFIE_COM_DOCUMENTO",
-      label: "Selfie segurando o documento",
+      label: "Selfie com documento",
       required: true,
+      description: "Foto segurando o documento ao lado do rosto.",
     },
     {
       key: "COMPROVANTE_CPF",
-      label: "Comprovante de situação do CPF ou print da pendência",
+      label: "Comprovante da situação do CPF",
       required: true,
+      description: "Print ou comprovante da pendência/irregularidade.",
+    },
+    {
+      key: "COMPROVANTE_ENDERECO",
+      label: "Comprovante de endereço",
+      required: false,
+      description: "Conta recente ou documento equivalente.",
+    },
+  ],
+  RG: [
+    {
+      key: "CPF",
+      label: "CPF",
+      required: true,
+      description: "CPF legível.",
     },
     {
       key: "CERTIDAO_CIVIL",
-      label: "Certidão de nascimento ou casamento",
-      required: false,
+      label: "Certidão civil",
+      required: true,
+      description: "Nascimento ou casamento, conforme o caso.",
     },
     {
       key: "COMPROVANTE_ENDERECO",
       label: "Comprovante de endereço",
+      required: true,
+      description: "Conta recente ou documento equivalente.",
+    },
+    {
+      key: "DOCUMENTO_FOTO",
+      label: "Documento com foto",
       required: false,
+      description: "Se houver documento anterior disponível.",
     },
   ],
-
-  CNH_SECOND_COPY: [
+  CNH: [
     {
       key: "DOCUMENTO_FOTO",
       label: "Documento com foto",
       required: true,
+      description: "RG ou documento equivalente.",
     },
     {
       key: "CNH_ATUAL",
-      label: "Foto ou cópia da CNH atual, se possuir",
+      label: "CNH atual",
       required: false,
+      description: "Foto ou cópia da CNH atual, se tiver.",
+    },
+    {
+      key: "COMPROVANTE_ENDERECO",
+      label: "Comprovante de endereço",
+      required: true,
+      description: "Conta recente ou documento equivalente.",
     },
     {
       key: "BOLETIM_OCORRENCIA",
-      label: "Boletim de ocorrência, se houve perda/roubo",
+      label: "Boletim de ocorrência",
       required: false,
-    },
-    {
-      key: "COMPROVANTE_ENDERECO",
-      label: "Comprovante de endereço",
-      required: true,
-    },
-    {
-      key: "COMPROVANTE_PAGAMENTO_GUIA",
-      label: "Comprovante da guia, se já tiver pago",
-      required: false,
+      description: "Quando houver perda, furto ou extravio.",
     },
   ],
-
-  NEGATIVE_CERTIFICATE: [
-    {
-      key: "DOCUMENTO_FOTO",
-      label: "Documento com foto",
-      required: true,
-    },
-    {
-      key: "COMPROVANTE_CPF",
-      label: "CPF ou comprovante de inscrição",
-      required: true,
-    },
+  CERTIDAO: [
     {
       key: "CERTIDAO_NEGATIVA_BASE",
-      label: "Documento ou print da exigência / certidão anterior",
-      required: false,
+      label: "Documento base da certidão",
+      required: true,
+      description: "Informações ou documento base para emissão.",
     },
-  ],
-
-  MEI_REGULARIZATION: [
     {
       key: "DOCUMENTO_FOTO",
       label: "Documento com foto",
       required: true,
+      description: "Documento legível do solicitante.",
+    },
+  ],
+  CNPJ: [
+    {
+      key: "DOCUMENTO_EMPRESA",
+      label: "Documento da empresa",
+      required: true,
+      description: "Contrato, requerimento ou documento equivalente.",
     },
     {
       key: "COMPROVANTE_CNPJ",
-      label: "Cartão CNPJ ou comprovante do MEI",
+      label: "Comprovante do CNPJ",
       required: true,
+      description: "Cartão CNPJ ou consulta equivalente.",
     },
     {
-      key: "DOCUMENTO_EMPRESA",
-      label: "Documento ou print da pendência da empresa",
+      key: "DOCUMENTO_FOTO",
+      label: "Documento com foto",
       required: true,
+      description: "Documento do responsável.",
+    },
+  ],
+  MEI: [
+    {
+      key: "COMPROVANTE_MEI",
+      label: "Comprovante do MEI",
+      required: true,
+      description: "CCMEI ou documento equivalente.",
+    },
+    {
+      key: "DOCUMENTO_FOTO",
+      label: "Documento com foto",
+      required: true,
+      description: "Documento do titular.",
     },
     {
       key: "COMPROVANTE_ENDERECO",
       label: "Comprovante de endereço",
       required: false,
+      description: "Conta recente ou documento equivalente.",
+    },
+  ],
+  OUTRO: [
+    {
+      key: "DOCUMENTO_FOTO",
+      label: "Documento com foto",
+      required: true,
+      description: "Documento legível do cliente.",
     },
     {
-      key: "COMPROVANTE_MEI",
-      label: "Comprovante DASN/SIMEI ou DAS, se tiver",
+      key: "DOCUMENTO_ADICIONAL",
+      label: "Documento adicional",
       required: false,
+      description: "Outros arquivos necessários para o atendimento.",
     },
   ],
 };
 
-type DynamicRequiredDoc = {
-  key: string;
-  label: string;
-  required?: boolean;
-};
+function normalizeDocumentKey(value: string): DocumentKey {
+  const normalized = value.trim();
 
-function normalizeText(value?: string | null) {
-  return (value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toUpperCase()
-    .trim();
-}
+  const allowed = new Set<string>([
+    "rg",
+    "cpf",
+    "CPF",
+    "comprovante_residencia",
+    "selfie_documento",
+    "certidao_nascimento",
+    "certidao_casamento",
+    "documento_adicional",
+    "DOCUMENTO_ADICIONAL",
+    "documento_com_foto",
+    "comprovante_cpf",
+    "DOCUMENTO_FOTO",
+    "SELFIE_COM_DOCUMENTO",
+    "CERTIDAO_CIVIL",
+    "COMPROVANTE_ENDERECO",
+    "COMPROVANTE_CPF",
+    "CNH_ATUAL",
+    "BOLETIM_OCORRENCIA",
+    "COMPROVANTE_PAGAMENTO_GUIA",
+    "CERTIDAO_NEGATIVA_BASE",
+    "DOCUMENTO_EMPRESA",
+    "COMPROVANTE_CNPJ",
+    "COMPROVANTE_MEI",
+  ]);
 
-function isKnownDocumentKey(value: string): value is DocumentKey {
-  return getAllDocumentKeys().includes(value as DocumentKey);
-}
-
-function normalizeDynamicRequiredDocs(value: unknown): ServiceDocument[] | null {
-  if (!Array.isArray(value)) return null;
-
-  const docs: ServiceDocument[] = [];
-
-  for (const item of value as DynamicRequiredDoc[]) {
-    if (!item || typeof item !== "object") continue;
-    if (typeof item.key !== "string" || typeof item.label !== "string") continue;
-    if (!isKnownDocumentKey(item.key)) continue;
-
-    docs.push({
-      key: item.key,
-      label: item.label,
-      required: item.required !== false,
-    });
+  if (allowed.has(normalized)) {
+    return normalized as DocumentKey;
   }
 
-  return docs.length > 0 ? docs : null;
+  return "documento_adicional";
 }
 
-export function getAllDocumentKeys(): DocumentKey[] {
-  return [
-    ...new Set(
-      Object.values(SERVICE_REQUIRED_DOCUMENTS).flatMap((docs) =>
-        docs.map((doc) => doc.key)
-      )
-    ),
-  ];
+function normalizeServiceType(value?: string | null): ServiceType {
+  const normalized = (value || "").trim().toUpperCase();
+
+  if (
+    normalized === "CPF" ||
+    normalized === "RG" ||
+    normalized === "CNH" ||
+    normalized === "CERTIDAO" ||
+    normalized === "CNPJ" ||
+    normalized === "MEI"
+  ) {
+    return normalized;
+  }
+
+  return "OUTRO";
 }
 
-export function getServiceDocuments(serviceType: ServiceType): ServiceDocument[] {
-  return SERVICE_REQUIRED_DOCUMENTS[serviceType];
+export function resolveServiceTypeFromService(
+  service?: MinimalService | null
+): ServiceType {
+  if (!service) return "OUTRO";
+
+  if (service.type) {
+    return normalizeServiceType(service.type);
+  }
+
+  const name = (service.name || "").toLowerCase();
+
+  if (name.includes("cpf")) return "CPF";
+  if (name.includes("rg")) return "RG";
+  if (name.includes("cnh")) return "CNH";
+  if (name.includes("certidão") || name.includes("certidao")) return "CERTIDAO";
+  if (name.includes("cnpj")) return "CNPJ";
+  if (name.includes("mei")) return "MEI";
+
+  return "OUTRO";
+}
+
+function normalizeDocumentsInput(
+  documents: unknown,
+  serviceType: ServiceType
+): ServiceDocument[] {
+  if (!Array.isArray(documents)) {
+    return DEFAULT_DOCUMENTS_BY_TYPE[serviceType];
+  }
+
+  const normalized = documents
+    .map((item) => {
+      if (typeof item === "string") {
+        return {
+          key: normalizeDocumentKey(item),
+          label: item,
+          required: true,
+        } satisfies ServiceDocument;
+      }
+
+      if (item && typeof item === "object") {
+        const obj = item as Record<string, unknown>;
+        const rawKey =
+          typeof obj.key === "string"
+            ? obj.key
+            : typeof obj.type === "string"
+            ? obj.type
+            : "documento_adicional";
+
+        const rawLabel =
+          typeof obj.label === "string"
+            ? obj.label
+            : typeof obj.name === "string"
+            ? obj.name
+            : rawKey;
+
+        return {
+          key: normalizeDocumentKey(rawKey),
+          label: rawLabel.trim(),
+          required:
+            typeof obj.required === "boolean" ? obj.required : true,
+          description:
+            typeof obj.description === "string"
+              ? obj.description.trim()
+              : undefined,
+        } satisfies ServiceDocument;
+      }
+
+      return null;
+    })
+    .filter((item): item is ServiceDocument => Boolean(item));
+
+  if (!normalized.length) {
+    return DEFAULT_DOCUMENTS_BY_TYPE[serviceType];
+  }
+
+  const unique = new Map<string, ServiceDocument>();
+
+  for (const doc of normalized) {
+    if (!unique.has(doc.key)) {
+      unique.set(doc.key, doc);
+    }
+  }
+
+  return [...unique.values()];
+}
+
+export function getServiceDocuments(
+  serviceType?: ServiceType | null
+): ServiceDocument[] {
+  return (
+    DEFAULT_DOCUMENTS_BY_TYPE[serviceType || "OUTRO"] ||
+    DEFAULT_DOCUMENTS_BY_TYPE.OUTRO
+  );
 }
 
 export function getRequiredDocumentsForService(
-  serviceType: ServiceType
+  serviceType?: ServiceType | null
 ): ServiceDocument[] {
-  return SERVICE_REQUIRED_DOCUMENTS[serviceType].filter((doc) => doc.required);
+  return getServiceDocuments(serviceType).filter((doc) => doc.required);
 }
 
 export async function getServiceDocumentsDynamic(
   serviceId: string,
-  fallbackServiceType?: ServiceType
+  fallbackServiceType?: ServiceType | null
 ): Promise<ServiceDocument[]> {
-  const service = await prisma.service.findUnique({
-    where: { id: serviceId },
-    select: {
-      requiredDocs: true,
-    },
-  });
+  try {
+    const service = await prisma.service.findUnique({
+      where: { id: serviceId },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        documents: true,
+      },
+    });
 
-  const dynamicDocs = normalizeDynamicRequiredDocs(service?.requiredDocs);
+    const resolvedType = resolveServiceTypeFromService({
+      ...service,
+      type: service?.type || fallbackServiceType || "OUTRO",
+    });
 
-  if (dynamicDocs) {
-    return dynamicDocs;
+    if (!service) {
+      return getServiceDocuments(resolvedType);
+    }
+
+    return normalizeDocumentsInput(service.documents, resolvedType);
+  } catch (error) {
+    console.error("Erro ao buscar documentos dinâmicos do serviço:", error);
+    return getServiceDocuments(fallbackServiceType || "OUTRO");
   }
-
-  return getServiceDocuments(fallbackServiceType || "CPF_REGULARIZATION");
 }
 
 export async function getRequiredDocumentsForServiceDynamic(
   serviceId: string,
-  fallbackServiceType?: ServiceType
+  fallbackServiceType?: ServiceType | null
 ): Promise<ServiceDocument[]> {
-  const docs = await getServiceDocumentsDynamic(serviceId, fallbackServiceType);
-  return docs.filter((doc) => doc.required);
-}
-
-export function isValidDocumentType(type: string): type is DocumentKey {
-  return getAllDocumentKeys().includes(type as DocumentKey);
-}
-
-export function isDocumentAllowedForService(
-  serviceType: ServiceType,
-  type: string
-): type is DocumentKey {
-  return getServiceDocuments(serviceType).some((doc) => doc.key === type);
+  const documents = await getServiceDocumentsDynamic(
+    serviceId,
+    fallbackServiceType
+  );
+  return documents.filter((doc) => doc.required);
 }
 
 export async function isDocumentAllowedForServiceDynamic(
   serviceId: string,
-  type: string,
-  fallbackServiceType?: ServiceType
+  fallbackServiceType: ServiceType | null,
+  type: string
 ): Promise<boolean> {
   const docs = await getServiceDocumentsDynamic(serviceId, fallbackServiceType);
   return docs.some((doc) => doc.key === type);
 }
 
-export function resolveServiceTypeFromService(
-  service?: ServiceResolverInput | null
-): ServiceType {
-  const prefix = normalizeText(service?.codePrefix);
-  const name = normalizeText(service?.name);
-
-  if (prefix === "CPF") return "CPF_REGULARIZATION";
-  if (prefix === "CNH") return "CNH_SECOND_COPY";
-  if (prefix === "CERT" || prefix === "CNT") return "NEGATIVE_CERTIFICATE";
-  if (prefix === "MEI") return "MEI_REGULARIZATION";
-
-  if (name.includes("CPF")) return "CPF_REGULARIZATION";
-  if (name.includes("CNH")) return "CNH_SECOND_COPY";
-  if (name.includes("CERTIDAO") || name.includes("CERTIDÃO")) {
-    return "NEGATIVE_CERTIFICATE";
-  }
-  if (name.includes("MEI")) return "MEI_REGULARIZATION";
-
-  return "CPF_REGULARIZATION";
+export function isValidDocumentType(type: string): boolean {
+  const normalized = normalizeDocumentKey(type);
+  return Boolean(normalized);
 }

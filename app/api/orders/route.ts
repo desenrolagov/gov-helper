@@ -10,10 +10,7 @@ export async function GET(req: Request) {
     const currentUser = await getCurrentUser();
 
     if (!currentUser) {
-      return NextResponse.json(
-        { error: "Não autenticado." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -26,10 +23,7 @@ export async function GET(req: Request) {
         currentUser.role === "ADMIN" || currentUser.id === requestedUserId;
 
       if (!canAccess) {
-        return NextResponse.json(
-          { error: "Acesso negado." },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
       }
 
       targetUserId = requestedUserId;
@@ -62,10 +56,7 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Não autenticado." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
 
     if (user.role !== "CLIENT") {
@@ -75,7 +66,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const validation = createOrderSchema.safeParse(body);
 
     if (!validation.success) {
@@ -89,13 +80,35 @@ export async function POST(req: Request) {
       );
     }
 
-    const { serviceId, termsAccepted, privacyAccepted } = validation.data;
+    const {
+      serviceId,
+      termsAccepted,
+      privacyAccepted,
+      legalVersion,
+    } = validation.data;
 
     if (!termsAccepted || !privacyAccepted) {
       return NextResponse.json(
         {
           error:
             "Para continuar, aceite os Termos de Uso e a Política de Privacidade.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!legalVersion) {
+      return NextResponse.json(
+        { error: "Versão legal não informada." },
+        { status: 400 }
+      );
+    }
+
+    if (legalVersion !== LEGAL_VERSION) {
+      return NextResponse.json(
+        {
+          error:
+            "A versão legal enviada está desatualizada. Recarregue a página e tente novamente.",
         },
         { status: 400 }
       );
@@ -131,6 +144,8 @@ export async function POST(req: Request) {
             totalAmount: Number(service.price),
             status: "PENDING_PAYMENT",
             orderCode,
+            termsAccepted: true,
+            privacyAccepted: true,
             termsAcceptedAt: acceptedAt,
             privacyAcceptedAt: acceptedAt,
             legalAcceptedVersion: LEGAL_VERSION,

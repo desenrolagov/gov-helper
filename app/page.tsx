@@ -10,6 +10,7 @@ type Service = {
   name: string;
   description: string | null;
   price: number;
+  highlights?: unknown;
 };
 
 function formatCurrency(value: number) {
@@ -23,33 +24,63 @@ function isCpfService(name?: string | null) {
   return (name || "").toLowerCase().includes("cpf");
 }
 
+function normalizeHighlights(input: unknown) {
+  if (!Array.isArray(input)) {
+    return [
+      "Atendimento privado completo",
+      "Acompanhamento do início ao fim",
+      "Processo simples e organizado",
+    ];
+  }
+
+  const values = input
+    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .slice(0, 3);
+
+  if (!values.length) {
+    return [
+      "Atendimento privado completo",
+      "Acompanhamento do início ao fim",
+      "Processo simples e organizado",
+    ];
+  }
+
+  return values;
+}
+
 export default async function HomePage() {
   const user = await getCurrentUser();
 
   const services = await prisma.service.findMany({
     where: { active: true },
-    orderBy: { createdAt: "desc" },
+    orderBy: [
+      { createdAt: "desc" },
+      { name: "asc" },
+    ],
     take: 12,
     select: {
       id: true,
       name: true,
       description: true,
       price: true,
+      highlights: true,
     },
   });
 
   const featuredService =
-    services.find((service) => isCpfService(service.name)) ||
+    services.find((service: Service) => isCpfService(service.name))
     services[0] ||
     null;
 
   const secondaryServices = services.filter(
-    (service) => service.id !== featuredService?.id
-  );
+  (service: Service) => service.id !== featuredService?.id
+    );
 
   const primaryHref = featuredService
     ? `/continue?serviceId=${featuredService.id}`
     : "/services";
+
+  const featuredHighlights = normalizeHighlights(featuredService?.highlights);
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -129,9 +160,9 @@ export default async function HomePage() {
                   </h2>
 
                   <ul className="mt-3 max-w-md space-y-2 text-sm leading-6 text-slate-600">
-                    <li>• Atendimento privado completo</li>
-                    <li>• Acompanhamento do início ao fim</li>
-                    <li>• Processo simples e organizado</li>
+                    {featuredHighlights.map((item) => (
+                      <li key={item}>• {item}</li>
+                    ))}
                   </ul>
 
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -173,38 +204,38 @@ export default async function HomePage() {
 
           {secondaryServices.length > 0 && (
             <div className="mt-10">
-              <h3 className="text-xl font-bold text-white">
-                Outros serviços
-              </h3>
+              <h3 className="text-xl font-bold text-white">Outros serviços</h3>
 
               <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {secondaryServices.map((service: Service) => (
-                  <div
-                    key={service.id}
-                    className="rounded-[24px] bg-white p-5 text-slate-900 shadow"
-                  >
-                    <h4 className="text-lg font-black">
-                      {service.name}
-                    </h4>
+                {secondaryServices.map((service: Service) => {
+                  const serviceHighlights = normalizeHighlights(service.highlights);
 
-                    <ul className="mt-3 max-w-md space-y-2 text-sm leading-6 text-slate-600">
-                      <li>• Atendimento privado</li>
-                      <li>• Processo rápido</li>
-                      <li>• Suporte durante o processo</li>
-                    </ul>
-
-                    <div className="mt-4 text-3xl font-black">
-                      {formatCurrency(Number(service.price))}
-                    </div>
-
-                    <Link
-                      href={`/continue?serviceId=${service.id}`}
-                      className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+                  return (
+                    <div
+                      key={service.id}
+                      className="rounded-[24px] bg-white p-5 text-slate-900 shadow"
                     >
-                      Iniciar agora
-                    </Link>
-                  </div>
-                ))}
+                      <h4 className="text-lg font-black">{service.name}</h4>
+
+                      <ul className="mt-3 max-w-md space-y-2 text-sm leading-6 text-slate-600">
+                        {serviceHighlights.map((item) => (
+                          <li key={item}>• {item}</li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-4 text-3xl font-black">
+                        {formatCurrency(Number(service.price))}
+                      </div>
+
+                      <Link
+                        href={`/continue?serviceId=${service.id}`}
+                        className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+                      >
+                        Iniciar agora
+                      </Link>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

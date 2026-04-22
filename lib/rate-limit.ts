@@ -3,6 +3,7 @@ type RateLimitEntry = {
   resetAt: number;
 };
 
+const RATE_LIMIT_MAX_ENTRIES = 5000;
 const store = new Map<string, RateLimitEntry>();
 
 type RateLimitOptions = {
@@ -36,6 +37,23 @@ function cleanupExpiredEntries(now: number) {
   for (const [key, value] of store.entries()) {
     if (now > value.resetAt) {
       store.delete(key);
+    }
+  }
+
+  if (store.size <= RATE_LIMIT_MAX_ENTRIES) {
+    return;
+  }
+
+  const sortedEntries = [...store.entries()].sort(
+    (a, b) => a[1].resetAt - b[1].resetAt
+  );
+
+  const excess = store.size - RATE_LIMIT_MAX_ENTRIES;
+
+  for (let i = 0; i < excess; i++) {
+    const entry = sortedEntries[i];
+    if (entry) {
+      store.delete(entry[0]);
     }
   }
 }

@@ -1,80 +1,42 @@
 "use client";
 
-import { useState } from "react";
-import { validateFile } from "@/lib/uploadValidation";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function UploadDocumentPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setError("");
-    setSuccess("");
-
-    const selectedFile = e.target.files?.[0];
-
-    if (!selectedFile) return;
-
-    const validation = validateFile(selectedFile);
-
-    if (!validation.valid) {
-      setFile(null);
-      setError(validation.error || "Arquivo inválido.");
-      return;
-    }
-
-    setFile(selectedFile);
-  }
-
-  async function handleUpload() {
-    setError("");
-    setSuccess("");
-
-    if (!file) {
-      setError("Selecione um arquivo antes de enviar.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setError(data.error || "Erro ao enviar arquivo.");
-      return;
-    }
-
-    setSuccess("Arquivo enviado com sucesso.");
-    setFile(null);
-  }
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("orderId");
 
   return (
-    <div className="p-6 max-w-md">
-      <h1 className="text-xl font-bold mb-4">Upload de Documento</h1>
+    <main className="min-h-screen bg-slate-50 px-4 py-10">
+      <div className="mx-auto max-w-2xl rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        <h1 className="text-2xl font-black text-slate-900">
+          Envio de documentos
+        </h1>
 
-      <input
-        type="file"
-        accept=".pdf,.jpg,.jpeg,.png"
-        onChange={handleFileChange}
-        className="mb-4"
-      />
+        <p className="mt-4 text-sm leading-6 text-slate-600">
+          Esta rota não é mais o fluxo principal de envio. Para evitar erros,
+          o envio deve ser feito pela tela correta do pedido.
+        </p>
 
-      {error && <p className="text-red-600 mb-2">{error}</p>}
-      {success && <p className="text-green-600 mb-2">{success}</p>}
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          {orderId ? (
+            <Link
+              href={`/orders/${orderId}/upload`}
+              className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800"
+            >
+              Ir para o upload do pedido
+            </Link>
+          ) : null}
 
-      <button
-        onClick={handleUpload}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-      >
-        Enviar
-      </button>
-    </div>
+          <Link
+            href="/orders"
+            className="inline-flex items-center justify-center rounded-2xl border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+          >
+            Ver meus pedidos
+          </Link>
+        </div>
+      </div>
+    </main>
   );
 }

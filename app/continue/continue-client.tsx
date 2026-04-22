@@ -11,6 +11,7 @@ type Service = {
   description?: string | null;
   price: number;
   active?: boolean;
+  highlights?: string[] | null;
 };
 
 function formatCurrency(value: number) {
@@ -24,10 +25,21 @@ function isCpfService(name?: string | null) {
   return (name || "").toLowerCase().includes("cpf");
 }
 
+function normalizeHighlights(service?: Service | null) {
+  if (!service?.highlights || !Array.isArray(service.highlights)) {
+    return [
+      "Atendimento completo",
+      "Acompanhamento do processo",
+      "Suporte durante todo o fluxo",
+    ];
+  }
+
+  return service.highlights.slice(0, 3);
+}
+
 export default function ContinueClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const serviceId = searchParams.get("serviceId") || "";
 
   const [service, setService] = useState<Service | null>(null);
@@ -74,8 +86,8 @@ export default function ContinueClient() {
         if (!selected) {
           setError("Nenhum serviço disponível.");
         }
-      } catch (err) {
-        setError("Erro inesperado.");
+      } catch {
+        setError("Erro inesperado ao carregar serviço.");
         setService(null);
       } finally {
         setLoading(false);
@@ -120,79 +132,117 @@ export default function ContinueClient() {
     return { res, data };
   }
 
+  async function registerUser() {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+        lgpdAccepted: true,
+        termsAccepted: true,
+        privacyAccepted: true,
+        legalAcceptedVersion: getLegalVersionLabel(),
+      }),
+    });
+
+    const data = await res.json().catch(() => null);
+    return { res, data };
+  }
+
+  async function loginUser() {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        password,
+      }),
+    });
+
+    const data = await res.json().catch(() => null);
+    return { res, data };
+  }
+
   async function handleContinue() {
     try {
       setError("");
 
-      if (!service?.id) return setError("Serviço não encontrado.");
-      if (!name || !email || !password)
-        return setError("Preencha os dados.");
-      if (password.length < 6)
-        return setError("Senha mínima de 6 caracteres.");
-      if (!acceptedLegal)
-        return setError("Aceite os termos para continuar.");
+      if (!service?.id) {
+        setError("Serviço não encontrado.");
+        return;
+      }
+
+      if (!name.trim() || !email.trim() || !password) {
+        setError("Preencha nome, email e senha.");
+        return;
+      }
+
+      if (password.length < 6) {
+        setError("Senha mínima de 6 caracteres.");
+        return;
+      }
+
+      if (!acceptedLegal) {
+        setError("Aceite os termos para continuar.");
+        return;
+      }
 
       setSubmitting(true);
 
       const direct = await createOrder(service.id);
 
-      if (direct.res.ok) {
-        router.replace(`/payment?orderId=${direct.data?.order?.id}`);
+      if (direct.res.ok && direct.data?.order?.id) {
+        router.replace(`/payment?orderId=${direct.data.order.id}`);
         return;
       }
 
-      if (direct.res.status === 401) {
-        await fetch("/api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            email: email.toLowerCase(),
-            password,
-            lgpdAccepted: true,
-            termsAccepted: true,
-            privacyAccepted: true,
-            legalAcceptedVersion: getLegalVersionLabel(),
-          }),
-        });
-
-        await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: email.toLowerCase(),
-            password,
-          }),
-        });
-
-        const order = await createOrder(service.id);
-
-        if (!order.res.ok) {
-          setError("Erro ao continuar.");
-          return;
-        }
-
-        router.replace(`/payment?orderId=${order.data?.order?.id}`);
+      if (direct.res.status !== 401) {
+        setError(direct.data?.error || "Erro ao continuar.");
         return;
       }
 
-      setError("Erro ao continuar.");
+      const register = await registerUser();
+
+      if (!register.res.ok) {
+        setError(register.data?.error || "Não foi possível criar sua conta.");
+        return;
+      }
+
+      const login = await loginUser();
+
+      if (!login.res.ok) {
+        setError(login.data?.error || "Conta criada, mas o login falhou.");
+        return;
+      }
+
+      const order = await createOrder(service.id);
+
+      if (!order.res.ok || !order.data?.order?.id) {
+        setError(order.data?.error || "Erro ao criar pedido.");
+        return;
+      }
+
+      router.replace(`/payment?orderId=${order.data.order.id}`);
     } catch {
-      setError("Erro inesperado.");
+      setError("Erro inesperado. Tente novamente.");
     } finally {
       setSubmitting(false);
     }
   }
 
+  const highlights = normalizeHighlights(service);
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6">
       <div className="mx-auto max-w-6xl">
-
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-
-          {/* ESQUERDA */}
           <section className="rounded-3xl bg-white p-6 shadow-sm">
-
             <h1 className="text-3xl font-black leading-tight">
               Finalize seu cadastro
             </h1>
@@ -207,90 +257,109 @@ export default function ContinueClient() {
               Assessoria privada, sem vínculo com órgãos públicos.
             </div>
 
-            {error && (
+            {error ? (
               <div className="mt-4 rounded-2xl bg-red-50 p-3 text-sm text-red-700">
                 {error}
               </div>
-            )}
-
+            ) : null}
           </section>
 
-          {/* DIREITA */}
           <aside className="rounded-3xl border-2 border-slate-900 bg-white p-6">
-
             {loading ? (
               <div>Carregando...</div>
             ) : !service ? (
               <div>Sem serviço.</div>
             ) : (
               <>
-                <h2 className="text-xl font-black">
-                  {service.name}
-                </h2>
+                <h2 className="text-xl font-black">{service.name}</h2>
 
                 <ul className="mt-3 max-w-md space-y-2 text-sm leading-6 text-slate-600">
-                  <li>• Atendimento completo</li>
-                  <li>• Acompanhamento do processo</li>
-                  <li>• Suporte durante todo o fluxo</li>
+                  {highlights.map((item) => (
+                    <li key={item}>• {item}</li>
+                  ))}
                 </ul>
 
                 <div className="mt-4 text-4xl font-black">
                   {formatCurrency(service.price)}
                 </div>
 
-                {/* FORM */}
-                <div className="mt-5 space-y-4">
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Nome
+                    </label>
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
+                      placeholder="Seu nome"
+                    />
+                  </div>
 
-                  <input
-                    placeholder="Seu nome"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-xl border px-4 py-3"
-                  />
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      E-mail
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
+                      placeholder="voce@email.com"
+                    />
+                  </div>
 
-                  <input
-                    placeholder="Seu e-mail"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border px-4 py-3"
-                  />
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Senha
+                    </label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
+                      placeholder="Mínimo de 6 caracteres"
+                    />
+                  </div>
 
-                  <input
-                    type="password"
-                    placeholder="Crie uma senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border px-4 py-3"
-                  />
+                  <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={acceptedLegal}
+                      onChange={(e) => setAcceptedLegal(e.target.checked)}
+                      className="mt-1"
+                    />
+                    <span>
+                      Aceito os{" "}
+                      <Link href="/terms" className="font-semibold underline">
+                        Termos de Uso
+                      </Link>{" "}
+                      e a{" "}
+                      <Link href="/privacy" className="font-semibold underline">
+                        Política de Privacidade
+                      </Link>
+                      .
+                    </span>
+                  </label>
 
+                  <button
+                    type="button"
+                    onClick={handleContinue}
+                    disabled={!canSubmit}
+                    className="w-full rounded-2xl bg-slate-900 px-5 py-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {submitting ? "Carregando..." : "Continuar para pagamento"}
+                  </button>
+
+                  <Link
+                    href={loginHref}
+                    className="block text-center text-sm font-medium text-slate-600 underline"
+                  >
+                    Já tenho conta
+                  </Link>
                 </div>
-
-                <label className="mt-4 flex gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={acceptedLegal}
-                    onChange={(e) => setAcceptedLegal(e.target.checked)}
-                  />
-                  Aceito termos e política
-                </label>
-
-                <button
-                  onClick={handleContinue}
-                  disabled={!canSubmit}
-                  className="mt-5 w-full rounded-2xl bg-slate-900 py-4 font-bold text-white"
-                >
-                  {submitting ? "Carregando..." : "Continuar para pagamento"}
-                </button>
-
-                <Link
-                  href={loginHref}
-                  className="mt-3 block text-center text-sm text-slate-500"
-                >
-                  Já tenho conta
-                </Link>
               </>
             )}
-
           </aside>
         </div>
       </div>
