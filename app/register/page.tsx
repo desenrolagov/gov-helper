@@ -2,13 +2,40 @@
 
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getLegalVersionLabel } from "@/lib/legal";
+
+function sanitizeCallbackUrl(callbackUrl: string | null) {
+  if (!callbackUrl) return null;
+  if (!callbackUrl.startsWith("/")) return null;
+  if (callbackUrl.startsWith("//")) return null;
+  return callbackUrl;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const legalVersion = useMemo(() => getLegalVersionLabel(), []);
+
+  const callbackUrl = useMemo(() => {
+    return sanitizeCallbackUrl(searchParams.get("callbackUrl"));
+  }, [searchParams]);
+
+  const continueMode = useMemo(() => {
+    if (!callbackUrl) return false;
+    return (
+      callbackUrl.startsWith("/continue") ||
+      callbackUrl.startsWith("/payment") ||
+      callbackUrl.startsWith("/orders")
+    );
+  }, [callbackUrl]);
+
+  const loginHref = callbackUrl
+    ? `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
+    : "/login";
+
+  const homeHref = callbackUrl || "/";
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -38,7 +65,7 @@ export default function RegisterPage() {
     setSuccess("");
 
     if (!name.trim() || !email.trim() || !password) {
-      setError("Preencha nome, email e senha.");
+      setError("Preencha nome, e-mail e senha.");
       return;
     }
 
@@ -81,8 +108,11 @@ export default function RegisterPage() {
       }
 
       setSuccess(
-        "Cadastro realizado com sucesso. Redirecionando para o login..."
+        continueMode
+          ? "Cadastro realizado com sucesso. Redirecionando para o login para continuar seu atendimento..."
+          : "Cadastro realizado com sucesso. Redirecionando para o login..."
       );
+
       setName("");
       setEmail("");
       setPassword("");
@@ -91,7 +121,7 @@ export default function RegisterPage() {
       setLgpdAccepted(false);
 
       setTimeout(() => {
-        router.push("/login");
+        router.push(loginHref);
       }, 1200);
     } catch (error) {
       console.error("Erro no cadastro:", error);
@@ -107,31 +137,71 @@ export default function RegisterPage() {
         <section className="hidden lg:block">
           <div className="max-w-xl">
             <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-              Novo acesso
+              {continueMode ? "Criar conta para continuar" : "Novo acesso"}
             </div>
 
             <h1 className="mt-5 text-5xl font-bold tracking-tight text-slate-900">
-              Crie sua conta para iniciar seu atendimento com mais organização
+              {continueMode
+                ? "Crie sua conta para continuar o atendimento sem perder a etapa"
+                : "Crie sua conta para iniciar seu atendimento com mais organização"}
             </h1>
 
             <p className="mt-5 text-base leading-8 text-slate-600">
-              Tenha acesso à sua área do cliente para solicitar serviços, enviar
-              documentos, acompanhar pedidos e visualizar cada etapa do processo
-              com mais clareza.
+              {continueMode
+                ? "Seu cadastro é rápido. Depois disso, você volta ao fluxo para seguir com pagamento e próximas etapas."
+                : "Tenha acesso à sua área do cliente para solicitar serviços, enviar documentos, acompanhar pedidos e visualizar cada etapa do processo com mais clareza."}
             </p>
+
+            <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              Atenção: a DesenrolaGov é uma assessoria privada e não possui vínculo
+              com a Receita Federal ou outros órgãos do governo.
+            </div>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-lg font-bold text-slate-900">1</p>
+                <p className="mt-1 text-sm font-medium text-slate-800">
+                  Cadastro rápido
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Crie seu acesso em poucos passos.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-lg font-bold text-slate-900">2</p>
+                <p className="mt-1 text-sm font-medium text-slate-800">
+                  Fluxo preservado
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Depois do login, você volta para o ponto certo.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-lg font-bold text-slate-900">3</p>
+                <p className="mt-1 text-sm font-medium text-slate-800">
+                  Área do cliente
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Pedidos, documentos e andamento organizados.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
         <section className="mx-auto w-full max-w-md">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6">
-              <p className="text-sm font-medium text-blue-600">GOV Helper</p>
+              <p className="text-sm font-medium text-blue-600">DesenrolaGov</p>
               <h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
                 Criar conta
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Cadastre-se para acessar a área do cliente e continuar o seu
-                fluxo com mais praticidade.
+                {continueMode
+                  ? "Cadastre-se para continuar seu atendimento agora."
+                  : "Cadastre-se para acessar a área do cliente e continuar o seu fluxo com mais praticidade."}
               </p>
             </div>
 
@@ -167,6 +237,7 @@ export default function RegisterPage() {
                   placeholder="Digite seu nome"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  required
                   className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
                 />
               </div>
@@ -184,6 +255,8 @@ export default function RegisterPage() {
                   placeholder="Digite seu e-mail"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
                   className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
                 />
               </div>
@@ -201,6 +274,8 @@ export default function RegisterPage() {
                   placeholder="Digite sua senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
                   className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
                 />
                 <p className="mt-2 text-xs text-slate-500">
@@ -278,7 +353,11 @@ export default function RegisterPage() {
                 disabled={!canSubmit}
                 className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Cadastrando..." : "Criar minha conta"}
+                {loading
+                  ? "Cadastrando..."
+                  : continueMode
+                  ? "Criar conta e continuar"
+                  : "Criar minha conta"}
               </button>
 
               {!termsAccepted || !privacyAccepted || !lgpdAccepted ? (
@@ -293,7 +372,7 @@ export default function RegisterPage() {
               <p className="text-sm text-slate-600">
                 Já tem conta?{" "}
                 <Link
-                  href="/login"
+                  href={loginHref}
                   className="font-semibold text-slate-900 hover:underline"
                 >
                   Entrar agora
@@ -303,10 +382,10 @@ export default function RegisterPage() {
 
             <div className="mt-4 text-center">
               <Link
-                href="/"
+                href={homeHref}
                 className="text-sm font-medium text-slate-600 hover:text-slate-900"
               >
-                Voltar para a página inicial
+                {continueMode ? "Voltar para o atendimento" : "Voltar para a página inicial"}
               </Link>
             </div>
           </div>

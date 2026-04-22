@@ -1,11 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+function sanitizeCallbackUrl(callbackUrl: string | null) {
+  if (!callbackUrl) return null;
+  if (!callbackUrl.startsWith("/")) return null;
+  if (callbackUrl.startsWith("//")) return null;
+  return callbackUrl;
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const callbackUrl = useMemo(() => {
+    return sanitizeCallbackUrl(searchParams.get("callbackUrl"));
+  }, [searchParams]);
+
+  const continueMode = useMemo(() => {
+    if (!callbackUrl) return false;
+    return (
+      callbackUrl.startsWith("/continue") ||
+      callbackUrl.startsWith("/payment") ||
+      callbackUrl.startsWith("/orders")
+    );
+  }, [callbackUrl]);
+
+  const registerHref = callbackUrl
+    ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`
+    : "/register";
+
+  const homeHref = callbackUrl || "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,14 +59,18 @@ export default function LoginPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(data.error || "Erro ao fazer login.");
+        setError(data?.error || "Erro ao fazer login.");
         return;
       }
 
-      if (data.user?.role === "ADMIN") {
+      const safeCallbackUrl = sanitizeCallbackUrl(callbackUrl);
+
+      if (safeCallbackUrl) {
+        router.push(safeCallbackUrl);
+      } else if (data?.user?.role === "ADMIN") {
         router.push("/admin");
       } else {
         router.push("/dashboard");
@@ -60,18 +91,25 @@ export default function LoginPage() {
         <section className="hidden lg:block">
           <div className="max-w-xl">
             <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-              Área de acesso
+              {continueMode ? "Continuar atendimento" : "Área de acesso"}
             </div>
 
             <h1 className="mt-5 text-5xl font-bold tracking-tight text-slate-900">
-              Entre para acompanhar seus pedidos com mais clareza
+              {continueMode
+                ? "Entre para continuar seu atendimento sem perder a etapa atual"
+                : "Entre para acompanhar seus pedidos com mais clareza"}
             </h1>
 
             <p className="mt-5 text-base leading-8 text-slate-600">
-              Acesse sua conta para visualizar pedidos, enviar documentos,
-              acompanhar o andamento do atendimento e seguir cada etapa em um só
-              lugar.
+              {continueMode
+                ? "Faça login para voltar direto ao fluxo do seu atendimento e seguir para a próxima etapa com rapidez."
+                : "Acesse sua conta para visualizar pedidos, enviar documentos, acompanhar o andamento do atendimento e seguir cada etapa em um só lugar."}
             </p>
+
+            <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              Atenção: a DesenrolaGov é uma assessoria privada e não possui vínculo
+              com a Receita Federal ou outros órgãos do governo.
+            </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -87,20 +125,20 @@ export default function LoginPage() {
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-lg font-bold text-slate-900">2</p>
                 <p className="mt-1 text-sm font-medium text-slate-800">
-                  Pedidos centralizados
+                  Etapa preservada
                 </p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Veja status, arquivos e próximas ações.
+                  Você volta para o ponto certo do atendimento.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-lg font-bold text-slate-900">3</p>
                 <p className="mt-1 text-sm font-medium text-slate-800">
-                  Acompanhamento profissional
+                  Acompanhamento organizado
                 </p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Tudo organizado em uma experiência melhor.
+                  Pedidos, documentos e andamento em um só lugar.
                 </p>
               </div>
             </div>
@@ -110,12 +148,14 @@ export default function LoginPage() {
         <section className="mx-auto w-full max-w-md">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="mb-6">
-              <p className="text-sm font-medium text-blue-600">GOV Helper</p>
+              <p className="text-sm font-medium text-blue-600">DesenrolaGov</p>
               <h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
                 Entrar
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Acesse sua conta para continuar seu atendimento com segurança.
+                {continueMode
+                  ? "Faça login para continuar seu atendimento agora."
+                  : "Acesse sua conta para continuar seu atendimento com segurança."}
               </p>
             </div>
 
@@ -134,7 +174,7 @@ export default function LoginPage() {
                   htmlFor="email"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Email
+                  E-mail
                 </label>
                 <input
                   id="email"
@@ -172,7 +212,11 @@ export default function LoginPage() {
                 disabled={loading}
                 className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Entrando..." : "Entrar na conta"}
+                {loading
+                  ? "Entrando..."
+                  : continueMode
+                  ? "Entrar e continuar"
+                  : "Entrar na conta"}
               </button>
             </form>
 
@@ -180,7 +224,7 @@ export default function LoginPage() {
               <p className="text-sm text-slate-600">
                 Ainda não tem conta?{" "}
                 <Link
-                  href="/register"
+                  href={registerHref}
                   className="font-semibold text-slate-900 hover:underline"
                 >
                   Criar conta
@@ -190,10 +234,10 @@ export default function LoginPage() {
 
             <div className="mt-4 text-center">
               <Link
-                href="/"
+                href={homeHref}
                 className="text-sm font-medium text-slate-600 hover:text-slate-900"
               >
-                Voltar para a página inicial
+                {continueMode ? "Voltar para o atendimento" : "Voltar para a página inicial"}
               </Link>
             </div>
           </div>
