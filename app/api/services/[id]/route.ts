@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-// 🔹 PATCH — atualizar
+// 🔹 PATCH
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
 
     const {
@@ -20,14 +21,12 @@ export async function PATCH(
     } = body;
 
     const service = await prisma.service.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         description,
         price: Number(price),
         codePrefix,
-
-        // 🔥 IMPORTANTE
         type,
         highlights,
         documents,
@@ -47,11 +46,13 @@ export async function PATCH(
 // 🔹 DELETE
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     await prisma.service.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
