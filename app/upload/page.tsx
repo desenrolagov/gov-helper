@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function UploadDocumentPage() {
+function UploadDocumentContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
 
@@ -38,5 +39,21 @@ export default function UploadDocumentPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function UploadDocumentPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-50 px-4 py-10">
+          <div className="mx-auto max-w-2xl rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+            <p className="text-sm text-slate-500">Carregando...</p>
+          </div>
+        </main>
+      }
+    >
+      <UploadDocumentContent />
+    </Suspense>
   );
 }
