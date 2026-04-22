@@ -113,45 +113,53 @@ export default function WhatsAppFloatingButton({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6">
-      <div
-        className={`max-w-[220px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-lg transition-all duration-300 ${
-          showBubble
-            ? "translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-2 opacity-0"
-        }`}
-      >
-        <p className="font-semibold text-slate-900">{bubbleCopy.title}</p>
-        <p className="mt-1 text-xs leading-5 text-slate-600">
-          {bubbleCopy.text}
-        </p>
-      </div>
+    <div className="fixed bottom-20 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+      {showBubble ? (
+        <div className="hidden max-w-[220px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl sm:block">
+          <p className="text-sm font-semibold text-slate-900">
+            {bubbleCopy.title}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-600">
+            {bubbleCopy.text}
+          </p>
+        </div>
+      ) : null}
 
       <a
         href={href}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         aria-label="Falar no WhatsApp"
-        className="group inline-flex items-center gap-3 rounded-full bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(22,163,74,0.28)] transition-all duration-200 hover:scale-[1.02] hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+        className="group inline-flex items-center justify-center rounded-full bg-green-500 text-white shadow-[0_10px_30px_rgba(34,197,94,0.35)] transition hover:scale-[1.03] hover:bg-green-600 sm:rounded-2xl"
       >
-        <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-white/15">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/20 opacity-75" />
+        <span className="flex h-14 w-14 items-center justify-center sm:hidden">
           <svg
-            xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 32 32"
-            fill="currentColor"
-            className="relative h-5 w-5"
+            className="h-7 w-7 fill-current"
             aria-hidden="true"
           >
-            <path d="M19.11 17.23c-.27-.14-1.6-.79-1.85-.88-.25-.09-.43-.14-.61.14-.18.27-.7.88-.86 1.06-.16.18-.32.2-.59.07-.27-.14-1.13-.42-2.15-1.33-.79-.71-1.33-1.58-1.49-1.84-.16-.27-.02-.41.12-.54.12-.12.27-.32.41-.48.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.14-.61-1.47-.84-2.02-.22-.52-.44-.45-.61-.46h-.52c-.18 0-.48.07-.73.34-.25.27-.95.93-.95 2.27s.98 2.63 1.11 2.82c.14.18 1.92 2.93 4.65 4.11.65.28 1.15.45 1.55.58.65.21 1.24.18 1.71.11.52-.08 1.6-.65 1.82-1.28.23-.63.23-1.17.16-1.28-.07-.11-.25-.18-.52-.32Z" />
-            <path d="M16.01 3.2c-7.06 0-12.79 5.7-12.79 12.73 0 2.25.59 4.45 1.71 6.39L3.2 28.8l6.68-1.74a12.86 12.86 0 0 0 6.13 1.56h.01c7.05 0 12.78-5.7 12.78-12.73S23.07 3.2 16.01 3.2Zm0 23.24h-.01a10.7 10.7 0 0 1-5.45-1.49l-.39-.23-3.96 1.03 1.06-3.86-.25-.4a10.54 10.54 0 0 1-1.65-5.61c0-5.85 4.78-10.61 10.66-10.61 2.84 0 5.51 1.1 7.52 3.1a10.5 10.5 0 0 1 3.13 7.5c0 5.85-4.79 10.61-10.66 10.61Z" />
+            <path d="M19.11 17.21c-.28-.14-1.65-.82-1.91-.91-.25-.09-.44-.14-.62.14-.18.28-.71.91-.87 1.1-.16.18-.32.21-.6.07-.28-.14-1.16-.43-2.21-1.38-.81-.72-1.36-1.61-1.52-1.89-.16-.28-.02-.43.12-.57.13-.13.28-.32.41-.48.14-.16.18-.28.28-.46.09-.18.05-.35-.02-.5-.07-.14-.62-1.49-.85-2.04-.22-.52-.45-.45-.62-.45h-.53c-.18 0-.46.07-.71.35-.25.28-.96.94-.96 2.29 0 1.35.98 2.66 1.12 2.84.14.18 1.93 2.95 4.68 4.14.65.28 1.16.44 1.56.56.65.21 1.24.18 1.71.11.52-.08 1.65-.67 1.88-1.31.23-.64.23-1.19.16-1.31-.07-.12-.25-.18-.53-.32Z" />
+            <path d="M16.02 3.2C8.95 3.2 3.2 8.94 3.2 16c0 2.49.72 4.92 2.08 7L3 29l6.16-2.2a12.8 12.8 0 0 0 6.86 1.99h.01c7.06 0 12.8-5.75 12.8-12.81 0-3.42-1.33-6.63-3.76-9.04A12.72 12.72 0 0 0 16.02 3.2Zm0 23.29h-.01a10.64 10.64 0 0 1-5.42-1.49l-.39-.23-3.66 1.31 1.34-3.57-.25-.37A10.57 10.57 0 0 1 5.38 16c0-5.87 4.77-10.64 10.64-10.64 2.84 0 5.51 1.1 7.52 3.11A10.56 10.56 0 0 1 26.65 16c0 5.87-4.77 10.64-10.63 10.64Z" />
           </svg>
         </span>
 
-        <span className="hidden sm:flex sm:flex-col sm:items-start sm:leading-tight">
-          <span>Falar no WhatsApp</span>
-          <span className="text-[11px] font-medium text-green-100">
-            Atendimento rápido
+        <span className="hidden min-w-[190px] items-center gap-3 rounded-2xl px-5 py-4 sm:inline-flex">
+          <svg
+            viewBox="0 0 32 32"
+            className="h-6 w-6 fill-current"
+            aria-hidden="true"
+          >
+            <path d="M19.11 17.21c-.28-.14-1.65-.82-1.91-.91-.25-.09-.44-.14-.62.14-.18.28-.71.91-.87 1.1-.16.18-.32.21-.6.07-.28-.14-1.16-.43-2.21-1.38-.81-.72-1.36-1.61-1.52-1.89-.16-.28-.02-.43.12-.57.13-.13.28-.32.41-.48.14-.16.18-.28.28-.46.09-.18.05-.35-.02-.5-.07-.14-.62-1.49-.85-2.04-.22-.52-.45-.45-.62-.45h-.53c-.18 0-.46.07-.71.35-.25.28-.96.94-.96 2.29 0 1.35.98 2.66 1.12 2.84.14.18 1.93 2.95 4.68 4.14.65.28 1.16.44 1.56.56.65.21 1.24.18 1.71.11.52-.08 1.65-.67 1.88-1.31.23-.64.23-1.19.16-1.31-.07-.12-.25-.18-.53-.32Z" />
+            <path d="M16.02 3.2C8.95 3.2 3.2 8.94 3.2 16c0 2.49.72 4.92 2.08 7L3 29l6.16-2.2a12.8 12.8 0 0 0 6.86 1.99h.01c7.06 0 12.8-5.75 12.8-12.81 0-3.42-1.33-6.63-3.76-9.04A12.72 12.72 0 0 0 16.02 3.2Zm0 23.29h-.01a10.64 10.64 0 0 1-5.42-1.49l-.39-.23-3.66 1.31 1.34-3.57-.25-.37A10.57 10.57 0 0 1 5.38 16c0-5.87 4.77-10.64 10.64-10.64 2.84 0 5.51 1.1 7.52 3.11A10.56 10.56 0 0 1 26.65 16c0 5.87-4.77 10.64-10.63 10.64Z" />
+          </svg>
+
+          <span className="text-left">
+            <span className="block text-sm font-bold leading-4">
+              Falar no WhatsApp
+            </span>
+            <span className="mt-1 block text-[11px] leading-4 text-green-100">
+              Atendimento rápido
+            </span>
           </span>
         </span>
       </a>
