@@ -32,9 +32,13 @@ export default function ContinueClient() {
 
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
-  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [error, setError] = useState("");
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     async function loadService() {
@@ -98,13 +102,36 @@ export default function ContinueClient() {
     return `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
   }, [callbackUrl]);
 
-  const registerHref = useMemo(() => {
-    return `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-  }, [callbackUrl]);
+  const canSubmit = useMemo(() => {
+    return (
+      !loading &&
+      !submitting &&
+      !!service?.id &&
+      !!name.trim() &&
+      !!email.trim() &&
+      password.length >= 6 &&
+      acceptedLegal
+    );
+  }, [loading, submitting, service?.id, name, email, password, acceptedLegal]);
 
-  const submitDisabled = useMemo(() => {
-    return loading || creatingOrder || !service || !acceptedLegal;
-  }, [loading, creatingOrder, service, acceptedLegal]);
+  async function createOrder(selectedServiceId: string) {
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        serviceId: selectedServiceId,
+        termsAccepted: true,
+        privacyAccepted: true,
+        legalVersion: LEGAL_VERSION,
+      }),
+    });
+
+    const data = await res.json().catch(() => null);
+
+    return { res, data };
+  }
 
   async function handleContinue() {
     try {
@@ -115,6 +142,16 @@ export default function ContinueClient() {
         return;
       }
 
+      if (!name.trim() || !email.trim() || !password) {
+        setError("Preencha nome, e-mail e senha.");
+        return;
+      }
+
+      if (password.length < 6) {
+        setError("A senha deve ter pelo menos 6 caracteres.");
+        return;
+      }
+
       if (!acceptedLegal) {
         setError(
           "Para continuar, aceite os Termos de Uso e a Política de Privacidade."
@@ -122,54 +159,106 @@ export default function ContinueClient() {
         return;
       }
 
-      setCreatingOrder(true);
+      setSubmitting(true);
 
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          serviceId: service.id,
-          termsAccepted: true,
-          privacyAccepted: true,
-          legalVersion: LEGAL_VERSION,
-        }),
-      });
+      // 1) Tenta criar pedido direto primeiro.
+      // Se o usuário já estiver logado, segue sem cadastro.
+      const directOrderAttempt = await createOrder(service.id);
 
-      const data = await res.json().catch(() => null);
+      if (directOrderAttempt.res.ok) {
+        const orderId = directOrderAttempt.data?.order?.id;
 
-      if (res.status === 401) {
-        router.push(loginHref);
+        if (!orderId) {
+          setError("Pedido criado, mas o identificador não foi retornado.");
+          return;
+        }
+
+        router.replace(`/payment?orderId=${orderId}`);
+        router.refresh();
         return;
       }
 
-      if (res.status === 403) {
+      // 2) Se não estiver autenticado, cria conta
+      if (directOrderAttempt.res.status === 401) {
+        const registerRes = await fetch("/api/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            password,
+            lgpdAccepted: true,
+            termsAccepted: true,
+            privacyAccepted: true,
+            legalAcceptedVersion: getLegalVersionLabel(),
+          }),
+        });
+
+        const registerData = await registerRes.json().catch(() => null);
+
+        if (!registerRes.ok) {
+          setError(registerData?.error || "Não foi possível criar sua conta.");
+          return;
+        }
+
+        // 3) Faz login automático
+        const loginRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            password,
+          }),
+        });
+
+        const loginData = await loginRes.json().catch(() => null);
+
+        if (!loginRes.ok) {
+          setError(
+            loginData?.error ||
+              "Conta criada, mas não foi possível iniciar sua sessão automaticamente."
+          );
+          return;
+        }
+
+        // 4) Cria o pedido já autenticado
+        const orderAttempt = await createOrder(service.id);
+
+        if (!orderAttempt.res.ok) {
+          setError(orderAttempt.data?.error || "Não foi possível continuar.");
+          return;
+        }
+
+        const orderId = orderAttempt.data?.order?.id;
+
+        if (!orderId) {
+          setError("Pedido criado, mas o identificador não foi retornado.");
+          return;
+        }
+
+        router.replace(`/payment?orderId=${orderId}`);
+        router.refresh();
+        return;
+      }
+
+      if (directOrderAttempt.res.status === 403) {
         setError(
-          data?.error || "Sua conta atual não pode iniciar esse atendimento."
+          directOrderAttempt.data?.error ||
+            "Sua conta atual não pode iniciar esse atendimento."
         );
         return;
       }
 
-      if (!res.ok) {
-        setError(data?.error || "Não foi possível continuar.");
-        return;
-      }
-
-      const orderId = data?.order?.id;
-
-      if (!orderId) {
-        setError("Pedido criado, mas o identificador não foi retornado.");
-        return;
-      }
-
-      router.replace(`/payment?orderId=${orderId}`);
-      router.refresh();
+      setError(directOrderAttempt.data?.error || "Não foi possível continuar.");
     } catch (err) {
-      console.error("Erro ao criar pedido:", err);
+      console.error("Erro ao continuar o atendimento:", err);
       setError("Erro inesperado ao continuar o atendimento.");
     } finally {
-      setCreatingOrder(false);
+      setSubmitting(false);
     }
   }
 
@@ -183,12 +272,13 @@ export default function ContinueClient() {
             </div>
 
             <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-              Falta só confirmar para seguir ao pagamento
+              Faça seu cadastro rápido e siga ao pagamento
             </h1>
 
             <p className="mt-3 text-base leading-7 text-slate-600">
-              Revise o serviço selecionado, aceite os termos legais e avance para
-              o checkout sem passar por etapas desnecessárias.
+              Para quem está chegando agora, o caminho mais rápido é criar o
+              acesso nesta etapa e seguir direto para o pagamento, sem perder o
+              fluxo.
             </p>
 
             <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
@@ -205,25 +295,25 @@ export default function ContinueClient() {
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  1. Confirmar
+                  1. Cadastro rápido
                 </div>
                 <p className="mt-1 text-sm text-slate-600">
-                  Você valida a contratação em poucos segundos.
+                  Você cria seu acesso em menos de 1 minuto.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  2. Pagar
+                  2. Pagamento
                 </div>
                 <p className="mt-1 text-sm text-slate-600">
-                  O checkout seguro é aberto na próxima etapa.
+                  O checkout é aberto logo após a criação da conta.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  3. Enviar documentos
+                  3. Envio de documentos
                 </div>
                 <p className="mt-1 text-sm text-slate-600">
                   Depois do pagamento, o pedido segue normalmente.
@@ -265,6 +355,65 @@ export default function ContinueClient() {
                   </div>
                 </div>
 
+                <div className="mt-6 space-y-4">
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                      Nome
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      placeholder="Digite seu nome"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      autoComplete="name"
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                      E-mail
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      placeholder="Digite seu e-mail"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="email"
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                      Senha
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      placeholder="Crie uma senha"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="new-password"
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
+                    />
+                    <p className="mt-2 text-xs text-slate-500">
+                      Use pelo menos 6 caracteres.
+                    </p>
+                  </div>
+                </div>
+
                 <label className="mt-6 flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
                   <input
                     type="checkbox"
@@ -297,29 +446,23 @@ export default function ContinueClient() {
                 <button
                   type="button"
                   onClick={handleContinue}
-                  disabled={submitDisabled}
+                  disabled={!canSubmit}
                   className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {creatingOrder ? "Continuando..." : "Ir para pagamento"}
+                  {submitting ? "Continuando..." : "Criar conta e ir para pagamento"}
                 </button>
 
                 <div className="mt-4 text-center text-xs text-slate-500">
-                  Ao continuar, o pedido é criado e o fluxo segue para o checkout.
+                  Ao continuar, sua conta é criada, o pedido é aberto e o fluxo
+                  segue para o checkout.
                 </div>
 
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <div className="mt-6">
                   <Link
                     href={loginHref}
-                    className="inline-flex flex-1 items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     Já tenho conta
-                  </Link>
-
-                  <Link
-                    href={registerHref}
-                    className="inline-flex flex-1 items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Criar conta
                   </Link>
                 </div>
               </>
