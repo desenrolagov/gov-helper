@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/current-user";
 import AppNav from "@/components/AppNav";
+import SocialLinks from "@/components/SocialLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,10 @@ function normalizeHighlights(input: unknown) {
   }
 
   const values = input
-    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .filter(
+      (item): item is string =>
+        typeof item === "string" && item.trim().length > 0
+    )
     .slice(0, 3);
 
   if (!values.length) {
@@ -53,10 +57,7 @@ export default async function HomePage() {
 
   const services = await prisma.service.findMany({
     where: { active: true },
-    orderBy: [
-      { createdAt: "desc" },
-      { name: "asc" },
-    ],
+    orderBy: [{ createdAt: "desc" }, { name: "asc" }],
     take: 12,
     select: {
       id: true,
@@ -68,13 +69,13 @@ export default async function HomePage() {
   });
 
   const featuredService =
-    services.find((service: Service) => isCpfService(service.name))
+    services.find((service: Service) => isCpfService(service.name)) ||
     services[0] ||
     null;
 
   const secondaryServices = services.filter(
-  (service: Service) => service.id !== featuredService?.id
-    );
+    (service: Service) => service.id !== featuredService?.id
+  );
 
   const primaryHref = featuredService
     ? `/continue?serviceId=${featuredService.id}`
@@ -208,7 +209,9 @@ export default async function HomePage() {
 
               <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {secondaryServices.map((service: Service) => {
-                  const serviceHighlights = normalizeHighlights(service.highlights);
+                  const serviceHighlights = normalizeHighlights(
+                    service.highlights
+                  );
 
                   return (
                     <div
@@ -239,6 +242,23 @@ export default async function HomePage() {
               </div>
             </div>
           )}
+
+          <section className="mt-14 rounded-3xl border border-white/10 bg-white/95 p-6 text-center text-slate-900 shadow-sm backdrop-blur sm:p-8">
+            <p className="text-sm font-semibold text-blue-700">
+              Canais oficiais da DesenrolaGov
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black text-slate-900">
+              Acompanhe nossas redes sociais
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Veja novidades, informações e nossos canais oficiais de
+              atendimento.
+            </p>
+
+            <SocialLinks className="mt-5 justify-center" />
+          </section>
         </div>
       </section>
     </main>
