@@ -16,9 +16,12 @@ type User = {
 type Service = {
   id: string;
   name: string;
-  description: string;
+  description?: string | null;
   price: number;
   active: boolean;
+  type?: string | null;
+  highlights?: unknown;
+  documents?: unknown;
 };
 
 type Props = {
@@ -36,15 +39,59 @@ function isCpfService(serviceName: string) {
   return serviceName.toLowerCase().includes("cpf");
 }
 
-function getShortServiceSummary(serviceName: string) {
-  if (isCpfService(serviceName)) {
-    return "Atendimento privado com acompanhamento do início ao fim.";
+function normalizeHighlights(input: unknown, serviceName: string) {
+  if (Array.isArray(input)) {
+    const values = input
+      .filter(
+        (item): item is string => typeof item === "string" && item.trim().length > 0
+      )
+      .slice(0, 3);
+
+    if (values.length) return values;
   }
 
-  return "Fluxo organizado com pagamento seguro e acompanhamento.";
+  if (isCpfService(serviceName)) {
+    return [
+      "Atendimento privado completo",
+      "Acompanhamento do início ao fim",
+      "Processo simples e organizado",
+    ];
+  }
+
+  return [
+    "Fluxo organizado",
+    "Pagamento seguro",
+    "Suporte durante todo o processo",
+  ];
 }
 
-function getSuggestedDocuments(serviceName: string) {
+function normalizeDocuments(input: unknown, serviceName: string) {
+  if (Array.isArray(input)) {
+    const values = input
+      .map((item) => {
+        if (typeof item === "string") return item;
+
+        if (item && typeof item === "object") {
+          const obj = item as Record<string, unknown>;
+          if (typeof obj.label === "string" && obj.label.trim()) {
+            return obj.label.trim();
+          }
+          if (typeof obj.name === "string" && obj.name.trim()) {
+            return obj.name.trim();
+          }
+          if (typeof obj.key === "string" && obj.key.trim()) {
+            return obj.key.trim();
+          }
+        }
+
+        return null;
+      })
+      .filter((item): item is string => Boolean(item))
+      .slice(0, 4);
+
+    if (values.length) return values;
+  }
+
   if (isCpfService(serviceName)) {
     return ["Documento com foto", "CPF", "Comprovante relacionado ao caso"];
   }
@@ -86,8 +133,8 @@ export default function ServicesClient({ user }: Props) {
           : [];
 
         setServices(normalizedServices);
-      } catch (error) {
-        console.error("Erro ao buscar serviços:", error);
+      } catch (err) {
+        console.error("Erro ao buscar serviços:", err);
         setError("Erro inesperado ao buscar serviços.");
         setServices([]);
       } finally {
@@ -100,11 +147,19 @@ export default function ServicesClient({ user }: Props) {
 
   const featuredService = useMemo(() => {
     return (
-      services.find((service) => isCpfService(service.name)) ||
+      services.find((service: Service) => isCpfService(service.name)) ||
       services[0] ||
       null
     );
   }, [services]);
+
+  const otherServices = useMemo(() => {
+    if (!featuredService) return services;
+
+    return services.filter(
+      (service: Service) => service.id !== featuredService.id
+    );
+  }, [services, featuredService]);
 
   async function handleCreateOrder(serviceId: string) {
     try {
@@ -153,12 +208,55 @@ export default function ServicesClient({ user }: Props) {
 
       router.push(`/payment?orderId=${orderId}`);
       router.refresh();
-    } catch (error) {
-      console.error("Erro ao criar pedido:", error);
+    } catch (err) {
+      console.error("Erro ao criar pedido:", err);
       setError("Erro inesperado ao criar pedido.");
     } finally {
       setCreatingOrderId(null);
     }
+  }
+
+  function renderLegalBlock(serviceId: string) {
+    return (
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            checked={legalAcceptedByService[serviceId] || false}
+            onChange={(e) =>
+              setLegalAcceptedByService((prev) => ({
+                ...prev,
+                [serviceId]: e.target.checked,
+              }))
+            }
+            className="mt-1 h-4 w-4 rounded border-slate-300"
+          />
+          <span className="text-sm leading-6 text-slate-700">
+            Li e aceito os{" "}
+            <Link
+              href="/terms"
+              target="_blank"
+              className="font-semibold text-slate-900 underline"
+            >
+              Termos de Uso
+            </Link>{" "}
+            e a{" "}
+            <Link
+              href="/privacy"
+              target="_blank"
+              className="font-semibold text-slate-900 underline"
+            >
+              Política de Privacidade
+            </Link>{" "}
+            para continuar.
+          </span>
+        </label>
+
+        <p className="mt-3 text-xs text-slate-500">
+          Versão legal vigente: {getLegalVersionLabel()}.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -169,46 +267,38 @@ export default function ServicesClient({ user }: Props) {
         <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-              Assessoria privada para regularização de CPF
+              Assessoria privada para regularização documental
             </div>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              Regularize seu CPF com mais clareza, suporte e acompanhamento
+              Escolha o serviço e siga direto para a próxima etapa
             </h1>
 
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-              Resolva sua solicitação com um fluxo simples: contratação,
-              pagamento, envio de documentos e acompanhamento em um só lugar.
+              Contrate online, pague com segurança, envie seus documentos no
+              local certo e acompanhe tudo pelo painel.
             </p>
-
-            <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
-              <strong>Atenção:</strong> a DesenrolaGov é uma assessoria privada
-              e não possui vínculo com a Receita Federal ou outros órgãos do
-              governo.
-            </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={() => {
                   if (featuredService) {
-                    handleCreateOrder(featuredService.id);
+                    const section = document.getElementById("servicos-disponiveis");
+                    section?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }
                 }}
                 disabled={loading || !featuredService}
                 className="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Carregando..." : "Regularizar meu CPF agora"}
+                {loading ? "Carregando..." : "Ver serviços disponíveis"}
               </button>
 
-              <button
-                onClick={() => {
-                  const section = document.getElementById("servico-principal");
-                  section?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-                className="rounded-2xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              <Link
+                href={user ? "/orders" : "/login"}
+                className="rounded-2xl border border-slate-300 px-6 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
-                Ver serviço disponível
-              </button>
+                {user ? "Ver meus pedidos" : "Já tenho conta"}
+              </Link>
             </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -248,7 +338,7 @@ export default function ServicesClient({ user }: Props) {
                   Fluxo organizado
                 </p>
                 <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                  Uma jornada mais clara para regularização de CPF
+                  Uma jornada mais clara para contratação online
                 </h2>
               </div>
 
@@ -260,10 +350,10 @@ export default function ServicesClient({ user }: Props) {
             <div className="mt-6 space-y-3">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm font-semibold text-slate-900">
-                  1. Contrate o serviço
+                  1. Escolha o serviço
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Inicie sua solicitação com uma estrutura simples e organizada.
+                  Selecione a opção certa para sua necessidade.
                 </p>
               </div>
 
@@ -310,122 +400,107 @@ export default function ServicesClient({ user }: Props) {
           </div>
         ) : null}
 
-        <section id="servico-principal" className="mt-14">
+        <section id="servicos-disponiveis" className="mt-14">
           <div>
             <p className="text-sm font-semibold text-blue-700">
-              Serviço disponível
+              Serviços disponíveis
             </p>
             <h2 className="mt-2 text-3xl font-bold text-slate-900">
-              Regularização de CPF
+              Escolha a opção ideal para seu atendimento
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Escolha o serviço e siga direto para a próxima etapa.
+              Todos os serviços ativos aparecem abaixo.
             </p>
           </div>
 
           {loading ? (
             <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              Carregando serviço...
+              Carregando serviços...
             </div>
-          ) : !featuredService ? (
+          ) : services.length === 0 ? (
             <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm text-slate-600">
               Nenhum serviço disponível no momento.
             </div>
           ) : (
-            <div className="mt-6 max-w-xl rounded-3xl border border-blue-200 bg-white p-6 shadow-sm ring-1 ring-blue-100">
-              <div className="flex items-start justify-between gap-3">
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                  Serviço principal
-                </span>
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              {services.map((service: Service) => {
+                const highlights = normalizeHighlights(
+                  service.highlights,
+                  service.name
+                );
+                const documents = normalizeDocuments(
+                  service.documents,
+                  service.name
+                );
 
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  Ativo
-                </span>
-              </div>
+                return (
+                  <div
+                    key={service.id}
+                    className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                        {service.id === featuredService?.id
+                          ? "Serviço principal"
+                          : "Serviço disponível"}
+                      </span>
 
-              <h3 className="mt-4 text-3xl font-bold text-slate-900">
-                {featuredService.name}
-              </h3>
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        Ativo
+                      </span>
+                    </div>
 
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {getShortServiceSummary(featuredService.name)}
-              </p>
+                    <h3 className="mt-4 text-3xl font-bold text-slate-900">
+                      {service.name}
+                    </h3>
 
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Valor
-                </p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">
-                  {formatCurrency(featuredService.price)}
-                </p>
-              </div>
+                    <div className="mt-4 space-y-2 text-sm text-slate-700">
+                      {highlights.map((item) => (
+                        <p key={item}>• {item}</p>
+                      ))}
+                    </div>
 
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Documentos normalmente solicitados
-                </p>
+                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Valor
+                      </p>
+                      <p className="mt-2 text-3xl font-bold text-slate-900">
+                        {formatCurrency(service.price)}
+                      </p>
+                    </div>
 
-                <div className="mt-3 space-y-2 text-sm text-slate-700">
-                  {getSuggestedDocuments(featuredService.name).map((item) => (
-                    <p key={item}>• {item}</p>
-                  ))}
-                </div>
-              </div>
+                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Documentos normalmente solicitados
+                      </p>
 
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <label className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={legalAcceptedByService[featuredService.id] || false}
-                    onChange={(e) =>
-                      setLegalAcceptedByService((prev) => ({
-                        ...prev,
-                        [featuredService.id]: e.target.checked,
-                      }))
-                    }
-                    className="mt-1 h-4 w-4 rounded border-slate-300"
-                  />
-                  <span className="text-sm leading-6 text-slate-700">
-                    Li e aceito os{" "}
-                    <Link
-                      href="/terms"
-                      target="_blank"
-                      className="font-semibold text-slate-900 underline"
-                    >
-                      Termos de Uso
-                    </Link>{" "}
-                    e a{" "}
-                    <Link
-                      href="/privacy"
-                      target="_blank"
-                      className="font-semibold text-slate-900 underline"
-                    >
-                      Política de Privacidade
-                    </Link>{" "}
-                    para continuar.
-                  </span>
-                </label>
+                      <div className="mt-3 space-y-2 text-sm text-slate-700">
+                        {documents.map((item) => (
+                          <p key={item}>• {item}</p>
+                        ))}
+                      </div>
+                    </div>
 
-                <p className="mt-3 text-xs text-slate-500">
-                  Versão legal vigente: {getLegalVersionLabel()}.
-                </p>
-              </div>
+                    {renderLegalBlock(service.id)}
 
-              <div className="mt-6">
-                <button
-                  onClick={() => handleCreateOrder(featuredService.id)}
-                  disabled={creatingOrderId === featuredService.id}
-                  className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {creatingOrderId === featuredService.id
-                    ? "Continuando..."
-                    : "Começar agora"}
-                </button>
+                    <div className="mt-6">
+                      <button
+                        onClick={() => handleCreateOrder(service.id)}
+                        disabled={creatingOrderId === service.id}
+                        className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {creatingOrderId === service.id
+                          ? "Continuando..."
+                          : "Começar agora"}
+                      </button>
 
-                <p className="mt-3 text-center text-xs leading-5 text-slate-500">
-                  Próxima etapa: continuar o atendimento.
-                </p>
-              </div>
+                      <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+                        Próxima etapa: continuar o atendimento.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

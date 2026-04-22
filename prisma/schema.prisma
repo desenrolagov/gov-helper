@@ -32,7 +32,7 @@ model Service {
   description  String?  // opcional agora
   price        Float
 
-  type         String   // CPF, RG, etc
+  type         String   @default("OUTRO")
   highlights   Json?    // bullets de conversão
   documents    Json?    // documentos necessários
 
