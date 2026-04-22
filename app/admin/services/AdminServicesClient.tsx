@@ -1,5 +1,6 @@
 "use client";
 
+import { generateServiceData } from "@/lib/service-generator";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import AppNav from "@/components/AppNav";
 
@@ -82,17 +83,20 @@ export default function AdminServicesClient({ user }: { user: User }) {
       .finally(() => setLoadingServices(false));
   }, []);
 
-  async function handleCreateService(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+async function handleCreateService(e: FormEvent<HTMLFormElement>) {
+  e.preventDefault();
 
-    const parsedPrice = parseCurrencyInput(price);
+  const parsedPrice = parseCurrencyInput(price);
 
-    if (!name || !description || !parsedPrice) {
-      alert("Preencha todos os campos.");
-      return;
-    }
+  if (!name || !parsedPrice) {
+    alert("Preencha nome e preço.");
+    return;
+  }
 
-    setSubmitting(true);
+  setSubmitting(true);
+
+  try {
+    const generated = generateServiceData(name);
 
     await fetch("/api/services", {
       method: "POST",
@@ -101,9 +105,17 @@ export default function AdminServicesClient({ user }: { user: User }) {
       },
       body: JSON.stringify({
         name,
-        description,
+
+        // 🔥 descrição agora vira fallback (opcional)
+        description: description || generated.highlights.join("\n"),
+
         price: parsedPrice,
         codePrefix: normalizePrefix(codePrefix),
+
+        // 🚀 NOVO SISTEMA
+        type: generated.type,
+        highlights: generated.highlights,
+        documents: generated.documents,
       }),
     });
 
@@ -113,8 +125,13 @@ export default function AdminServicesClient({ user }: { user: User }) {
     setCodePrefix("");
 
     await refreshServices();
+
+  } catch (err) {
+    alert("Erro ao criar serviço");
+  } finally {
     setSubmitting(false);
   }
+}
 
   return (
     <div className="min-h-screen bg-slate-50">
