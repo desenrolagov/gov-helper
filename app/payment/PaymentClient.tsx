@@ -290,9 +290,9 @@ export default function PaymentClient() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-sm">
             <div className="text-sm font-medium text-slate-500">
               Carregando pedido...
             </div>
@@ -304,18 +304,18 @@ export default function PaymentClient() {
 
   if (!orderId) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h1 className="text-2xl font-bold text-slate-950">
+      <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-8 shadow-sm">
+            <h1 className="text-2xl font-black text-slate-950">
               Pedido não informado
             </h1>
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-sm leading-6 text-slate-600">
               Volte para a página inicial e reinicie o atendimento.
             </p>
             <Link
               href="/"
-              className="mt-6 inline-flex rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Ir para o início
             </Link>
@@ -326,117 +326,164 @@ export default function PaymentClient() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            Etapa 2 de 2 • Pagamento seguro
+          </div>
+          <div className="hidden text-xs font-medium text-slate-500 sm:block">
+            Próximo passo: envio de documentos
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-8">
+          <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
               Pagamento do atendimento
             </div>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            <h1 className="mt-4 max-w-md text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">
               Finalize o pagamento para liberar a próxima etapa
             </h1>
 
-            <p className="mt-3 text-base leading-7 text-slate-600">
+            <p className="mt-3 max-w-md text-base leading-7 text-slate-600">
               Depois da confirmação do pagamento, seu pedido segue para envio de
               documentos e acompanhamento.
             </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              {order?.orderCode ? <OrderCodeBadge code={order.orderCode} /> : null}
-
-              <Link
-                href="/orders"
-                className="text-sm font-semibold text-slate-700 underline"
-              >
-                Ver meus pedidos
-              </Link>
+            <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+              Atenção: a DesenrolaGov é uma assessoria privada e não possui vínculo
+              com a Receita Federal ou outros órgãos do governo.
             </div>
 
             {success ? (
-              <div className="mt-5 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+              <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                 Pagamento recebido. Estamos confirmando o status do seu pedido...
               </div>
             ) : null}
 
             {canceled ? (
-              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                 O pagamento foi cancelado. Você pode tentar novamente abaixo.
               </div>
             ) : null}
 
             {error ? (
-              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
               </div>
             ) : null}
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              {order?.orderCode ? <OrderCodeBadge code={order.orderCode} /> : null}
+
+              <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                {getStatusLabel(order?.status)}
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  Serviço
+                  1. Pagamento
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
-                  {order?.service?.name || "Serviço não informado"}
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Você conclui em ambiente seguro.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  Status atual
+                  2. Confirmação
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
-                  {getStatusLabel(order?.status)}
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  O sistema verifica o status automaticamente.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  Valor
+                  3. Documentos
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
-                  {formatCurrency(order?.totalAmount)}
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Depois disso, você segue para upload e andamento.
                 </p>
               </div>
             </div>
 
-            {order?.service?.description ? (
-              <div className="mt-6 rounded-2xl border border-slate-200 p-5">
-                <div className="text-sm font-semibold text-slate-900">
-                  Sobre o atendimento
-                </div>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
-                  {order.service.description}
-                </p>
+            <div className="mt-6 rounded-2xl border border-slate-200 p-5">
+              <div className="text-sm font-semibold text-slate-900">
+                O que acontece após o pagamento?
               </div>
-            ) : null}
+              <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                <li>• Seu pagamento é confirmado em ambiente protegido.</li>
+                <li>• O pedido avança automaticamente para a próxima etapa.</li>
+                <li>• Você envia os documentos necessários para continuar.</li>
+              </ul>
+            </div>
           </section>
 
-          <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 className="text-xl font-bold text-slate-950">
-              Confirmar pagamento
-            </h2>
-
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              O checkout será aberto em ambiente seguro após a confirmação legal.
-            </p>
-
-            {latestPayment ? (
-              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                <div className="font-semibold text-slate-900">
-                  Última tentativa de pagamento
+          <aside className="rounded-[28px] border-2 border-slate-900 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.08)] sm:p-8">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-500">
+                  Resumo do pedido
                 </div>
-                <div className="mt-2">
-                  Status: {getLatestPaymentStatusLabel(latestPayment.status)}
-                </div>
-                <div className="mt-1">
-                  Valor: {formatCurrency(latestPayment.amount)}
-                </div>
+                <h2 className="mt-1 text-2xl font-black leading-tight text-slate-950">
+                  {order?.service?.name || "Serviço não informado"}
+                </h2>
               </div>
+
+              <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                Checkout seguro
+              </div>
+            </div>
+
+            {order?.service?.description ? (
+              <p className="mt-4 text-sm leading-7 text-slate-600">
+                {order.service.description}
+              </p>
             ) : null}
 
-            <label className="mt-6 flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
+            <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Situação atual
+                </div>
+                <div className="mt-2 text-sm font-semibold text-slate-900">
+                  {getStatusLabel(order?.status)}
+                </div>
+
+                {latestPayment ? (
+                  <div className="mt-3 text-sm text-slate-600">
+                    Última tentativa:{" "}
+                    <span className="font-medium text-slate-900">
+                      {getLatestPaymentStatusLabel(latestPayment.status)}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-3 text-sm text-slate-600">
+                    Pedido pronto para gerar checkout.
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 p-4 sm:min-w-[190px]">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  Valor
+                </div>
+                <div className="mt-1 text-4xl font-black text-slate-950">
+                  {formatCurrency(order?.totalAmount)}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              Você está a um passo de liberar a próxima etapa do atendimento.
+            </div>
+
+            <label className="mt-5 flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
               <input
                 type="checkbox"
                 checked={acceptedLegal}
@@ -469,19 +516,22 @@ export default function PaymentClient() {
               type="button"
               onClick={handleCreateCheckout}
               disabled={creatingCheckout || !acceptedLegal}
-              className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-5 inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {creatingCheckout ? "Redirecionando..." : "Ir para pagamento seguro"}
             </button>
 
-            <div className="mt-4 text-center text-xs text-slate-500">
-              Após o pagamento, o sistema verifica o status e envia você para a
-              próxima etapa automaticamente.
+            <div className="mt-3 text-center text-xs text-slate-500">
+              Você será levado ao ambiente seguro de pagamento.
             </div>
 
-            <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-              A DesenrolaGov é uma assessoria privada e não possui vínculo com
-              órgãos do governo.
+            <div className="mt-5 border-t border-slate-200 pt-5">
+              <Link
+                href="/orders"
+                className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 px-4 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Ver meus pedidos
+              </Link>
             </div>
           </aside>
         </div>

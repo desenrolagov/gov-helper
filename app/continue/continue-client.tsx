@@ -161,8 +161,6 @@ export default function ContinueClient() {
 
       setSubmitting(true);
 
-      // 1) Tenta criar pedido direto primeiro.
-      // Se o usuário já estiver logado, segue sem cadastro.
       const directOrderAttempt = await createOrder(service.id);
 
       if (directOrderAttempt.res.ok) {
@@ -178,7 +176,6 @@ export default function ContinueClient() {
         return;
       }
 
-      // 2) Se não estiver autenticado, cria conta
       if (directOrderAttempt.res.status === 401) {
         const registerRes = await fetch("/api/register", {
           method: "POST",
@@ -203,7 +200,6 @@ export default function ContinueClient() {
           return;
         }
 
-        // 3) Faz login automático
         const loginRes = await fetch("/api/auth/login", {
           method: "POST",
           headers: {
@@ -225,7 +221,6 @@ export default function ContinueClient() {
           return;
         }
 
-        // 4) Cria o pedido já autenticado
         const orderAttempt = await createOrder(service.id);
 
         if (!orderAttempt.res.ok) {
@@ -263,22 +258,30 @@ export default function ContinueClient() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            Etapa 1 de 2 • Cadastro rápido
+          </div>
+          <div className="hidden text-xs font-medium text-slate-500 sm:block">
+            Próximo passo: pagamento seguro
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr] lg:gap-8">
+          <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
               Continuação do atendimento
             </div>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-              Faça seu cadastro rápido e siga ao pagamento
+            <h1 className="mt-4 max-w-md text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">
+              Cadastre-se agora e siga para o pagamento
             </h1>
 
-            <p className="mt-3 text-base leading-7 text-slate-600">
-              Para quem está chegando agora, o caminho mais rápido é criar o
-              acesso nesta etapa e seguir direto para o pagamento, sem perder o
-              fluxo.
+            <p className="mt-3 max-w-md text-base leading-7 text-slate-600">
+              Este é o caminho mais rápido para iniciar seu atendimento sem perder
+              tempo com etapas desnecessárias.
             </p>
 
             <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
@@ -287,18 +290,18 @@ export default function ContinueClient() {
             </div>
 
             {error ? (
-              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
               </div>
             ) : null}
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  1. Cadastro rápido
+                  1. Cadastro
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
-                  Você cria seu acesso em menos de 1 minuto.
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Você cria seu acesso em poucos segundos.
                 </p>
               </div>
 
@@ -306,57 +309,77 @@ export default function ContinueClient() {
                 <div className="text-sm font-semibold text-slate-900">
                   2. Pagamento
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
-                  O checkout é aberto logo após a criação da conta.
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  O checkout é liberado logo depois.
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-sm font-semibold text-slate-900">
-                  3. Envio de documentos
+                  3. Documentos
                 </div>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm leading-6 text-slate-600">
                   Depois do pagamento, o pedido segue normalmente.
                 </p>
               </div>
             </div>
           </section>
 
-          <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="text-sm font-semibold text-slate-500">
-              Resumo do serviço
-            </div>
-
+          <aside className="rounded-[28px] border-2 border-slate-900 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.08)] sm:p-8">
             {loading ? (
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
                 Carregando serviço...
               </div>
             ) : !service ? (
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
                 Nenhum serviço disponível no momento.
               </div>
             ) : (
               <>
-                <h2 className="mt-2 text-2xl font-bold text-slate-950">
-                  {service.name}
-                </h2>
-
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {service.description ||
-                    "Atendimento privado com organização do processo e acompanhamento do pedido."}
-                </p>
-
-                <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Valor
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-500">
+                      Serviço selecionado
+                    </div>
+                    <h2 className="mt-1 text-2xl font-black leading-tight text-slate-950">
+                      {service.name}
+                    </h2>
                   </div>
-                  <div className="mt-1 text-3xl font-black text-slate-950">
-                    {formatCurrency(Number(service.price))}
+
+                  <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    Atendimento online
                   </div>
                 </div>
 
-                <div className="mt-6 space-y-4">
-                  <div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+                  <div className="rounded-2xl border border-slate-200 p-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Ideal para
+                    </div>
+                    <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                      <li>• CPF pendente de regularização</li>
+                      <li>• Cadastro com inconsistência</li>
+                      <li>• Quem quer resolver com suporte</li>
+                    </ul>
+                  </div>
+
+                  <div className="rounded-2xl bg-slate-50 p-4 sm:min-w-[180px]">
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Valor
+                    </div>
+                    <div className="mt-1 text-4xl font-black text-slate-950">
+                      {formatCurrency(Number(service.price))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  Cadastro rápido nesta etapa. Depois disso, o fluxo segue direto
+                  para o pagamento seguro.
+                </div>
+
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
                     <label
                       htmlFor="name"
                       className="mb-2 block text-sm font-medium text-slate-700"
@@ -370,11 +393,11 @@ export default function ContinueClient() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       autoComplete="name"
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
                     />
                   </div>
 
-                  <div>
+                  <div className="sm:col-span-2">
                     <label
                       htmlFor="email"
                       className="mb-2 block text-sm font-medium text-slate-700"
@@ -388,11 +411,11 @@ export default function ContinueClient() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       autoComplete="email"
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
                     />
                   </div>
 
-                  <div>
+                  <div className="sm:col-span-2">
                     <label
                       htmlFor="password"
                       className="mb-2 block text-sm font-medium text-slate-700"
@@ -406,7 +429,7 @@ export default function ContinueClient() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       autoComplete="new-password"
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
                     />
                     <p className="mt-2 text-xs text-slate-500">
                       Use pelo menos 6 caracteres.
@@ -414,7 +437,7 @@ export default function ContinueClient() {
                   </div>
                 </div>
 
-                <label className="mt-6 flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
+                <label className="mt-5 flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
                   <input
                     type="checkbox"
                     checked={acceptedLegal}
@@ -447,20 +470,19 @@ export default function ContinueClient() {
                   type="button"
                   onClick={handleContinue}
                   disabled={!canSubmit}
-                  className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-5 inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? "Continuando..." : "Criar conta e ir para pagamento"}
                 </button>
 
-                <div className="mt-4 text-center text-xs text-slate-500">
-                  Ao continuar, sua conta é criada, o pedido é aberto e o fluxo
-                  segue para o checkout.
+                <div className="mt-3 text-center text-xs text-slate-500">
+                  Você cria sua conta agora e segue para a próxima etapa.
                 </div>
 
-                <div className="mt-6">
+                <div className="mt-5 border-t border-slate-200 pt-5">
                   <Link
                     href={loginHref}
-                    className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 px-4 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   >
                     Já tenho conta
                   </Link>
