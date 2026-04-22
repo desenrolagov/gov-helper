@@ -2,8 +2,7 @@ import Link from "next/link";
 
 type Props = {
   className?: string;
-  iconClassName?: string;
-  textMode?: boolean;
+  size?: "sm" | "md";
 };
 
 const INSTAGRAM_URL = "https://www.instagram.com/desenrolagov.oficial/";
@@ -11,32 +10,17 @@ const FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61565289068738";
 
 export default function SocialLinks({
   className = "",
-  iconClassName = "h-5 w-5",
-  textMode = false,
+  size = "md",
 }: Props) {
-  if (textMode) {
-    return (
-      <div className={`flex flex-wrap items-center gap-4 ${className}`}>
-        <Link
-          href={INSTAGRAM_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-medium text-slate-600 underline underline-offset-4 transition hover:text-slate-900"
-        >
-          Instagram
-        </Link>
+  const wrapper =
+    size === "sm"
+      ? "h-10 w-10 rounded-full"
+      : "h-11 w-11 rounded-full";
 
-        <Link
-          href={FACEBOOK_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-medium text-slate-600 underline underline-offset-4 transition hover:text-slate-900"
-        >
-          Facebook
-        </Link>
-      </div>
-    );
-  }
+  const icon =
+    size === "sm"
+      ? "h-4 w-4"
+      : "h-5 w-5";
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
@@ -45,12 +29,12 @@ export default function SocialLinks({
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Instagram da DesenrolaGov"
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900"
+        className={`inline-flex ${wrapper} items-center justify-center border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900`}
       >
         <svg
           viewBox="0 0 24 24"
           fill="none"
-          className={iconClassName}
+          className={icon}
           stroke="currentColor"
           strokeWidth="1.8"
           aria-hidden="true"
@@ -66,12 +50,12 @@ export default function SocialLinks({
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Facebook da DesenrolaGov"
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900"
+        className={`inline-flex ${wrapper} items-center justify-center border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-900`}
       >
         <svg
           viewBox="0 0 24 24"
           fill="currentColor"
-          className={iconClassName}
+          className={icon}
           aria-hidden="true"
         >
           <path d="M13.5 21v-7h2.3l.4-2.7h-2.7V9.6c0-.8.2-1.3 1.4-1.3h1.5V5.9c-.3 0-1.1-.1-2.1-.1-2.1 0-3.5 1.3-3.5 3.7v1.8H8.5V14H11v7h2.5Z" />
