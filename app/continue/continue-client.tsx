@@ -54,7 +54,7 @@ export default function ContinueClient() {
         const data = await res.json().catch(() => null);
 
         if (!res.ok) {
-          setError(data?.error || "Não foi possível carregar o serviço.");
+          setError(data?.error || "Erro ao carregar serviço.");
           setService(null);
           return;
         }
@@ -72,11 +72,10 @@ export default function ContinueClient() {
         setService(selected);
 
         if (!selected) {
-          setError("Nenhum serviço ativo foi encontrado.");
+          setError("Nenhum serviço disponível.");
         }
       } catch (err) {
-        console.error("Erro ao carregar serviço:", err);
-        setError("Erro inesperado ao carregar o serviço.");
+        setError("Erro inesperado.");
         setService(null);
       } finally {
         setLoading(false);
@@ -87,32 +86,21 @@ export default function ContinueClient() {
   }, [serviceId]);
 
   const callbackUrl = useMemo(() => {
-    if (service?.id) {
-      return `/continue?serviceId=${service.id}`;
-    }
-
-    if (serviceId) {
-      return `/continue?serviceId=${serviceId}`;
-    }
-
+    if (service?.id) return `/continue?serviceId=${service.id}`;
+    if (serviceId) return `/continue?serviceId=${serviceId}`;
     return "/continue";
   }, [service?.id, serviceId]);
 
-  const loginHref = useMemo(() => {
-    return `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-  }, [callbackUrl]);
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
 
-  const canSubmit = useMemo(() => {
-    return (
-      !loading &&
-      !submitting &&
-      !!service?.id &&
-      !!name.trim() &&
-      !!email.trim() &&
-      password.length >= 6 &&
-      acceptedLegal
-    );
-  }, [loading, submitting, service?.id, name, email, password, acceptedLegal]);
+  const canSubmit =
+    !loading &&
+    !submitting &&
+    !!service?.id &&
+    !!name.trim() &&
+    !!email.trim() &&
+    password.length >= 6 &&
+    acceptedLegal;
 
   async function createOrder(selectedServiceId: string) {
     const res = await fetch("/api/orders", {
@@ -129,7 +117,6 @@ export default function ContinueClient() {
     });
 
     const data = await res.json().catch(() => null);
-
     return { res, data };
   }
 
@@ -137,54 +124,30 @@ export default function ContinueClient() {
     try {
       setError("");
 
-      if (!service?.id) {
-        setError("Serviço não encontrado.");
-        return;
-      }
-
-      if (!name.trim() || !email.trim() || !password) {
-        setError("Preencha nome, e-mail e senha.");
-        return;
-      }
-
-      if (password.length < 6) {
-        setError("A senha deve ter pelo menos 6 caracteres.");
-        return;
-      }
-
-      if (!acceptedLegal) {
-        setError(
-          "Para continuar, aceite os Termos de Uso e a Política de Privacidade."
-        );
-        return;
-      }
+      if (!service?.id) return setError("Serviço não encontrado.");
+      if (!name || !email || !password)
+        return setError("Preencha os dados.");
+      if (password.length < 6)
+        return setError("Senha mínima de 6 caracteres.");
+      if (!acceptedLegal)
+        return setError("Aceite os termos para continuar.");
 
       setSubmitting(true);
 
-      const directOrderAttempt = await createOrder(service.id);
+      const direct = await createOrder(service.id);
 
-      if (directOrderAttempt.res.ok) {
-        const orderId = directOrderAttempt.data?.order?.id;
-
-        if (!orderId) {
-          setError("Pedido criado, mas o identificador não foi retornado.");
-          return;
-        }
-
-        router.replace(`/payment?orderId=${orderId}`);
-        router.refresh();
+      if (direct.res.ok) {
+        router.replace(`/payment?orderId=${direct.data?.order?.id}`);
         return;
       }
 
-      if (directOrderAttempt.res.status === 401) {
-        const registerRes = await fetch("/api/register", {
+      if (direct.res.status === 401) {
+        await fetch("/api/register", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: name.trim(),
-            email: email.trim().toLowerCase(),
+            name,
+            email: email.toLowerCase(),
             password,
             lgpdAccepted: true,
             termsAccepted: true,
@@ -193,302 +156,141 @@ export default function ContinueClient() {
           }),
         });
 
-        const registerData = await registerRes.json().catch(() => null);
-
-        if (!registerRes.ok) {
-          setError(registerData?.error || "Não foi possível criar sua conta.");
-          return;
-        }
-
-        const loginRes = await fetch("/api/auth/login", {
+        await fetch("/api/auth/login", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: email.trim().toLowerCase(),
+            email: email.toLowerCase(),
             password,
           }),
         });
 
-        const loginData = await loginRes.json().catch(() => null);
+        const order = await createOrder(service.id);
 
-        if (!loginRes.ok) {
-          setError(
-            loginData?.error ||
-              "Conta criada, mas não foi possível iniciar sua sessão automaticamente."
-          );
+        if (!order.res.ok) {
+          setError("Erro ao continuar.");
           return;
         }
 
-        const orderAttempt = await createOrder(service.id);
-
-        if (!orderAttempt.res.ok) {
-          setError(orderAttempt.data?.error || "Não foi possível continuar.");
-          return;
-        }
-
-        const orderId = orderAttempt.data?.order?.id;
-
-        if (!orderId) {
-          setError("Pedido criado, mas o identificador não foi retornado.");
-          return;
-        }
-
-        router.replace(`/payment?orderId=${orderId}`);
-        router.refresh();
+        router.replace(`/payment?orderId=${order.data?.order?.id}`);
         return;
       }
 
-      if (directOrderAttempt.res.status === 403) {
-        setError(
-          directOrderAttempt.data?.error ||
-            "Sua conta atual não pode iniciar esse atendimento."
-        );
-        return;
-      }
-
-      setError(directOrderAttempt.data?.error || "Não foi possível continuar.");
-    } catch (err) {
-      console.error("Erro ao continuar o atendimento:", err);
-      setError("Erro inesperado ao continuar o atendimento.");
+      setError("Erro ao continuar.");
+    } catch {
+      setError("Erro inesperado.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 sm:py-8">
+    <main className="min-h-screen bg-slate-50 px-4 py-6">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-            Etapa 1 de 2 • Cadastro rápido
-          </div>
-          <div className="hidden text-xs font-medium text-slate-500 sm:block">
-            Próximo passo: pagamento seguro
-          </div>
-        </div>
 
-        <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr] lg:gap-8">
-          <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-              Continuação do atendimento
-            </div>
+        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
 
-            <h1 className="mt-4 max-w-md text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">
-              Cadastre-se agora e siga para o pagamento
+          {/* ESQUERDA */}
+          <section className="rounded-3xl bg-white p-6 shadow-sm">
+
+            <h1 className="text-3xl font-black leading-tight">
+              Finalize seu cadastro
             </h1>
 
-            <p className="mt-3 max-w-md text-base leading-7 text-slate-600">
-              Este é o caminho mais rápido para iniciar seu atendimento sem perder
-              tempo com etapas desnecessárias.
-            </p>
+            <ul className="mt-4 max-w-md space-y-2 text-sm leading-7 text-slate-600">
+              <li>• Cadastro rápido</li>
+              <li>• Pagamento na próxima etapa</li>
+              <li>• Envio de documentos depois</li>
+            </ul>
 
-            <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              Atenção: a DesenrolaGov é uma assessoria privada e não possui vínculo
-              com a Receita Federal ou outros órgãos do governo.
+            <div className="mt-4 max-w-md rounded-2xl bg-red-50 p-3 text-sm text-red-700">
+              Assessoria privada, sem vínculo com órgãos públicos.
             </div>
 
-            {error ? (
-              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error && (
+              <div className="mt-4 rounded-2xl bg-red-50 p-3 text-sm text-red-700">
                 {error}
               </div>
-            ) : null}
+            )}
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-semibold text-slate-900">
-                  1. Cadastro
-                </div>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Você cria seu acesso em poucos segundos.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-semibold text-slate-900">
-                  2. Pagamento
-                </div>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  O checkout é liberado logo depois.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="text-sm font-semibold text-slate-900">
-                  3. Documentos
-                </div>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Depois do pagamento, o pedido segue normalmente.
-                </p>
-              </div>
-            </div>
           </section>
 
-          <aside className="rounded-[28px] border-2 border-slate-900 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.08)] sm:p-8">
+          {/* DIREITA */}
+          <aside className="rounded-3xl border-2 border-slate-900 bg-white p-6">
+
             {loading ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-                Carregando serviço...
-              </div>
+              <div>Carregando...</div>
             ) : !service ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
-                Nenhum serviço disponível no momento.
-              </div>
+              <div>Sem serviço.</div>
             ) : (
               <>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-500">
-                      Serviço selecionado
-                    </div>
-                    <h2 className="mt-1 text-2xl font-black leading-tight text-slate-950">
-                      {service.name}
-                    </h2>
-                  </div>
+                <h2 className="text-xl font-black">
+                  {service.name}
+                </h2>
 
-                  <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                    Atendimento online
-                  </div>
+                <ul className="mt-3 max-w-md space-y-2 text-sm leading-6 text-slate-600">
+                  <li>• Atendimento completo</li>
+                  <li>• Acompanhamento do processo</li>
+                  <li>• Suporte durante todo o fluxo</li>
+                </ul>
+
+                <div className="mt-4 text-4xl font-black">
+                  {formatCurrency(service.price)}
                 </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
-                  <div className="rounded-2xl border border-slate-200 p-4">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                      Ideal para
-                    </div>
-                    <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                      <li>• CPF pendente de regularização</li>
-                      <li>• Cadastro com inconsistência</li>
-                      <li>• Quem quer resolver com suporte</li>
-                    </ul>
-                  </div>
+                {/* FORM */}
+                <div className="mt-5 space-y-4">
 
-                  <div className="rounded-2xl bg-slate-50 p-4 sm:min-w-[180px]">
-                    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                      Valor
-                    </div>
-                    <div className="mt-1 text-4xl font-black text-slate-950">
-                      {formatCurrency(Number(service.price))}
-                    </div>
-                  </div>
+                  <input
+                    placeholder="Seu nome"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full rounded-xl border px-4 py-3"
+                  />
+
+                  <input
+                    placeholder="Seu e-mail"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-xl border px-4 py-3"
+                  />
+
+                  <input
+                    type="password"
+                    placeholder="Crie uma senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-xl border px-4 py-3"
+                  />
+
                 </div>
 
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                  Cadastro rápido nesta etapa. Depois disso, o fluxo segue direto
-                  para o pagamento seguro.
-                </div>
-
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div className="sm:col-span-2">
-                    <label
-                      htmlFor="name"
-                      className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                      Nome
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      placeholder="Digite seu nome"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      autoComplete="name"
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label
-                      htmlFor="email"
-                      className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                      E-mail
-                    </label>
-                    <input
-                      id="email"
-                      type="email"
-                      placeholder="Digite seu e-mail"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      autoComplete="email"
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label
-                      htmlFor="password"
-                      className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                      Senha
-                    </label>
-                    <input
-                      id="password"
-                      type="password"
-                      placeholder="Crie uma senha"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      autoComplete="new-password"
-                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
-                    />
-                    <p className="mt-2 text-xs text-slate-500">
-                      Use pelo menos 6 caracteres.
-                    </p>
-                  </div>
-                </div>
-
-                <label className="mt-5 flex items-start gap-3 rounded-2xl border border-slate-200 p-4">
+                <label className="mt-4 flex gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={acceptedLegal}
                     onChange={(e) => setAcceptedLegal(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300"
                   />
-                  <span className="text-sm leading-6 text-slate-700">
-                    Li e aceito os{" "}
-                    <Link
-                      href="/terms"
-                      className="font-semibold text-slate-900 underline"
-                    >
-                      Termos de Uso
-                    </Link>{" "}
-                    e a{" "}
-                    <Link
-                      href="/privacy"
-                      className="font-semibold text-slate-900 underline"
-                    >
-                      Política de Privacidade
-                    </Link>
-                    .
-                    <span className="mt-1 block text-xs text-slate-500">
-                      Versão legal vigente: {getLegalVersionLabel()}.
-                    </span>
-                  </span>
+                  Aceito termos e política
                 </label>
 
                 <button
-                  type="button"
                   onClick={handleContinue}
                   disabled={!canSubmit}
-                  className="mt-5 inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-5 w-full rounded-2xl bg-slate-900 py-4 font-bold text-white"
                 >
-                  {submitting ? "Continuando..." : "Criar conta e ir para pagamento"}
+                  {submitting ? "Carregando..." : "Continuar para pagamento"}
                 </button>
 
-                <div className="mt-3 text-center text-xs text-slate-500">
-                  Você cria sua conta agora e segue para a próxima etapa.
-                </div>
-
-                <div className="mt-5 border-t border-slate-200 pt-5">
-                  <Link
-                    href={loginHref}
-                    className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 px-4 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Já tenho conta
-                  </Link>
-                </div>
+                <Link
+                  href={loginHref}
+                  className="mt-3 block text-center text-sm text-slate-500"
+                >
+                  Já tenho conta
+                </Link>
               </>
             )}
+
           </aside>
         </div>
       </div>
