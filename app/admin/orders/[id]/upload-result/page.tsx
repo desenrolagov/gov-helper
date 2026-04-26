@@ -44,13 +44,9 @@ function getNextAction(status: string) {
 export default async function AdminUploadResultPage({ params }: PageProps) {
   const user = await getCurrentUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
-  if (user.role !== "ADMIN") {
-    redirect("/dashboard");
-  }
+  if (user.role !== "ADMIN") redirect("/dashboard");
 
   const { id } = await params;
 
@@ -71,38 +67,36 @@ export default async function AdminUploadResultPage({ params }: PageProps) {
     },
   });
 
-  if (!order) {
-    redirect("/admin/orders");
-  }
+  if (!order) redirect("/admin/orders");
 
   const paid = order.payments.some(
     (payment: { status: string }) => payment.status === "PAID"
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--primary-blue)] text-white">
       <AppNav user={user} />
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <section className="rounded-3xl border border-white/10 bg-[var(--primary-blue-strong)] p-6 shadow-xl shadow-black/20">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                Painel Admin
+              <div className="inline-flex rounded-full border border-green-400/30 bg-green-400/10 px-4 py-1 text-xs font-bold text-green-300">
+                Painel administrativo
               </div>
 
-              <h1 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">
+              <h1 className="mt-3 text-2xl font-black sm:text-3xl">
                 Enviar resultado {order.orderCode || order.id.slice(0, 8)}
               </h1>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <OrderStatusBadge status={order.status} />
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-white/70">
                   Cliente: {order.user.name} ({order.user.email})
                 </span>
               </div>
 
-              <p className="mt-3 text-sm leading-6 text-slate-600">
+              <p className="mt-3 text-sm leading-6 text-white/70">
                 Serviço: {order.service?.name || "Serviço não informado"}
               </p>
             </div>
@@ -110,7 +104,7 @@ export default async function AdminUploadResultPage({ params }: PageProps) {
             <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
               <Link
                 href={`/admin/orders/${order.id}`}
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold text-white hover:bg-white/15"
               >
                 Voltar ao pedido
               </Link>
@@ -119,116 +113,116 @@ export default async function AdminUploadResultPage({ params }: PageProps) {
                 href={`/orders/${order.id}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold text-white hover:bg-white/15"
               >
                 Abrir visão do cliente
               </Link>
             </div>
           </div>
+        </section>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Pagamento</p>
-              <p className="mt-1 text-lg font-bold text-slate-900">
-                {paid ? "Confirmado" : "Pendente"}
-              </p>
-            </div>
+        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-3xl bg-white p-5 text-[var(--text-dark)] shadow-xl">
+            <p className="text-xs font-semibold text-slate-500">Pagamento</p>
+            <p className="mt-1 text-lg font-black text-slate-950">
+              {paid ? "Confirmado" : "Pendente"}
+            </p>
+          </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Uploads do cliente</p>
-              <p className="mt-1 text-lg font-bold text-slate-900">
-                {order.uploadedFiles.length}
-              </p>
-            </div>
+          <div className="rounded-3xl bg-white p-5 text-[var(--text-dark)] shadow-xl">
+            <p className="text-xs font-semibold text-slate-500">
+              Uploads do cliente
+            </p>
+            <p className="mt-1 text-lg font-black text-slate-950">
+              {order.uploadedFiles.length}
+            </p>
+          </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Resultados finais</p>
-              <p className="mt-1 text-lg font-bold text-slate-900">
-                {order.resultFiles.length}
-              </p>
-            </div>
+          <div className="rounded-3xl bg-white p-5 text-[var(--text-dark)] shadow-xl">
+            <p className="text-xs font-semibold text-slate-500">
+              Resultados finais
+            </p>
+            <p className="mt-1 text-lg font-black text-slate-950">
+              {order.resultFiles.length}
+            </p>
+          </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Próxima ação</p>
-              <p className="mt-1 text-lg font-bold text-slate-900">
-                {getNextAction(order.status)}
-              </p>
-            </div>
+          <div className="rounded-3xl bg-white p-5 text-[var(--text-dark)] shadow-xl">
+            <p className="text-xs font-semibold text-slate-500">Próxima ação</p>
+            <p className="mt-1 text-lg font-black text-slate-950">
+              {getNextAction(order.status)}
+            </p>
           </div>
         </section>
 
         <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.9fr]">
-          <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-900">
-                Resultado final do atendimento
-              </h2>
-              <p className="mt-2 text-sm text-slate-600">
-                Envie o documento final que ficará disponível para o cliente.
-              </p>
+          <div className="rounded-3xl bg-white p-5 text-[var(--text-dark)] shadow-xl">
+            <h2 className="text-lg font-black text-slate-950">
+              Resultado final do atendimento
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Envie o documento final que ficará disponível para o cliente.
+            </p>
 
-              <div className="mt-5">
-                <AdminFinalDeliveryCard
-                  orderId={order.id}
-                  currentStatus={order.status}
-                />
-              </div>
+            <div className="mt-5">
+              <AdminFinalDeliveryCard
+                orderId={order.id}
+                currentStatus={order.status}
+              />
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">
-                    Resultados já enviados
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Histórico dos arquivos finais vinculados a este pedido.
-                  </p>
-                </div>
-
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  {order.resultFiles.length} resultado
-                  {order.resultFiles.length === 1 ? "" : "s"}
-                </span>
+          <div className="rounded-3xl bg-white p-5 text-[var(--text-dark)] shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black text-slate-950">
+                  Resultados já enviados
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  Histórico dos arquivos finais vinculados a este pedido.
+                </p>
               </div>
 
-              {order.resultFiles.length === 0 ? (
-                <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-                  Nenhum resultado final enviado ainda.
-                </div>
-              ) : (
-                <div className="mt-4 space-y-3">
-                  {order.resultFiles.map((file: ResultFileItem) => (
-                    <div
-                      key={file.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                    >
-                      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-900">
-                            {file.originalName || "Arquivo final"}
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            Enviado em: {formatDate(file.createdAt)}
-                          </p>
-                        </div>
-
-                        <a
-                          href={file.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                          Visualizar resultado
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <span className="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
+                {order.resultFiles.length} resultado
+                {order.resultFiles.length === 1 ? "" : "s"}
+              </span>
             </div>
+
+            {order.resultFiles.length === 0 ? (
+              <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
+                Nenhum resultado final enviado ainda.
+              </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {order.resultFiles.map((file: ResultFileItem) => (
+                  <div
+                    key={file.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-950">
+                          {file.originalName || "Arquivo final"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Enviado em: {formatDate(file.createdAt)}
+                        </p>
+                      </div>
+
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center rounded-xl bg-[var(--accent-green)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--accent-green-hover)]"
+                      >
+                        Visualizar resultado
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>
