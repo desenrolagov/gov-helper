@@ -33,8 +33,19 @@ export default function LogoutButton() {
   }
 
   return (
-    <button onClick={handleLogout} disabled={loading}>
-      {loading ? "Saindo..." : "Sair"}
+    <button
+      onClick={handleLogout}
+      disabled={loading}
+      className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {loading ? (
+        <span className="flex items-center gap-2">
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          Saindo...
+        </span>
+      ) : (
+        "Sair"
+      )}
     </button>
   );
 }
