@@ -88,20 +88,20 @@ export default async function HomePage() {
         <section className="relative overflow-hidden px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,220,120,0.18),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.08),transparent_35%)]" />
 
-          <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <section>
               <div className="inline-flex rounded-full border border-green-400/30 bg-green-400/10 px-4 py-1 text-xs font-bold text-green-300">
                 Assessoria privada para regularização documental
               </div>
 
               <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-                Resolva seu documento com atendimento rápido, seguro e
-                organizado
+                Regularize seu CPF sem dor de cabeça e sem filas
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-white/75">
-                A DesenrolaGov organiza sua contratação, pagamento, envio de
-                documentos e acompanhamento do pedido em uma plataforma simples.
+                Nós organizamos seu atendimento do cadastro até a finalização,
+                com pagamento via Pix, envio de documentos e acompanhamento do
+                pedido em um só lugar.
               </p>
 
               <div className="mt-6 grid gap-3 text-sm font-semibold text-white/90 sm:grid-cols-3">
@@ -121,32 +121,24 @@ export default async function HomePage() {
                 a Receita Federal, gov.br ou qualquer órgão público.
               </div>
 
-<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link
+                  href={primaryHref}
+                  className="inline-flex w-full items-center justify-center rounded-2xl bg-[var(--accent-green)] px-6 py-4 text-base font-black text-white shadow-lg shadow-green-900/30 transition hover:scale-[1.02] hover:bg-[var(--accent-green-hover)] sm:w-auto"
+                >
+                  Resolver meu CPF agora
+                </Link>
 
-  {/* BOTÃO PRINCIPAL */}
-  <Link
-    href={primaryHref}
-    className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-[var(--accent-green)] px-6 py-4 text-base font-black text-white shadow-lg shadow-green-900/30 transition hover:scale-[1.02] hover:bg-[var(--accent-green-hover)]"
-  >
-    Resolver meu problema agora
-  </Link>
+                <Link
+                  href={user ? "/orders" : "/login"}
+                  className="inline-flex w-full items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-6 py-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white sm:w-auto"
+                >
+                  {user ? "Acompanhar pedido" : "Já tenho conta"}
+                </Link>
+              </div>
 
-  {/* BOTÃO SECUNDÁRIO */}
-  <Link
-    href={user ? "/orders" : "/login"}
-    className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-6 py-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-  >
-    {user ? "Acompanhar pedido" : "Já tenho conta"}
-  </Link>
-
-</div>
-
-<p className="mt-3 text-xs text-white/50">
-  ✔ Processo rápido • ✔ Pagamento seguro • ✔ Sem burocracia
-</p>
-
-              <p className="mt-3 text-xs font-semibold text-white/60">
-                Rápido • Seguro • Sem burocracia desnecessária
+              <p className="mt-3 text-xs text-white/50">
+                ✔ Processo rápido • ✔ Pagamento seguro • ✔ Sem burocracia
               </p>
             </section>
 
@@ -252,6 +244,104 @@ export default async function HomePage() {
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Documentos, status e resultado ficam centralizados na sua área.
                 </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white px-4 pb-12 text-[var(--text-dark)] sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
+            <div className="text-center">
+              <p className="text-sm font-bold text-[var(--accent-green)]">
+                Clientes atendidos pela nossa equipe
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">
+                Atendimento simples, organizado e acompanhado
+              </h2>
+
+              <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                A DesenrolaGov ajuda clientes que querem economizar tempo e
+                evitar dúvidas durante o processo documental.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {[
+                [
+                  "Maria S.",
+                  "Consegui entender o passo a passo e acompanhar tudo pela plataforma.",
+                ],
+                [
+                  "João P.",
+                  "Gostei porque o atendimento ficou organizado e sem confusão.",
+                ],
+                [
+                  "Ana R.",
+                  "Foi prático enviar os documentos e acompanhar o andamento.",
+                ],
+              ].map(([name, text]) => (
+                <div
+                  key={name}
+                  className="rounded-2xl border border-slate-200 bg-white p-5"
+                >
+                  <p className="font-black text-slate-950">{name}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    “{text}”
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+              <div>
+                <p className="text-sm font-bold text-green-300">
+                  Dúvidas frequentes
+                </p>
+                <h2 className="mt-2 text-3xl font-black">
+                  O que você precisa saber antes de contratar
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-white/70">
+                  Respostas simples para as principais dúvidas antes de iniciar
+                  seu atendimento.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  [
+                    "Preciso ir até algum órgão?",
+                    "Não. O atendimento é feito online pela plataforma, seguindo as etapas do pedido.",
+                  ],
+                  [
+                    "Quanto tempo leva?",
+                    "O prazo pode variar conforme análise, documentação enviada e etapa operacional.",
+                  ],
+                  [
+                    "É seguro?",
+                    "Os documentos devem ser enviados pela plataforma e usados apenas para execução do serviço contratado.",
+                  ],
+                  [
+                    "A DesenrolaGov é do governo?",
+                    "Não. Somos uma assessoria privada e não temos vínculo com órgãos públicos.",
+                  ],
+                ].map(([question, answer]) => (
+                  <details
+                    key={question}
+                    className="rounded-2xl border border-white/10 bg-white/10 p-5"
+                  >
+                    <summary className="cursor-pointer font-black text-white">
+                      {question}
+                    </summary>
+                    <p className="mt-3 text-sm leading-6 text-white/70">
+                      {answer}
+                    </p>
+                  </details>
+                ))}
               </div>
             </div>
           </div>
