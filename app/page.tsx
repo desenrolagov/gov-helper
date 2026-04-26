@@ -121,23 +121,29 @@ export default async function HomePage() {
                 a Receita Federal, gov.br ou qualquer órgão público.
               </div>
 
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href={primaryHref}
-                  className="inline-flex items-center justify-center rounded-2xl bg-[var(--accent-green)] px-6 py-4 text-sm font-black text-white shadow-xl shadow-green-950/20 hover:bg-[var(--accent-green-hover)]"
-                >
-                  {featuredService
-                    ? `Iniciar ${featuredService.name}`
-                    : "Iniciar atendimento"}
-                </Link>
+<div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
 
-                <Link
-                  href={user ? "/orders" : "/login"}
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-6 py-4 text-sm font-bold text-white hover:bg-white/15"
-                >
-                  {user ? "Ver meus pedidos" : "Já tenho conta"}
-                </Link>
-              </div>
+  {/* BOTÃO PRINCIPAL */}
+  <Link
+    href={primaryHref}
+    className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl bg-[var(--accent-green)] px-6 py-4 text-base font-black text-white shadow-lg shadow-green-900/30 transition hover:scale-[1.02] hover:bg-[var(--accent-green-hover)]"
+  >
+    Resolver meu problema agora
+  </Link>
+
+  {/* BOTÃO SECUNDÁRIO */}
+  <Link
+    href={user ? "/orders" : "/login"}
+    className="w-full sm:w-auto inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-6 py-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+  >
+    {user ? "Acompanhar pedido" : "Já tenho conta"}
+  </Link>
+
+</div>
+
+<p className="mt-3 text-xs text-white/50">
+  ✔ Processo rápido • ✔ Pagamento seguro • ✔ Sem burocracia
+</p>
 
               <p className="mt-3 text-xs font-semibold text-white/60">
                 Rápido • Seguro • Sem burocracia desnecessária
