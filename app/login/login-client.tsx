@@ -86,70 +86,59 @@ export default function LoginClient() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-[var(--primary-blue)] text-white">
       <div className="mx-auto grid min-h-screen max-w-7xl items-center gap-8 px-4 py-10 sm:px-6 lg:grid-cols-2 lg:px-8">
         <section className="hidden lg:block">
           <div className="max-w-xl">
-            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            <div className="inline-flex items-center rounded-full border border-green-400/30 bg-green-400/10 px-4 py-1 text-xs font-bold text-green-300">
               {continueMode ? "Continuar atendimento" : "Área de acesso"}
             </div>
 
-            <h1 className="mt-5 text-5xl font-bold tracking-tight text-slate-900">
+            <h1 className="mt-5 text-5xl font-black tracking-tight">
               {continueMode
                 ? "Entre para continuar seu atendimento sem perder a etapa atual"
                 : "Entre para acompanhar seus pedidos com mais clareza"}
             </h1>
 
-            <p className="mt-5 text-base leading-8 text-slate-600">
+            <p className="mt-5 text-base leading-8 text-white/75">
               {continueMode
                 ? "Faça login para voltar direto ao fluxo do seu atendimento e seguir para a próxima etapa com rapidez."
                 : "Acesse sua conta para visualizar pedidos, enviar documentos, acompanhar o andamento do atendimento e seguir cada etapa em um só lugar."}
             </p>
 
-            <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              Atenção: a DesenrolaGov é uma assessoria privada e não possui vínculo
-              com a Receita Federal ou outros órgãos do governo.
+            <div className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm font-medium text-red-100">
+              Atenção: a DesenrolaGov é uma assessoria privada e não possui
+              vínculo com a Receita Federal ou outros órgãos do governo.
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-lg font-bold text-slate-900">1</p>
-                <p className="mt-1 text-sm font-medium text-slate-800">
-                  Login rápido
-                </p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Entre com segurança para continuar seu fluxo.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-lg font-bold text-slate-900">2</p>
-                <p className="mt-1 text-sm font-medium text-slate-800">
-                  Etapa preservada
-                </p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Você volta para o ponto certo do atendimento.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-lg font-bold text-slate-900">3</p>
-                <p className="mt-1 text-sm font-medium text-slate-800">
-                  Acompanhamento organizado
-                </p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Pedidos, documentos e andamento em um só lugar.
-                </p>
-              </div>
+              {[
+                ["1", "Login rápido", "Entre com segurança para continuar seu fluxo."],
+                ["2", "Etapa preservada", "Você volta para o ponto certo do atendimento."],
+                ["3", "Acompanhamento organizado", "Pedidos, documentos e andamento em um só lugar."],
+              ].map(([number, title, description]) => (
+                <div
+                  key={number}
+                  className="rounded-2xl border border-white/10 bg-white/10 p-4 shadow-xl shadow-black/10"
+                >
+                  <p className="text-lg font-black text-green-300">{number}</p>
+                  <p className="mt-1 text-sm font-bold text-white">{title}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/65">
+                    {description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
         <section className="mx-auto w-full max-w-md">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl sm:p-8">
             <div className="mb-6">
-              <p className="text-sm font-medium text-blue-600">DesenrolaGov</p>
-              <h2 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+              <p className="text-sm font-bold text-[var(--accent-green)]">
+                DesenrolaGov
+              </p>
+              <h2 className="mt-1 text-3xl font-black tracking-tight text-slate-950">
                 Entrar
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -161,7 +150,7 @@ export default function LoginClient() {
 
             {error && (
               <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4">
-                <p className="text-sm font-semibold text-red-800">
+                <p className="text-sm font-bold text-red-800">
                   Não foi possível entrar
                 </p>
                 <p className="mt-1 text-sm text-red-700">{error}</p>
@@ -172,7 +161,7 @@ export default function LoginClient() {
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-bold text-slate-700"
                 >
                   E-mail
                 </label>
@@ -184,14 +173,14 @@ export default function LoginClient() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-blue)]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="password"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-bold text-slate-700"
                 >
                   Senha
                 </label>
@@ -203,20 +192,20 @@ export default function LoginClient() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-900"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary-blue)]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex w-full items-center justify-center rounded-2xl bg-[var(--accent-green)] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-green-950/20 transition hover:bg-[var(--accent-green-hover)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading
                   ? "Entrando..."
                   : continueMode
-                  ? "Entrar e continuar"
-                  : "Entrar na conta"}
+                    ? "Entrar e continuar"
+                    : "Entrar na conta"}
               </button>
             </form>
 
@@ -225,7 +214,7 @@ export default function LoginClient() {
                 Ainda não tem conta?{" "}
                 <Link
                   href={registerHref}
-                  className="font-semibold text-slate-900 hover:underline"
+                  className="font-bold text-slate-950 hover:underline"
                 >
                   Criar conta
                 </Link>
@@ -235,9 +224,11 @@ export default function LoginClient() {
             <div className="mt-4 text-center">
               <Link
                 href={homeHref}
-                className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                className="text-sm font-semibold text-slate-600 hover:text-slate-950"
               >
-                {continueMode ? "Voltar para o atendimento" : "Voltar para a página inicial"}
+                {continueMode
+                  ? "Voltar para o atendimento"
+                  : "Voltar para a página inicial"}
               </Link>
             </div>
           </div>
