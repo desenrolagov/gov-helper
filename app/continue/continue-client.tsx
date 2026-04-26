@@ -33,7 +33,6 @@ function normalizeHighlights(service?: Service | null) {
       "Suporte durante todo o fluxo",
     ];
   }
-
   return service.highlights.slice(0, 3);
 }
 
@@ -189,7 +188,7 @@ export default function ContinueClient() {
       }
 
       if (!acceptedLegal) {
-        setError("Aceite os termos para continuar.");
+        setError("Aceite os termos.");
         return;
       }
 
@@ -202,43 +201,30 @@ export default function ContinueClient() {
         return;
       }
 
-if (direct.res.ok && direct.data?.order?.id) {
-  router.replace(`/payment?orderId=${direct.data.order.id}`);
-  return;
-}
-
-// 👉 TRATAR 401 E 403 COMO "PRECISA LOGAR"
-if (direct.res.status === 401 || direct.res.status === 403) {
-  // segue fluxo de cadastro/login
-} else {
-  setError(direct.data?.error || "Erro ao continuar.");
-  return;
-}
-
       const register = await registerUser();
 
       if (!register.res.ok) {
-        setError(register.data?.error || "Não foi possível criar sua conta.");
+        setError(register.data?.error || "Erro ao criar conta.");
         return;
       }
 
       const login = await loginUser();
 
       if (!login.res.ok) {
-        setError(login.data?.error || "Conta criada, mas o login falhou.");
+        setError("Conta criada, mas login falhou.");
         return;
       }
 
       const order = await createOrder(service.id);
 
       if (!order.res.ok || !order.data?.order?.id) {
-        setError(order.data?.error || "Erro ao criar pedido.");
+        setError("Erro ao criar pedido.");
         return;
       }
 
       router.replace(`/payment?orderId=${order.data.order.id}`);
     } catch {
-      setError("Erro inesperado. Tente novamente.");
+      setError("Erro inesperado.");
     } finally {
       setSubmitting(false);
     }
@@ -247,122 +233,83 @@ if (direct.res.status === 401 || direct.res.status === 403) {
   const highlights = normalizeHighlights(service);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6">
+    <main className="min-h-screen bg-[var(--primary-blue)] px-4 py-8 text-white">
       <div className="mx-auto max-w-6xl">
-        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <section className="rounded-3xl bg-white p-6 shadow-sm">
-            <h1 className="text-3xl font-black leading-tight">
+        <div className="grid gap-8 lg:grid-cols-2">
+
+          <section>
+            <span className="inline-flex rounded-full border border-green-400/30 bg-green-400/10 px-4 py-1 text-xs font-bold text-green-300">
+              Continuação do atendimento
+            </span>
+
+            <h1 className="mt-4 text-4xl font-black">
               Finalize seu cadastro
             </h1>
 
-            <ul className="mt-4 max-w-md space-y-2 text-sm leading-7 text-slate-600">
-              <li>• Cadastro rápido</li>
-              <li>• Pagamento na próxima etapa</li>
-              <li>• Envio de documentos depois</li>
+            <ul className="mt-6 space-y-2 text-white/80">
+              <li>✔ Cadastro rápido</li>
+              <li>✔ Pagamento na próxima etapa</li>
+              <li>✔ Envio de documentos depois</li>
             </ul>
 
-            <div className="mt-4 max-w-md rounded-2xl bg-red-50 p-3 text-sm text-red-700">
-              Assessoria privada, sem vínculo com órgãos públicos.
-            </div>
-
-            {error ? (
-              <div className="mt-4 rounded-2xl bg-red-50 p-3 text-sm text-red-700">
+            {error && (
+              <div className="mt-4 rounded-xl bg-red-400/10 p-3 text-red-200">
                 {error}
               </div>
-            ) : null}
+            )}
           </section>
 
-          <aside className="rounded-3xl border-2 border-slate-900 bg-white p-6">
+          <aside className="rounded-3xl bg-white p-6 text-black shadow-xl">
             {loading ? (
               <div>Carregando...</div>
             ) : !service ? (
-              <div>Sem serviço.</div>
+              <div>Sem serviço</div>
             ) : (
               <>
                 <h2 className="text-xl font-black">{service.name}</h2>
 
-                <ul className="mt-3 max-w-md space-y-2 text-sm leading-6 text-slate-600">
+                <ul className="mt-3 text-sm text-slate-600">
                   {highlights.map((item) => (
-                    <li key={item}>• {item}</li>
+                    <li key={item}>✔ {item}</li>
                   ))}
                 </ul>
 
-                <div className="mt-4 text-4xl font-black">
+                <div className="mt-4 text-3xl font-black">
                   {formatCurrency(service.price)}
                 </div>
 
-                <div className="mt-6 space-y-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                      Nome
-                    </label>
-                    <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
-                      placeholder="Seu nome"
-                    />
-                  </div>
+                <div className="mt-6 space-y-3">
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nome"
+                    className="w-full rounded-xl border px-3 py-2"
+                  />
 
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                      E-mail
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
-                      placeholder="voce@email.com"
-                    />
-                  </div>
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    className="w-full rounded-xl border px-3 py-2"
+                  />
 
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                      Senha
-                    </label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
-                      placeholder="Mínimo de 6 caracteres"
-                    />
-                  </div>
-
-                  <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={acceptedLegal}
-                      onChange={(e) => setAcceptedLegal(e.target.checked)}
-                      className="mt-1"
-                    />
-                    <span>
-                      Aceito os{" "}
-                      <Link href="/terms" className="font-semibold underline">
-                        Termos de Uso
-                      </Link>{" "}
-                      e a{" "}
-                      <Link href="/privacy" className="font-semibold underline">
-                        Política de Privacidade
-                      </Link>
-                      .
-                    </span>
-                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Senha"
+                    className="w-full rounded-xl border px-3 py-2"
+                  />
 
                   <button
-                    type="button"
                     onClick={handleContinue}
                     disabled={!canSubmit}
-                    className="w-full rounded-2xl bg-slate-900 px-5 py-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full rounded-xl bg-[var(--accent-green)] py-3 text-white font-bold"
                   >
-                    {submitting ? "Carregando..." : "Continuar para pagamento"}
+                    {submitting ? "Processando..." : "Continuar"}
                   </button>
 
-                  <Link
-                    href={loginHref}
-                    className="block text-center text-sm font-medium text-slate-600 underline"
-                  >
+                  <Link href={loginHref} className="block text-center text-sm underline">
                     Já tenho conta
                   </Link>
                 </div>
