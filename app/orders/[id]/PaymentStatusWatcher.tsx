@@ -55,11 +55,7 @@ function getStatusLabel(status: OrderStatus) {
   }
 }
 
-export function PaymentStatusWatcher({
-  orderId,
-  payment,
-  status,
-}: Props) {
+export function PaymentStatusWatcher({ orderId, payment, status }: Props) {
   const router = useRouter();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const attemptsRef = useRef(0);
@@ -142,18 +138,12 @@ export function PaymentStatusWatcher({
           setHasTimedOut(false);
           stopWatcher(false);
 
-          if (
-            data.status === "PAID" ||
-            data.status === "AWAITING_DOCUMENTS"
-          ) {
+          if (data.status === "PAID" || data.status === "AWAITING_DOCUMENTS") {
             router.replace(`/orders/${orderId}/upload`);
             return;
           }
 
-          if (
-            data.status === "PROCESSING" ||
-            data.status === "COMPLETED"
-          ) {
+          if (data.status === "PROCESSING" || data.status === "COMPLETED") {
             router.replace(`/orders/${orderId}`);
             return;
           }
@@ -203,9 +193,9 @@ export function PaymentStatusWatcher({
   const progressPercentage = Math.min((attempts / MAX_ATTEMPTS) * 100, 100);
 
   return (
-    <div className="rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-white/10 bg-[var(--primary-blue-strong)] p-5 text-white shadow-xl shadow-black/20">
       <div className="flex items-start gap-4">
-        <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+        <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-green-400/30 bg-green-400/10 text-green-300">
           <span className="text-lg">
             {hasConfirmed ? "✅" : isChecking ? "⏳" : "ℹ️"}
           </span>
@@ -213,13 +203,13 @@ export function PaymentStatusWatcher({
 
         <div className="min-w-0 flex-1 space-y-3">
           <div>
-            <h2 className="text-lg font-semibold text-blue-900">
+            <h2 className="text-lg font-black text-white">
               {hasConfirmed
                 ? "Pagamento confirmado com sucesso"
                 : "Estamos confirmando seu pagamento"}
             </h2>
 
-            <p className="mt-1 text-sm leading-relaxed text-blue-800">
+            <p className="mt-1 text-sm leading-relaxed text-white/75">
               {hasConfirmed
                 ? "O pedido foi atualizado e estamos levando você para a próxima etapa."
                 : "Recebemos seu retorno do pagamento. A confirmação pode levar alguns instantes para aparecer no pedido."}
@@ -227,13 +217,13 @@ export function PaymentStatusWatcher({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3 text-xs font-medium text-blue-700">
+            <div className="flex items-center justify-between gap-3 text-xs font-bold text-white/70">
               <span>
                 {hasConfirmed
                   ? "Status atualizado"
                   : isChecking
-                  ? "Verificação automática em andamento"
-                  : "Verificação automática encerrada"}
+                    ? "Verificação automática em andamento"
+                    : "Verificação automática encerrada"}
               </span>
 
               <span>
@@ -241,11 +231,9 @@ export function PaymentStatusWatcher({
               </span>
             </div>
 
-            <div className="h-2 w-full overflow-hidden rounded-full bg-blue-100">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  hasConfirmed ? "bg-green-600" : "bg-blue-600"
-                }`}
+                className="h-full rounded-full bg-[var(--accent-green)] transition-all duration-500"
                 style={{
                   width: hasConfirmed ? "100%" : `${progressPercentage}%`,
                 }}
@@ -254,35 +242,35 @@ export function PaymentStatusWatcher({
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-blue-200 bg-white/80 p-3">
-              <p className="text-xs uppercase tracking-wide text-blue-700">
+            <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
+              <p className="text-xs uppercase tracking-wide text-green-300">
                 Status atual
               </p>
-              <p className="mt-1 text-sm font-semibold text-blue-950">
+              <p className="mt-1 text-sm font-bold text-white">
                 {getStatusLabel(currentStatus)}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-blue-200 bg-white/80 p-3">
-              <p className="text-xs uppercase tracking-wide text-blue-700">
+            <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
+              <p className="text-xs uppercase tracking-wide text-green-300">
                 Situação
               </p>
-              <p className="mt-1 text-sm font-semibold text-blue-950">
+              <p className="mt-1 text-sm font-bold text-white">
                 {hasConfirmed
                   ? "Pedido atualizado"
                   : isChecking
-                  ? "Aguardando confirmação"
-                  : "Aguardando nova atualização"}
+                    ? "Aguardando confirmação"
+                    : "Aguardando nova atualização"}
               </p>
             </div>
           </div>
 
           {isChecking && !hasConfirmed ? (
-            <div className="rounded-2xl border border-blue-200 bg-white/80 p-3">
-              <p className="text-sm font-medium text-blue-900">
+            <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
+              <p className="text-sm font-bold text-white">
                 Aguarde enquanto confirmamos o pagamento do seu pedido.
               </p>
-              <p className="mt-1 text-xs leading-relaxed text-blue-700">
+              <p className="mt-1 text-xs leading-relaxed text-white/70">
                 Assim que a confirmação chegar, a página será atualizada
                 automaticamente.
               </p>
@@ -290,11 +278,11 @@ export function PaymentStatusWatcher({
           ) : null}
 
           {hasTimedOut && !hasConfirmed ? (
-            <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-3">
-              <p className="text-sm font-medium text-yellow-900">
+            <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3">
+              <p className="text-sm font-bold text-yellow-100">
                 A confirmação está demorando um pouco mais que o normal
               </p>
-              <p className="mt-1 text-xs leading-relaxed text-yellow-800">
+              <p className="mt-1 text-xs leading-relaxed text-yellow-100/80">
                 Isso pode acontecer quando o sistema ainda está finalizando a
                 comunicação do pagamento. Você pode atualizar a página em alguns
                 instantes.
@@ -303,11 +291,11 @@ export function PaymentStatusWatcher({
           ) : null}
 
           {lastError && !hasConfirmed ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-3">
-              <p className="text-sm font-medium text-red-900">
+            <div className="rounded-2xl border border-red-400/30 bg-red-400/10 p-3">
+              <p className="text-sm font-bold text-red-100">
                 Houve uma falha temporária na verificação
               </p>
-              <p className="mt-1 text-xs leading-relaxed text-red-800">
+              <p className="mt-1 text-xs leading-relaxed text-red-100/80">
                 {lastError}
               </p>
             </div>
@@ -317,7 +305,7 @@ export function PaymentStatusWatcher({
             <button
               type="button"
               onClick={() => router.refresh()}
-              className="inline-flex items-center justify-center rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-900 transition hover:bg-blue-100"
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--accent-green)] px-4 py-2 text-sm font-bold text-white transition hover:bg-[var(--accent-green-hover)]"
             >
               Atualizar agora
             </button>
@@ -325,7 +313,7 @@ export function PaymentStatusWatcher({
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/15"
             >
               Recarregar página
             </button>

@@ -36,13 +36,9 @@ function formatDate(value: Date | string) {
 export default async function OrderPage({ params }: OrderPageProps) {
   const user = await getCurrentUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
-  if (user.role !== "CLIENT") {
-    redirect("/admin/orders");
-  }
+  if (user.role !== "CLIENT") redirect("/admin/orders");
 
   const resolvedParams = await params;
 
@@ -51,31 +47,20 @@ export default async function OrderPage({ params }: OrderPageProps) {
     include: {
       service: true,
       uploadedFiles: {
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy: { createdAt: "desc" },
       },
       resultFiles: {
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
 
-  if (!order || order.userId !== user.id) {
-    redirect("/orders");
-  }
+  if (!order || order.userId !== user.id) redirect("/orders");
 
-  if (!isValidOrderStatus(order.status)) {
-    redirect("/orders");
-  }
+  if (!isValidOrderStatus(order.status)) redirect("/orders");
 
   const status = order.status as OrderStatus;
 
-  // 🔒 Trava crítica de fluxo:
-  // Se o pedido ainda pode gerar checkout, ele não deve seguir
-  // para o fluxo operacional normal.
   if (canCreateCheckoutForOrderStatus(status)) {
     redirect(`/payment?orderId=${order.id}`);
   }
@@ -87,20 +72,20 @@ export default async function OrderPage({ params }: OrderPageProps) {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--primary-blue)] text-white">
       <AppNav user={user} />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <Link
             href="/orders"
-            className="inline-flex items-center text-sm font-medium text-slate-600 hover:text-slate-900"
+            className="inline-flex items-center text-sm font-bold text-white/75 underline hover:text-white"
           >
             ← Voltar para meus pedidos
           </Link>
         </div>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-3">
@@ -111,7 +96,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
                 />
               </div>
 
-              <h1 className="mt-4 text-3xl font-bold text-slate-900">
+              <h1 className="mt-4 text-3xl font-black text-slate-950">
                 {order.service.name}
               </h1>
 
@@ -126,7 +111,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
                 orderId={order.id}
                 filesCount={order.uploadedFiles.length}
                 resultFilesCount={order.resultFiles.length}
-                className="w-full"
+                className="w-full bg-[var(--accent-green)] text-white hover:bg-[var(--accent-green-hover)]"
               />
             </div>
           </div>
@@ -136,7 +121,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
               <p className="text-xs uppercase tracking-wide text-slate-500">
                 Valor do pedido
               </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
+              <p className="mt-1 text-sm font-bold text-slate-950">
                 {formatCurrency(Number(order.totalAmount))}
               </p>
             </div>
@@ -145,7 +130,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
               <p className="text-xs uppercase tracking-wide text-slate-500">
                 Criado em
               </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
+              <p className="mt-1 text-sm font-bold text-slate-950">
                 {formatDate(order.createdAt)}
               </p>
             </div>
@@ -154,7 +139,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
               <p className="text-xs uppercase tracking-wide text-slate-500">
                 Documentos enviados
               </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
+              <p className="mt-1 text-sm font-bold text-slate-950">
                 {order.uploadedFiles.length}
               </p>
             </div>
@@ -163,25 +148,25 @@ export default async function OrderPage({ params }: OrderPageProps) {
               <p className="text-xs uppercase tracking-wide text-slate-500">
                 Arquivos finais
               </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
+              <p className="mt-1 text-sm font-bold text-slate-950">
                 {order.resultFiles.length}
               </p>
             </div>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-            <p className="text-xs uppercase tracking-wide text-blue-700">
+          <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-4">
+            <p className="text-xs uppercase tracking-wide text-green-700">
               Próxima etapa
             </p>
-            <p className="mt-2 text-base font-semibold text-blue-900">
+            <p className="mt-2 text-base font-black text-green-900">
               {flow.nextStepLabel}
             </p>
           </div>
         </section>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">
+          <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl">
+            <h2 className="text-lg font-black text-slate-950">
               Documentos enviados por você
             </h2>
 
@@ -191,36 +176,35 @@ export default async function OrderPage({ params }: OrderPageProps) {
               </div>
             ) : (
               <div className="mt-4 space-y-3">
-                {order.uploadedFiles.map(
-                  (file: (typeof order.uploadedFiles)[number]) => (
-                    <div
-                      key={file.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                    >
-                      <p className="text-sm font-semibold text-slate-900">
-                        {file.originalName}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        Enviado em {formatDate(file.createdAt)}
-                      </p>
+                {order.uploadedFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <p className="text-sm font-bold text-slate-950">
+                      {file.originalName}
+                    </p>
 
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-3 inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white"
-                      >
-                        Visualizar arquivo
-                      </a>
-                    </div>
-                  )
-                )}
+                    <p className="mt-1 text-xs text-slate-500">
+                      Enviado em {formatDate(file.createdAt)}
+                    </p>
+
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-white"
+                    >
+                      Visualizar arquivo
+                    </a>
+                  </div>
+                ))}
               </div>
             )}
           </section>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">
+          <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl">
+            <h2 className="text-lg font-black text-slate-950">
               Resultado final do serviço
             </h2>
 
@@ -230,30 +214,29 @@ export default async function OrderPage({ params }: OrderPageProps) {
               </div>
             ) : (
               <div className="mt-4 space-y-3">
-                {order.resultFiles.map(
-                  (file: (typeof order.resultFiles)[number]) => (
-                    <div
-                      key={file.id}
-                      className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"
-                    >
-                      <p className="text-sm font-semibold text-emerald-900">
-                        {file.originalName}
-                      </p>
-                      <p className="mt-1 text-xs text-emerald-700">
-                        Liberado em {formatDate(file.createdAt)}
-                      </p>
+                {order.resultFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className="rounded-2xl border border-green-200 bg-green-50 p-4"
+                  >
+                    <p className="text-sm font-bold text-green-900">
+                      {file.originalName}
+                    </p>
 
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-3 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
-                      >
-                        Baixar arquivo
-                      </a>
-                    </div>
-                  )
-                )}
+                    <p className="mt-1 text-xs text-green-700">
+                      Liberado em {formatDate(file.createdAt)}
+                    </p>
+
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-3 inline-flex items-center justify-center rounded-xl bg-[var(--accent-green)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--accent-green-hover)]"
+                    >
+                      Baixar arquivo
+                    </a>
+                  </div>
+                ))}
               </div>
             )}
           </section>

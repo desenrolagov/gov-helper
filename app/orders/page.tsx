@@ -48,13 +48,9 @@ function formatDate(value: Date | string) {
 export default async function OrdersPage() {
   const user = await getCurrentUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
-  if (user.role !== "CLIENT") {
-    redirect("/admin/orders");
-  }
+  if (user.role !== "CLIENT") redirect("/admin/orders");
 
   const orders: OrdersPageOrder[] = await prisma.order.findMany({
     where: {
@@ -85,17 +81,21 @@ export default async function OrdersPage() {
   const validOrders = orders.filter((order) => isValidOrderStatus(order.status));
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--primary-blue)] text-white">
       <AppNav user={user} />
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-blue-600">Área do cliente</p>
-            <h1 className="mt-1 text-3xl font-bold text-slate-900">
+            <p className="text-sm font-bold text-green-300">
+              Área do cliente
+            </p>
+
+            <h1 className="mt-1 text-3xl font-black">
               Meus pedidos
             </h1>
-            <p className="mt-2 text-sm text-slate-600">
+
+            <p className="mt-2 max-w-2xl text-sm text-white/70">
               Acompanhe o andamento dos seus pedidos e acesse rapidamente a
               próxima etapa de cada atendimento.
             </p>
@@ -103,17 +103,18 @@ export default async function OrdersPage() {
 
           <Link
             href="/services"
-            className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+            className="inline-flex items-center justify-center rounded-2xl bg-[var(--accent-green)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-green-950/20 transition hover:bg-[var(--accent-green-hover)]"
           >
             Contratar novo serviço
           </Link>
         </div>
 
         {validOrders.length === 0 ? (
-          <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
+          <section className="rounded-3xl bg-white p-8 text-center text-[var(--text-dark)] shadow-xl">
+            <h2 className="text-xl font-black text-slate-950">
               Você ainda não possui pedidos
             </h2>
+
             <p className="mt-2 text-sm text-slate-600">
               Quando você contratar um serviço, seus pedidos aparecerão aqui para
               acompanhamento.
@@ -122,7 +123,7 @@ export default async function OrdersPage() {
             <div className="mt-6">
               <Link
                 href="/services"
-                className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+                className="inline-flex items-center justify-center rounded-2xl bg-[var(--accent-green)] px-6 py-3 text-sm font-bold text-white hover:bg-[var(--accent-green-hover)]"
               >
                 Ver serviços disponíveis
               </Link>
@@ -132,6 +133,7 @@ export default async function OrdersPage() {
           <div className="grid gap-4">
             {validOrders.map((order) => {
               const status = order.status as OrderStatus;
+
               const flow = getOrderFlow(status, {
                 orderId: order.id,
                 filesCount: order.uploadedFiles.length,
@@ -141,19 +143,20 @@ export default async function OrdersPage() {
               return (
                 <section
                   key={order.id}
-                  className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+                  className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl"
                 >
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-3">
                         <OrderStatusBadge status={status} />
+
                         <OrderCodeBadge
                           code={order.orderCode ?? undefined}
                           fallback={order.id.slice(0, 8).toUpperCase()}
                         />
                       </div>
 
-                      <h2 className="mt-4 text-xl font-bold text-slate-900">
+                      <h2 className="mt-4 text-xl font-black text-slate-950">
                         {order.service.name}
                       </h2>
 
@@ -162,7 +165,7 @@ export default async function OrdersPage() {
                           <p className="text-xs uppercase tracking-wide text-slate-500">
                             Valor
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-slate-900">
+                          <p className="mt-1 text-sm font-bold text-slate-950">
                             {formatCurrency(Number(order.totalAmount))}
                           </p>
                         </div>
@@ -171,16 +174,16 @@ export default async function OrdersPage() {
                           <p className="text-xs uppercase tracking-wide text-slate-500">
                             Data do pedido
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-slate-900">
+                          <p className="mt-1 text-sm font-bold text-slate-950">
                             {formatDate(order.createdAt)}
                           </p>
                         </div>
 
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                          <p className="text-xs uppercase tracking-wide text-slate-500">
+                        <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
+                          <p className="text-xs uppercase tracking-wide text-green-700">
                             Próxima etapa
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-slate-900">
+                          <p className="mt-1 text-sm font-black text-green-900">
                             {flow.nextStepLabel}
                           </p>
                         </div>
@@ -198,12 +201,12 @@ export default async function OrdersPage() {
                           orderId={order.id}
                           filesCount={order.uploadedFiles.length}
                           resultFilesCount={order.resultFiles.length}
-                          className="w-full"
+                          className="w-full bg-[var(--accent-green)] text-white hover:bg-[var(--accent-green-hover)]"
                         />
 
                         <Link
                           href={`/orders/${order.id}`}
-                          className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                          className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50"
                         >
                           Ver detalhes do pedido
                         </Link>
