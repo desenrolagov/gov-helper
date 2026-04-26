@@ -17,26 +17,29 @@ export default async function AdminOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--primary-blue)] text-white">
       <AppNav user={user} />
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+
+        <section className="mb-6 rounded-3xl border border-white/10 bg-[var(--primary-blue-strong)] p-6 shadow-xl shadow-black/20">
+
+          <div className="inline-flex rounded-full border border-green-400/30 bg-green-400/10 px-4 py-1 text-xs font-bold text-green-300">
             Painel administrativo
           </div>
 
-          <h1 className="mt-4 text-3xl font-bold text-slate-900">
+          <h1 className="mt-4 text-3xl font-black">
             Gestão de pedidos
           </h1>
 
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Acompanhe os pedidos, atualize o andamento operacional, revise os
-            documentos enviados pelos clientes e finalize as entregas.
+          <p className="mt-3 text-sm text-white/70">
+            Controle total do fluxo: pagamento, documentos, andamento e entrega final.
           </p>
-        </div>
+
+        </section>
 
         <AdminOrdersClient />
+
       </main>
     </div>
   );
