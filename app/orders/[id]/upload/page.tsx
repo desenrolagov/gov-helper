@@ -262,7 +262,9 @@ export default function OrderUploadPage() {
       const resolvedRequiredDocuments =
         data.requiredDocuments && data.requiredDocuments.length > 0
           ? data.requiredDocuments
-          : getRequiredDocumentsForService(resolveServiceTypeFromService(data.service));
+          : getRequiredDocumentsForService(
+              resolveServiceTypeFromService(data.service)
+            );
 
       const existingUploadedTypes = [
         ...new Set(
@@ -481,8 +483,10 @@ export default function OrderUploadPage() {
 
   if (loadingOrder) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        <p className="text-sm text-slate-600">Carregando pedido...</p>
+      <main className="min-h-screen bg-[var(--primary-blue)] px-4 py-8 text-white">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-[var(--primary-blue-strong)] p-6 shadow-xl shadow-black/20">
+          <p className="text-sm text-white/75">Carregando pedido...</p>
+        </div>
       </main>
     );
   }
@@ -502,14 +506,17 @@ export default function OrderUploadPage() {
     status === "COMPLETED" ||
     allRequiredDocumentsSent;
 
-  return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
+    return (
+  <main className="min-h-screen bg-[var(--primary-blue)] px-4 py-8 text-white">
+    <div className="mx-auto max-w-6xl">
+
+      {/* HEADER */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-black">
             Envio de documentos
           </h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-white/70">
             Serviço: {order?.service?.name || "Não informado"}
           </p>
         </div>
@@ -521,18 +528,19 @@ export default function OrderUploadPage() {
 
           <Link
             href={`/orders/${orderId}`}
-            className="rounded-xl border px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
           >
             Voltar ao pedido
           </Link>
         </div>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-semibold text-slate-900">
-          Status atual: {getStatusLabel(status)}
+      {/* STATUS */}
+      <div className="mb-6 rounded-2xl border border-white/10 bg-[var(--primary-blue-strong)] p-5 shadow-xl shadow-black/20">
+        <p className="text-sm font-bold text-white">
+          Status: {getStatusLabel(status)}
         </p>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-white/70">
           {getStatusMessage({
             status,
             waitingForBusinessHours,
@@ -541,239 +549,150 @@ export default function OrderUploadPage() {
         </p>
       </div>
 
-      {waitingForBusinessHours ? (
-        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          {order?.businessHours?.notice ||
-            "Recebemos todos os documentos obrigatórios fora do horário comercial. Seu pedido está na fila e será assumido pela equipe no próximo período de atendimento."}
-        </div>
-      ) : null}
-
-      {showTopInfo ? (
-        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          Todos os documentos obrigatórios já foram enviados. Aguarde enquanto o
-          pedido é encaminhado automaticamente para a próxima etapa.
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      {/* ALERTAS */}
+      {error && (
+        <div className="mb-4 rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
           {error}
         </div>
-      ) : null}
+      )}
 
-      {success ? (
-        <div className="mb-4 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+      {success && (
+        <div className="mb-4 rounded-2xl border border-green-400/30 bg-green-400/10 p-4 text-sm text-green-200">
           {success}
         </div>
-      ) : null}
+      )}
 
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">
-              Progresso dos documentos obrigatórios
-            </p>
-            <p className="text-sm text-slate-600">
-              {uploadedFiles} de {requiredFiles} enviados
-            </p>
-          </div>
-
-          <span className="text-lg font-bold text-slate-900">{progress}%</span>
+      {/* PROGRESSO */}
+      <div className="mb-6 rounded-2xl border border-white/10 bg-[var(--primary-blue-strong)] p-5">
+        <div className="flex justify-between">
+          <p className="text-sm text-white/80">
+            {uploadedFiles} de {requiredFiles} enviados
+          </p>
+          <span className="font-bold">{progress}%</span>
         </div>
 
-        <div className="mt-4 h-3 w-full rounded-full bg-slate-200">
+        <div className="mt-3 h-3 w-full rounded-full bg-white/10">
           <div
-            className="h-3 rounded-full bg-slate-900 transition-all"
+            className="h-3 rounded-full bg-[var(--accent-green)]"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
+      {/* GRID */}
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Documentos necessários
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Envie os arquivos abaixo para dar continuidade ao atendimento.
-          </p>
+
+        {/* DOCUMENTOS */}
+        <section className="rounded-2xl bg-white p-5 text-black shadow-xl">
+          <h2 className="text-lg font-bold">Documentos necessários</h2>
 
           <div className="mt-4 space-y-3">
             {serviceDocuments.map((doc) => {
               const uploaded = uploadedTypes.includes(doc.key);
 
               return (
-                <div
-                  key={doc.key}
-                  className="rounded-2xl border border-slate-200 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {doc.label}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {doc.required ? "Obrigatório" : "Opcional"}
-                      </p>
-                    </div>
+                <div key={doc.key} className="rounded-xl border p-4">
+                  <div className="flex justify-between">
+                    <span className="font-semibold">{doc.label}</span>
 
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      className={`text-xs font-bold ${
                         uploaded
-                          ? "bg-green-100 text-green-700"
+                          ? "text-green-600"
                           : doc.required
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-slate-100 text-slate-600"
+                          ? "text-yellow-600"
+                          : "text-slate-500"
                       }`}
                     >
-                      {uploaded
-                        ? "Enviado"
-                        : doc.required
-                        ? "Pendente"
-                        : "Opcional"}
+                      {uploaded ? "Enviado" : "Pendente"}
                     </span>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          {requiredDocuments.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500">
-              Este serviço não possui documentos obrigatórios cadastrados.
-            </p>
-          ) : null}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
-            Enviar novo arquivo
-          </h2>
+        {/* UPLOAD */}
+        <section className="rounded-2xl bg-white p-5 text-black shadow-xl">
+          <h2 className="text-lg font-bold">Enviar documento</h2>
 
           {hideUploadForm ? (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-              {waitingForBusinessHours
-                ? "Todos os documentos obrigatórios já foram recebidos. Como o envio ocorreu fora do horário comercial, o pedido ficará na fila até o próximo período de atendimento."
-                : status === "PROCESSING"
-                ? "Todos os documentos já foram recebidos e o pedido está em análise."
-                : status === "COMPLETED"
-                ? "Este pedido já foi concluído. Novos envios não são necessários."
-                : "Todos os documentos obrigatórios já foram enviados. Aguarde a próxima atualização do pedido."}
-            </div>
+            <p className="mt-4 text-sm text-slate-600">
+              Todos os documentos já foram enviados ou o pedido está em análise.
+            </p>
           ) : (
             <div className="mt-4 space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Tipo do documento
-                </label>
 
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value as DocumentKey)}
-                  disabled={!uploadAllowed || loading}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-900"
-                >
-                  <option value="">Selecione um documento</option>
-                  {serviceDocuments.map((doc) => (
-                    <option key={doc.key} value={doc.key}>
-                      {doc.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value as any)}
+                className="w-full rounded-xl border px-3 py-2"
+              >
+                <option value="">Selecione</option>
+                {serviceDocuments.map((doc) => (
+                  <option key={doc.key} value={doc.key}>
+                    {doc.label}
+                  </option>
+                ))}
+              </select>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Arquivo
-                </label>
-
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  disabled={!uploadAllowed || loading}
-                  className="block w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
-                />
-              </div>
-
-              {selectedDocumentLabel ? (
-                <p className="text-xs text-slate-500">
-                  Documento selecionado: {selectedDocumentLabel}
-                </p>
-              ) : null}
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="w-full"
+              />
 
               <button
-                type="button"
                 onClick={handleUpload}
-                disabled={!uploadAllowed || loading || !selectedType || !file}
-                className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={!selectedType || !file || loading}
+                className="w-full rounded-xl bg-[var(--accent-green)] py-3 text-white font-bold hover:bg-[var(--accent-green-hover)]"
               >
                 {loading ? "Enviando..." : "Enviar documento"}
               </button>
+
             </div>
           )}
-
-          {!uploadAllowed && !hideUploadForm ? (
-            currentStatus === "PROCESSING" ? (
-              <p className="mt-4 text-xs font-medium text-green-700">
-                Seu pedido já está em análise.
-              </p>
-            ) : currentStatus === "COMPLETED" ? (
-              <p className="mt-4 text-xs font-medium text-green-700">
-                Este pedido já foi concluído.
-              </p>
-            ) : currentStatus === "CANCELLED" ? (
-              <p className="mt-4 text-xs font-medium text-red-600">
-                Este pedido foi cancelado e não aceita novos envios.
-              </p>
-            ) : (
-              <p className="mt-4 text-xs text-red-600">
-                O envio está bloqueado nesta etapa do pedido.
-              </p>
-            )
-          ) : null}
         </section>
+
       </div>
 
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
-          Arquivos já enviados
-        </h2>
+      {/* LISTA DE ARQUIVOS */}
+      <section className="mt-6 rounded-2xl bg-white p-5 text-black shadow-xl">
+        <h2 className="text-lg font-bold">Arquivos enviados</h2>
 
         <div className="mt-4 space-y-3">
           {filesList.length === 0 ? (
             <p className="text-sm text-slate-600">
-              Nenhum arquivo enviado até o momento.
+              Nenhum arquivo enviado.
             </p>
           ) : (
             filesList.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-slate-200 p-4"
-              >
-                <p className="text-sm font-semibold text-slate-900">
-                  {item.originalName || "Arquivo"}
+              <div key={item.id} className="border p-4 rounded-xl">
+                <p className="font-semibold">
+                  {item.originalName}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Tipo: {getDocumentTypeLabel(item.type, item.type || "Documento")}
+
+                <p className="text-xs text-slate-500">
+                  {getDocumentTypeLabel(item.type)}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Enviado em: {formatDate(item.createdAt)}
-                </p>
-                {item.url ? (
+
+                {item.url && (
                   <a
                     href={item.url}
                     target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-block text-sm font-medium text-blue-600 hover:underline"
+                    className="text-blue-600 underline text-sm"
                   >
                     Abrir arquivo
                   </a>
-                ) : null}
+                )}
               </div>
             ))
           )}
         </div>
       </section>
-    </main>
-  );
+
+    </div>
+  </main>
+);
 }
