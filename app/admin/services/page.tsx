@@ -7,13 +7,9 @@ export const dynamic = "force-dynamic";
 export default async function AdminServicesPage() {
   const user = await getCurrentUser();
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
-  if (user.role !== "ADMIN") {
-    redirect("/dashboard");
-  }
+  if (user.role !== "ADMIN") redirect("/dashboard");
 
   return <AdminServicesClient user={user} />;
 }

@@ -54,6 +54,8 @@ export default function AdminServicesClient({ user }: { user: User }) {
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -67,7 +69,7 @@ export default function AdminServicesClient({ user }: { user: User }) {
   }, [loadingServices, services.length]);
 
   async function loadServices() {
-    const res = await fetch("/api/services");
+    const res = await fetch("/api/services", { cache: "no-store" });
     const data = await res.json();
     return Array.isArray(data) ? data : [];
   }
@@ -83,96 +85,142 @@ export default function AdminServicesClient({ user }: { user: User }) {
       .finally(() => setLoadingServices(false));
   }, []);
 
-async function handleCreateService(e: FormEvent<HTMLFormElement>) {
-  e.preventDefault();
-
-  const parsedPrice = parseCurrencyInput(price);
-
-  if (!name || !parsedPrice) {
-    alert("Preencha nome e preço.");
-    return;
-  }
-
-  setSubmitting(true);
-
-  try {
-    const generated = generateServiceData(name);
-
-    await fetch("/api/services", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-
-        // 🔥 descrição agora vira fallback (opcional)
-        description: description || generated.highlights.join("\n"),
-
-        price: parsedPrice,
-        codePrefix: normalizePrefix(codePrefix),
-
-        // 🚀 NOVO SISTEMA
-        type: generated.type,
-        highlights: generated.highlights,
-        documents: generated.documents,
-      }),
-    });
-
+  function resetForm() {
+    setEditingId(null);
     setName("");
     setDescription("");
     setPrice("");
     setCodePrefix("");
-
-    await refreshServices();
-
-  } catch (err) {
-    alert("Erro ao criar serviço");
-  } finally {
-    setSubmitting(false);
   }
-}
+
+  function startEdit(service: Service) {
+    setEditingId(service.id);
+    setName(service.name);
+    setDescription(service.description || "");
+    setPrice(formatCurrencyInput(String(Math.round(Number(service.price) * 100))));
+    setCodePrefix(service.codePrefix || "");
+  }
+
+  async function handleSubmitService(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const parsedPrice = parseCurrencyInput(price);
+
+    if (!name || !parsedPrice) {
+      alert("Preencha nome e preço.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const generated = generateServiceData(name);
+
+      const payload = {
+        name,
+        description: description || generated.highlights.join("\n"),
+        price: parsedPrice,
+        codePrefix: normalizePrefix(codePrefix),
+        type: generated.type,
+        highlights: generated.highlights,
+        documents: generated.documents,
+      };
+
+      const url = editingId ? `/api/services/${editingId}` : "/api/services";
+      const method = editingId ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        alert(data?.error || "Erro ao salvar serviço.");
+        return;
+      }
+
+      resetForm();
+      await refreshServices();
+    } catch {
+      alert("Erro ao salvar serviço.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDeleteService(serviceId: string) {
+    const confirmed = window.confirm(
+      "Tem certeza que deseja excluir este serviço? Essa ação pode afetar o catálogo."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(serviceId);
+
+      const res = await fetch(`/api/services/${serviceId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        alert(data?.error || "Erro ao excluir serviço.");
+        return;
+      }
+
+      if (editingId === serviceId) resetForm();
+
+      await refreshServices();
+    } catch {
+      alert("Erro inesperado ao excluir serviço.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--primary-blue)] text-white">
       <AppNav user={user} />
 
-      <main className="px-4 py-6">
+      <main className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
+          <section className="mb-6 rounded-3xl border border-white/10 bg-[var(--primary-blue-strong)] p-6 shadow-xl shadow-black/20">
+            <div className="inline-flex rounded-full border border-green-400/30 bg-green-400/10 px-4 py-1 text-xs font-bold text-green-300">
+              Painel administrativo
+            </div>
 
-          {/* HEADER */}
-          <div className="mb-6 bg-white p-6 rounded-3xl shadow-sm">
-            <h1 className="text-3xl font-bold">
+            <h1 className="mt-4 text-3xl font-black">
               Gerenciar serviços
             </h1>
 
-            <ul className="mt-3 max-w-md space-y-1 text-sm text-slate-600">
-              <li>• Crie serviços com foco em conversão</li>
-              <li>• Use descrição curta e direta</li>
-              <li>• Evite textos longos</li>
-            </ul>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70">
+              Crie, edite e remova serviços da plataforma. Mantenha nomes,
+              valores e descrições claros para melhorar a conversão.
+            </p>
 
-            <div className="mt-3 text-sm text-slate-500">
+            <div className="mt-4 text-sm font-bold text-green-300">
               {servicesCountLabel}
             </div>
-          </div>
+          </section>
 
           <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-
-            {/* CRIAR */}
-            <section className="bg-white p-6 rounded-3xl">
-
-              <h2 className="text-lg font-bold">
-                Novo serviço
+            <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl">
+              <h2 className="text-lg font-black text-slate-950">
+                {editingId ? "Editar serviço" : "Novo serviço"}
               </h2>
 
-              <form onSubmit={handleCreateService} className="mt-4 space-y-4">
-
+              <form onSubmit={handleSubmitService} className="mt-4 space-y-4">
                 <input
                   placeholder="Nome (ex: Regularizar CPF)"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full border rounded-xl px-4 py-3"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--accent-green)]"
                 />
 
                 <textarea
@@ -182,63 +230,117 @@ async function handleCreateService(e: FormEvent<HTMLFormElement>) {
 • Processo simples`}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full border rounded-xl px-4 py-3 min-h-[120px]"
+                  className="min-h-[120px] w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--accent-green)]"
                 />
 
                 <input
                   placeholder="Preço (ex: 39,90)"
                   value={price}
-                  onChange={(e) =>
-                    setPrice(formatCurrencyInput(e.target.value))
-                  }
-                  className="w-full border rounded-xl px-4 py-3"
+                  onChange={(e) => setPrice(formatCurrencyInput(e.target.value))}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--accent-green)]"
                 />
 
                 <input
                   placeholder="Prefixo (CPF, RG...)"
                   value={codePrefix}
-                  onChange={(e) =>
-                    setCodePrefix(normalizePrefix(e.target.value))
-                  }
-                  className="w-full border rounded-xl px-4 py-3 uppercase"
+                  onChange={(e) => setCodePrefix(normalizePrefix(e.target.value))}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 uppercase outline-none focus:border-[var(--accent-green)]"
                 />
 
-                <button className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold">
-                  {submitting ? "Criando..." : "Criar serviço"}
+                <button
+                  disabled={submitting}
+                  className="w-full rounded-xl bg-[var(--accent-green)] py-3 font-bold text-white hover:bg-[var(--accent-green-hover)] disabled:opacity-60"
+                >
+                  {submitting
+                    ? "Salvando..."
+                    : editingId
+                    ? "Salvar alterações"
+                    : "Criar serviço"}
                 </button>
 
+                {editingId ? (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="w-full rounded-xl border border-slate-300 py-3 font-bold text-slate-700 hover:bg-slate-50"
+                  >
+                    Cancelar edição
+                  </button>
+                ) : null}
               </form>
             </section>
 
-            {/* LISTA */}
-            <section className="bg-white p-6 rounded-3xl">
-
-              <h2 className="text-lg font-bold">
-                Serviços
+            <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl">
+              <h2 className="text-lg font-black text-slate-950">
+                Serviços cadastrados
               </h2>
 
               <div className="mt-4 space-y-4">
-                {services.map((s) => (
-                  <div key={s.id} className="border rounded-2xl p-4">
-
-                    <h3 className="font-bold">
-                      {s.name}
-                    </h3>
-
-                    <ul className="mt-2 max-w-md space-y-1 text-sm text-slate-600">
-                      {s.description.split("\n").map((line, i) => (
-                        <li key={i}>• {line.replace(/^•\s?/, "")}</li>
-                      ))}
-                    </ul>
-
-                    <div className="mt-3 font-bold">
-                      {formatCurrency(s.price)}
-                    </div>
-
+                {loadingServices ? (
+                  <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                    Carregando serviços...
                   </div>
-                ))}
-              </div>
+                ) : services.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
+                    Nenhum serviço cadastrado.
+                  </div>
+                ) : (
+                  services.map((service) => (
+                    <div
+                      key={service.id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <h3 className="font-black text-slate-950">
+                            {service.name}
+                          </h3>
 
+                          <ul className="mt-2 max-w-md space-y-1 text-sm text-slate-600">
+                            {(service.description || "")
+                              .split("\n")
+                              .filter(Boolean)
+                              .map((line, index) => (
+                                <li key={index}>
+                                  • {line.replace(/^•\s?/, "")}
+                                </li>
+                              ))}
+                          </ul>
+
+                          <div className="mt-3 text-lg font-black text-slate-950">
+                            {formatCurrency(service.price)}
+                          </div>
+
+                          {service.codePrefix ? (
+                            <div className="mt-2 text-xs font-bold text-slate-500">
+                              Prefixo: {service.codePrefix}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <div className="flex flex-col gap-2 sm:w-40">
+                          <button
+                            type="button"
+                            onClick={() => startEdit(service)}
+                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-100"
+                          >
+                            Editar
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteService(service.id)}
+                            disabled={deletingId === service.id}
+                            className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-100 disabled:opacity-60"
+                          >
+                            {deletingId === service.id ? "Excluindo..." : "Excluir"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </section>
           </div>
         </div>
