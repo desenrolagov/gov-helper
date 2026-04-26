@@ -4,9 +4,9 @@ import { verifySession } from "@/lib/auth";
 
 type PaymentStatusValue = "PENDING" | "PAID" | "FAILED" | "EXPIRED";
 
-function avg(value: number, count: number) {
+function avgMinutes(totalMs: number, count: number) {
   if (!count) return 0;
-  return Math.round(value / count / 1000 / 60);
+  return Math.round(totalMs / count / 1000 / 60);
 }
 
 export async function GET() {
@@ -29,9 +29,7 @@ export async function GET() {
           orderBy: { createdAt: "asc" },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     });
 
     const statusCounts = {
@@ -52,12 +50,13 @@ export async function GET() {
     let countUpload = 0;
     let countComplete = 0;
 
-    let stuckOrders = 0;
     let paidOrders = 0;
     let uploadedOrders = 0;
     let completedOrders = 0;
+    let stuckOrders = 0;
 
     const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
 
     for (const order of orders) {
       switch (order.status) {
@@ -75,6 +74,7 @@ export async function GET() {
           break;
         case "COMPLETED":
           statusCounts.completed++;
+          completedOrders++;
           break;
         case "CANCELLED":
           statusCounts.cancelled++;
@@ -89,31 +89,33 @@ export async function GET() {
       const firstUpload = order.uploadedFiles[0];
       const firstResult = order.resultFiles[0];
 
-      const hasPaid = Boolean(paidPayment);
-      const hasUpload = Boolean(firstUpload);
-      const hasResult = Boolean(firstResult);
-
-      if (hasPaid) {
+      if (paidPayment) {
         paidOrders++;
         totalTimeToPay +=
-          new Date(paidPayment!.createdAt).getTime() -
+          new Date(paidPayment.createdAt).getTime() -
           new Date(order.createdAt).getTime();
         countPay++;
       }
 
-      if (hasUpload) {
+      if (firstUpload) {
         uploadedOrders++;
+
+        const startDate = paidPayment?.createdAt || order.createdAt;
+
         totalTimeToUpload +=
-          new Date(firstUpload!.createdAt).getTime() -
-          new Date(order.createdAt).getTime();
+          new Date(firstUpload.createdAt).getTime() -
+          new Date(startDate).getTime();
+
         countUpload++;
       }
 
-      if (hasResult) {
-        completedOrders++;
+      if (firstResult) {
+        const startDate = paidPayment?.createdAt || order.createdAt;
+
         totalTimeToComplete +=
-          new Date(firstResult!.createdAt).getTime() -
-          new Date(order.createdAt).getTime();
+          new Date(firstResult.createdAt).getTime() -
+          new Date(startDate).getTime();
+
         countComplete++;
       }
 
@@ -122,7 +124,7 @@ export async function GET() {
 
       const isStuck =
         isOperationallyOpen &&
-        now - new Date(order.updatedAt).getTime() > 24 * 60 * 60 * 1000;
+        now - new Date(order.updatedAt).getTime() > oneDayMs;
 
       if (isStuck) {
         stuckOrders++;
@@ -130,24 +132,24 @@ export async function GET() {
     }
 
     const paymentConversionRate = statusCounts.total
-      ? Number(((paidOrders / statusCounts.total) * 100).toFixed(2))
+      ? Number(((paidOrders / statusCounts.total) * 100).toFixed(1))
       : 0;
 
     const uploadConversionRate = paidOrders
-      ? Number(((uploadedOrders / paidOrders) * 100).toFixed(2))
+      ? Number(((uploadedOrders / paidOrders) * 100).toFixed(1))
       : 0;
 
     const completionRate = paidOrders
-      ? Number(((completedOrders / paidOrders) * 100).toFixed(2))
+      ? Number(((completedOrders / paidOrders) * 100).toFixed(1))
       : 0;
 
     return NextResponse.json(
       {
         statusCounts,
         metrics: {
-          avgTimeToPay: avg(totalTimeToPay, countPay),
-          avgTimeToUpload: avg(totalTimeToUpload, countUpload),
-          avgTimeToComplete: avg(totalTimeToComplete, countComplete),
+          avgTimeToPay: avgMinutes(totalTimeToPay, countPay),
+          avgTimeToUpload: avgMinutes(totalTimeToUpload, countUpload),
+          avgTimeToComplete: avgMinutes(totalTimeToComplete, countComplete),
           stuckOrders,
         },
         conversion: {
