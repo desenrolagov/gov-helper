@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/current-user";
 import AppNav from "@/components/AppNav";
-import SocialLinks from "@/components/SocialLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -242,24 +241,7 @@ export default async function HomePage() {
               </div>
             </div>
           )}
-
-          <section className="mt-14 rounded-3xl border border-white/10 bg-white/95 p-6 text-center text-slate-900 shadow-sm backdrop-blur sm:p-8">
-            <p className="text-sm font-semibold text-blue-700">
-              Canais oficiais da DesenrolaGov
-            </p>
-
-            <h2 className="mt-2 text-2xl font-black text-slate-900">
-              Acompanhe nossas redes sociais
-            </h2>
-
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Veja novidades, informações e nossos canais oficiais de
-              atendimento.
-            </p>
-
-            <SocialLinks className="mt-5 justify-center" />
-          </section>
-        </div>
+       </div>
       </section>
     </main>
   );

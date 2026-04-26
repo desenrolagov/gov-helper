@@ -59,12 +59,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
 
-    if (user.role !== "CLIENT") {
-      return NextResponse.json(
-        { error: "Somente clientes podem criar pedidos." },
-        { status: 403 }
-      );
-    }
+if (user.role === "ADMIN") {
+  return NextResponse.json(
+    { error: "Administradores não podem criar pedidos como cliente." },
+    { status: 403 }
+  );
+}
 
     const body = await req.json().catch(() => null);
     const validation = createOrderSchema.safeParse(body);
