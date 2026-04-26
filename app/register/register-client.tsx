@@ -44,29 +44,17 @@ export default function RegisterClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const canSubmit = useMemo(() => {
-    return (
-      name.trim().length > 0 &&
-      email.trim().length > 0 &&
-      password.length >= 6 &&
-      acceptedTerms &&
-      acceptedPrivacy &&
-      acceptedLgpd &&
-      !loading
-    );
-  }, [
-    name,
-    email,
-    password,
-    acceptedTerms,
-    acceptedPrivacy,
-    acceptedLgpd,
-    loading,
-  ]);
+  const canSubmit =
+    name.trim() &&
+    email.trim() &&
+    password.length >= 6 &&
+    acceptedTerms &&
+    acceptedPrivacy &&
+    acceptedLgpd &&
+    !loading;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
     if (!canSubmit) return;
 
     setLoading(true);
@@ -101,8 +89,7 @@ export default function RegisterClient() {
       }
 
       router.refresh();
-    } catch (error) {
-      console.error("Erro no cadastro:", error);
+    } catch {
       setError("Erro inesperado ao criar conta.");
     } finally {
       setLoading(false);
@@ -110,101 +97,60 @@ export default function RegisterClient() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-[var(--primary-blue)] text-white">
       <div className="mx-auto grid min-h-screen max-w-7xl items-center gap-8 px-4 py-10 sm:px-6 lg:grid-cols-2 lg:px-8">
-        
-        {/* LADO ESQUERDO */}
+
+        {/* ESQUERDA */}
         <section className="hidden lg:block">
           <div className="max-w-xl">
-            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+
+            <div className="inline-flex rounded-full border border-green-400/30 bg-green-400/10 px-4 py-1 text-xs font-bold text-green-300">
               {continueMode ? "Continuar atendimento" : "Criar conta"}
             </div>
 
-            <h1 className="mt-5 text-5xl font-bold tracking-tight text-slate-900">
+            <h1 className="mt-5 text-5xl font-black">
               {continueMode
-                ? "Crie sua conta e continue seu atendimento agora"
+                ? "Crie sua conta e continue agora"
                 : "Crie sua conta para acompanhar seus pedidos"}
             </h1>
 
-            <p className="mt-5 text-base leading-8 text-slate-600">
-              {continueMode
-                ? "Você está a um passo de concluir. Crie seu acesso e volte direto para continuar o atendimento."
-                : "Cadastre-se para acessar sua área do cliente, enviar documentos e acompanhar seu pedido com segurança."}
+            <p className="mt-5 text-base text-white/75">
+              Cadastro rápido, seguro e com acesso completo ao seu atendimento.
             </p>
 
-            <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-              Atenção: a DesenrolaGov é uma assessoria privada e não possui vínculo
-              com a Receita Federal ou outros órgãos do governo.
+            <div className="mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">
+              A DesenrolaGov é uma assessoria privada sem vínculo com órgãos públicos.
             </div>
 
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-lg font-bold text-slate-900">1</p>
-                <p className="mt-1 text-sm font-medium text-slate-800">
-                  Cadastro rápido
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Leva menos de 1 minuto.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-lg font-bold text-slate-900">2</p>
-                <p className="mt-1 text-sm font-medium text-slate-800">
-                  Etapa preservada
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Você volta direto ao fluxo.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-lg font-bold text-slate-900">3</p>
-                <p className="mt-1 text-sm font-medium text-slate-800">
-                  Acompanhamento
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Tudo organizado na sua conta.
-                </p>
-              </div>
-            </div>
           </div>
         </section>
 
         {/* FORM */}
         <section className="mx-auto w-full max-w-md">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="mb-6">
-              <p className="text-sm font-medium text-blue-600">DesenrolaGov</p>
-              <h2 className="mt-1 text-3xl font-bold text-slate-900">
-                Criar conta
-              </h2>
-            </div>
+          <div className="rounded-3xl bg-white p-6 text-black shadow-xl">
+
+            <h2 className="text-2xl font-black">Criar conta</h2>
 
             {error && (
-              <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4">
-                <p className="text-sm font-semibold text-red-800">
-                  Erro no cadastro
-                </p>
-                <p className="mt-1 text-sm text-red-700">{error}</p>
+              <div className="mt-4 rounded-xl bg-red-100 p-3 text-red-700 text-sm">
+                {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+
               <input
-                type="text"
                 placeholder="Seu nome"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-2xl border px-4 py-3"
+                className="w-full rounded-xl border px-3 py-2"
               />
 
               <input
-                type="email"
                 placeholder="Seu e-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-2xl border px-4 py-3"
+                className="w-full rounded-xl border px-3 py-2"
               />
 
               <input
@@ -212,66 +158,49 @@ export default function RegisterClient() {
                 placeholder="Crie uma senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-2xl border px-4 py-3"
+                className="w-full rounded-xl border px-3 py-2"
               />
 
-              {/* CHECKBOXES */}
-              <div className="space-y-2 text-sm">
+              <div className="text-sm space-y-1">
                 <label className="flex gap-2">
-                  <input
-                    type="checkbox"
-                    checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  />
-                  Aceito os <Link href="/terms" className="underline">Termos</Link>
+                  <input type="checkbox" onChange={(e)=>setAcceptedTerms(e.target.checked)} />
+                  Termos
                 </label>
 
                 <label className="flex gap-2">
-                  <input
-                    type="checkbox"
-                    checked={acceptedPrivacy}
-                    onChange={(e) => setAcceptedPrivacy(e.target.checked)}
-                  />
-                  Aceito a <Link href="/privacy" className="underline">Privacidade</Link>
+                  <input type="checkbox" onChange={(e)=>setAcceptedPrivacy(e.target.checked)} />
+                  Privacidade
                 </label>
 
                 <label className="flex gap-2">
-                  <input
-                    type="checkbox"
-                    checked={acceptedLgpd}
-                    onChange={(e) => setAcceptedLgpd(e.target.checked)}
-                  />
-                  Autorizo uso dos dados
+                  <input type="checkbox" onChange={(e)=>setAcceptedLgpd(e.target.checked)} />
+                  LGPD
                 </label>
               </div>
 
               <button
-                type="submit"
                 disabled={!canSubmit}
-                className="w-full rounded-2xl bg-slate-900 py-3 text-white"
+                className="w-full bg-[var(--accent-green)] text-white py-3 rounded-xl font-bold"
               >
-                {loading
-                  ? "Criando conta..."
-                  : continueMode
-                  ? "Criar conta e continuar"
-                  : "Criar conta"}
+                {loading ? "Criando..." : "Criar conta"}
               </button>
+
             </form>
 
-            <div className="mt-6 text-sm text-slate-600">
+            <div className="mt-4 text-sm">
               Já tem conta?{" "}
-              <Link href={loginHref} className="font-semibold underline">
+              <Link href={loginHref} className="underline font-bold">
                 Entrar
               </Link>
             </div>
 
-            <div className="mt-4 text-center">
-              <Link href={homeHref} className="text-sm text-slate-500">
-                Voltar
-              </Link>
+            <div className="mt-3 text-sm text-center">
+              <Link href={homeHref}>Voltar</Link>
             </div>
+
           </div>
         </section>
+
       </div>
     </main>
   );
