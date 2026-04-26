@@ -76,26 +76,26 @@ function SectionCard({
 }) {
   const badgeClasses =
     badgeTone === "emerald"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      ? "bg-green-50 text-green-700 border-green-200"
       : "bg-slate-50 text-slate-700 border-slate-200";
 
   return (
-    <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+    <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <p className="mt-1 text-sm text-gray-600">{description}</p>
+          <h2 className="text-lg font-black text-slate-950">{title}</h2>
+          <p className="mt-1 text-sm text-slate-600">{description}</p>
         </div>
 
         <span
-          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${badgeClasses}`}
+          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${badgeClasses}`}
         >
           {badgeLabel}
         </span>
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-600">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
           {emptyMessage}
         </div>
       ) : (
@@ -103,47 +103,43 @@ function SectionCard({
           {items.map((doc) => (
             <div
               key={`${doc.kind}-${doc.id}`}
-              className="rounded-2xl border border-gray-200 bg-white p-5"
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900">
+                  <h3 className="text-base font-bold text-slate-950">
                     {doc.originalName}
                   </h3>
 
-                  <p className="mt-2 text-sm text-gray-600">
+                  <p className="mt-2 text-sm text-slate-600">
                     Serviço: {doc.order.serviceName}
                   </p>
 
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-600">
                     Pedido: {doc.order.orderCode || doc.order.id}
                   </p>
 
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-600">
                     Status: {getStatusLabel(doc.order.status)}
                   </p>
 
                   {doc.type ? (
-                    <p className="text-sm text-gray-600">
-                      Tipo: {doc.type}
-                    </p>
+                    <p className="text-sm text-slate-600">Tipo: {doc.type}</p>
                   ) : null}
 
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-slate-600">
                     Enviado em: {formatDate(doc.createdAt)}
                   </p>
                 </div>
 
-                <div>
-                  <a
-                    href={doc.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-                  >
-                    {buttonLabel}
-                  </a>
-                </div>
+                <a
+                  href={doc.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-xl bg-[var(--accent-green)] px-4 py-2 text-sm font-bold text-white transition hover:bg-[var(--accent-green-hover)]"
+                >
+                  {buttonLabel}
+                </a>
               </div>
             </div>
           ))}
@@ -200,32 +196,35 @@ export default function DocumentsClient({ user }: Props) {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-[var(--primary-blue)] text-white">
       <AppNav user={user} />
 
       <section className="mx-auto max-w-6xl px-4 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Meus documentos</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="text-sm font-bold text-green-300">Área do cliente</p>
+          <h1 className="mt-1 text-3xl font-black">Meus documentos</h1>
+          <p className="mt-2 max-w-3xl text-sm text-white/70">
             Aqui os arquivos ficam separados entre o que você enviou e o que foi
             liberado pela equipe no final do atendimento.
           </p>
         </div>
 
-        <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-700">
+        <div className="mb-6 rounded-2xl border border-white/10 bg-[var(--primary-blue-strong)] p-4 shadow-xl shadow-black/20">
+          <p className="text-sm text-white/75">
             Cliente:{" "}
-            <span className="font-semibold">{user.name || user.email}</span>
+            <span className="font-bold text-white">
+              {user.name || user.email}
+            </span>
           </p>
         </div>
 
         {loading ? (
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <p className="text-sm text-gray-600">Carregando documentos...</p>
+          <div className="rounded-2xl border border-white/10 bg-[var(--primary-blue-strong)] p-6 shadow-xl shadow-black/20">
+            <p className="text-sm text-white/70">Carregando documentos...</p>
           </div>
         ) : error ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
-            <p className="text-sm text-red-600">{error}</p>
+          <div className="rounded-2xl border border-red-400/30 bg-red-400/10 p-6">
+            <p className="text-sm text-red-100">{error}</p>
           </div>
         ) : (
           <div className="grid gap-6">
