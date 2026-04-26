@@ -202,10 +202,18 @@ export default function ContinueClient() {
         return;
       }
 
-      if (direct.res.status !== 401) {
-        setError(direct.data?.error || "Erro ao continuar.");
-        return;
-      }
+if (direct.res.ok && direct.data?.order?.id) {
+  router.replace(`/payment?orderId=${direct.data.order.id}`);
+  return;
+}
+
+// 👉 TRATAR 401 E 403 COMO "PRECISA LOGAR"
+if (direct.res.status === 401 || direct.res.status === 403) {
+  // segue fluxo de cadastro/login
+} else {
+  setError(direct.data?.error || "Erro ao continuar.");
+  return;
+}
 
       const register = await registerUser();
 
