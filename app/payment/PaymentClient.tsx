@@ -164,80 +164,83 @@ export default function PaymentClient() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-8">
-        <div className="mx-auto max-w-5xl rounded-3xl bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">Carregando...</p>
+      <main className="min-h-screen bg-[var(--primary-blue)] px-4 py-8 text-white">
+        <div className="mx-auto max-w-5xl rounded-3xl border border-white/10 bg-[var(--primary-blue-strong)] p-6 shadow-xl shadow-black/20">
+          <p className="text-sm text-white/70">Carregando pagamento...</p>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen bg-[var(--primary-blue)] px-4 py-8 text-white">
+      <div className="mx-auto max-w-6xl">
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+          <section className="rounded-3xl border border-white/10 bg-[var(--primary-blue-strong)] p-6 shadow-xl shadow-black/20 sm:p-8">
+            <div className="inline-flex items-center rounded-full border border-green-400/30 bg-green-400/10 px-4 py-1 text-xs font-bold text-green-300">
               Etapa de pagamento
             </div>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
               Finalize seu pagamento
             </h1>
 
-            <ul className="mt-5 space-y-3 text-sm text-slate-700">
-              <li>• Pagamento seguro</li>
-              <li>• Liberação imediata do atendimento</li>
-              <li>• Próxima etapa: envio de documentos</li>
+            <ul className="mt-5 space-y-3 text-sm text-white/80">
+              <li>✔ Pagamento seguro</li>
+              <li>✔ Liberação imediata do atendimento</li>
+              <li>✔ Próxima etapa: envio de documentos</li>
             </ul>
 
-            <p className="mt-5 text-sm text-slate-500">
-              Assessoria privada, sem vínculo com órgãos públicos.
+            <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
+              A DesenrolaGov é uma assessoria privada e não possui vínculo com
+              órgãos públicos.
             </p>
 
             {success ? (
-              <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <div className="mt-6 rounded-2xl border border-green-400/30 bg-green-400/10 px-4 py-3 text-sm text-green-200">
                 Pagamento identificado. Estamos atualizando seu pedido.
               </div>
             ) : null}
 
             {canceled ? (
-              <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              <div className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
                 Pagamento cancelado. Você pode tentar novamente.
               </div>
             ) : null}
 
             {error ? (
-              <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-100">
                 {error}
               </div>
             ) : null}
           </section>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl sm:p-8">
             <div className="space-y-5">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
                   Resumo do pedido
                 </p>
 
-                <h2 className="mt-2 text-2xl font-black text-slate-900">
+                <h2 className="mt-2 text-2xl font-black text-slate-950">
                   {order?.service?.name || "Serviço"}
                 </h2>
               </div>
 
-              {order?.orderCode ? <OrderCodeBadge code={order.orderCode} /> : null}
+              {order?.orderCode ? (
+                <OrderCodeBadge code={order.orderCode} />
+              ) : null}
 
-              <div>
-                <p className="text-sm text-slate-500">Valor</p>
-                <p className="text-3xl font-black text-slate-900">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-slate-500">Valor</p>
+                <p className="mt-1 text-4xl font-black text-slate-950">
                   {formatCurrency(order?.totalAmount)}
                 </p>
               </div>
 
-              <div>
-                <p className="text-sm text-slate-500">Status</p>
-                <p className="text-sm font-semibold text-slate-800">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm font-semibold text-slate-500">Status</p>
+                <p className="mt-1 text-sm font-bold text-[var(--primary-blue)]">
                   {getStatusLabel(order?.status)}
                 </p>
               </div>
@@ -251,11 +254,17 @@ export default function PaymentClient() {
                 />
                 <span>
                   Aceito os{" "}
-                  <Link href="/terms" className="font-semibold text-slate-900 underline">
+                  <Link
+                    href="/terms"
+                    className="font-bold text-slate-950 underline"
+                  >
                     Termos de Uso
                   </Link>{" "}
                   e a{" "}
-                  <Link href="/privacy" className="font-semibold text-slate-900 underline">
+                  <Link
+                    href="/privacy"
+                    className="font-bold text-slate-950 underline"
+                  >
                     Política de Privacidade
                   </Link>
                   .
@@ -265,15 +274,15 @@ export default function PaymentClient() {
               <button
                 type="button"
                 onClick={handleCheckout}
-                disabled={creatingCheckout}
-                className="w-full rounded-2xl bg-emerald-600 px-5 py-4 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={creatingCheckout || !acceptedLegal}
+                className="w-full rounded-2xl bg-[var(--accent-green)] px-5 py-4 text-sm font-bold text-white shadow-lg shadow-green-950/20 transition hover:bg-[var(--accent-green-hover)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {creatingCheckout ? "Redirecionando..." : "Pagar agora"}
               </button>
 
               <Link
                 href="/orders"
-                className="block text-center text-sm font-medium text-slate-600 underline"
+                className="block text-center text-sm font-semibold text-slate-600 underline"
               >
                 Ver meus pedidos
               </Link>
