@@ -17,9 +17,84 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function formatDateTime(value: Date | string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function getStatusTimelineMeta(status: string) {
+  switch (status) {
+    case "PENDING_PAYMENT":
+      return {
+        title: "Pedido criado",
+        description: "O pedido foi iniciado e ficou aguardando pagamento.",
+        tone: "amber" as const,
+        badge: "Status",
+      };
+
+    case "PAID":
+      return {
+        title: "Pagamento aprovado",
+        description: "O pagamento foi confirmado e o atendimento foi liberado.",
+        tone: "green" as const,
+        badge: "Pagamento",
+      };
+
+    case "AWAITING_DOCUMENTS":
+      return {
+        title: "Aguardando documentos",
+        description: "O cliente precisa enviar os documentos obrigatórios.",
+        tone: "amber" as const,
+        badge: "Documentos",
+      };
+
+    case "WAITING_OPERATOR_SCHEDULE_REVIEW":
+      return {
+        title: "Aguardando unidade Poupatempo",
+        description:
+          "Documentos recebidos. O operador deve localizar a unidade e horários disponíveis.",
+        tone: "blue" as const,
+        badge: "Poupatempo",
+      };
+
+    case "PROCESSING":
+      return {
+        title: "Pedido em atendimento",
+        description: "A equipe iniciou o andamento do pedido.",
+        tone: "blue" as const,
+        badge: "Status",
+      };
+
+    case "COMPLETED":
+      return {
+        title: "Pedido concluído",
+        description: "O atendimento foi finalizado.",
+        tone: "green" as const,
+        badge: "Entrega",
+      };
+
+    case "CANCELLED":
+      return {
+        title: "Pedido cancelado",
+        description: "O pedido foi encerrado sem conclusão.",
+        tone: "red" as const,
+        badge: "Status",
+      };
+
+    default:
+      return {
+        title: status,
+        description: "Atualização registrada no pedido.",
+        tone: "slate" as const,
+        badge: "Status",
+      };
+  }
+}
+
 function OperatorScheduleReviewCard({ order }: { order: any }) {
-  const isWaiting =
-    order.status === "WAITING_OPERATOR_SCHEDULE_REVIEW";
+  const isWaiting = order.status === "WAITING_OPERATOR_SCHEDULE_REVIEW";
 
   if (!isWaiting) return null;
 
@@ -101,8 +176,21 @@ export default async function AdminOrderDetailsPage({ params }: any) {
 
   const totalUploads = order.uploadedFiles.length;
   const totalResults = order.resultFiles.length;
-
   const paid = order.payments.some((p: any) => p.status === "PAID");
+
+  const timelineItems = order.histories.map((history: any) => {
+    const meta = getStatusTimelineMeta(history.status);
+
+    return {
+      id: history.id,
+      title: meta.title,
+      description: meta.description,
+      timestamp: formatDateTime(history.createdAt),
+      sortDate: history.createdAt,
+      tone: meta.tone,
+      badge: meta.badge,
+    };
+  });
 
   return (
     <div className="min-h-screen bg-[var(--primary-blue)] text-white">
@@ -193,10 +281,10 @@ export default async function AdminOrderDetailsPage({ params }: any) {
                   {order.uploadedFiles.map((file: any) => (
                     <div
                       key={file.id}
-                      className="flex items-center justify-between rounded-2xl border p-3"
+                      className="flex items-center justify-between gap-4 rounded-2xl border p-3"
                     >
-                      <div>
-                        <p className="text-sm font-bold">
+                      <div className="min-w-0">
+                        <p className="break-all text-sm font-bold">
                           {file.originalName}
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
@@ -208,7 +296,7 @@ export default async function AdminOrderDetailsPage({ params }: any) {
                         href={file.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-sm font-bold text-[var(--accent-green)]"
+                        className="shrink-0 text-sm font-bold text-[var(--accent-green)]"
                       >
                         Abrir
                       </a>
@@ -265,10 +353,21 @@ export default async function AdminOrderDetailsPage({ params }: any) {
             />
 
             <div className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl">
-              <h2 className="text-lg font-black">Timeline do pedido</h2>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-black">Timeline do pedido</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Acompanhe cada avanço registrado neste atendimento.
+                  </p>
+                </div>
 
-              <div className="mt-4">
-                <AdminOrderAuditTimeline items={[]} />
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
+                  {timelineItems.length}
+                </span>
+              </div>
+
+              <div className="mt-5">
+                <AdminOrderAuditTimeline items={timelineItems} />
               </div>
             </div>
           </div>
