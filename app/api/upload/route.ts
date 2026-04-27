@@ -363,7 +363,23 @@ const isRgService =
   order.service.name?.toLowerCase().includes("rg") ||
   order.service.name?.toLowerCase().includes("identidade");
 
-const requiredDocs = isRgService ? allRequiredDocs.slice(0, 2) : allRequiredDocs;
+const rgRequiredDocs = [
+  {
+    key: "CPF",
+    label: "CPF ou certidão de nascimento",
+    required: true,
+    description: "Envie o CPF ou a certidão de nascimento/casamento legível.",
+  },
+  {
+    key: "COMPROVANTE_ENDERECO",
+    label: "Comprovante de residência",
+    required: true,
+    description:
+      "Conta recente de água, luz, telefone, internet ou documento equivalente.",
+  },
+] as const;
+
+const requiredDocs = isRgService ? rgRequiredDocs : allRequiredDocs;
 
 const isAllowed = requiredDocs.some((doc) => doc.key === type);
 
