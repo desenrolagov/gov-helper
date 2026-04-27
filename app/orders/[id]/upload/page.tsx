@@ -1,5 +1,6 @@
 "use client";
 
+import PoupatempoLocator from "@/components/PoupatempoLocator";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -30,6 +31,9 @@ type OrderData = {
     name?: string | null;
   } | null;
   uploadedFiles?: UploadedFileItem[];
+    selectedPoupatempoName?: string | null;
+  selectedPoupatempoAddress?: string | null;
+  selectedPoupatempoDistanceKm?: number | null;
 };
 
 function canUploadForStatus(status?: string): status is AllowedUploadStatus {
@@ -231,7 +235,18 @@ export default function OrderUploadPage() {
           {Math.min(uploadedRequiredCount, 2)}/2 documentos enviados
         </p>
 
-        {(isWaiting || allRequiredSent) && <WaitingBlock />}
+{(isWaiting || allRequiredSent) && (
+  <>
+    <WaitingBlock />
+
+    <PoupatempoLocator
+      orderId={orderId}
+      selectedName={order?.selectedPoupatempoName}
+      selectedAddress={order?.selectedPoupatempoAddress}
+      selectedDistanceKm={order?.selectedPoupatempoDistanceKm}
+    />
+  </>
+)}
 
         {!isWaiting && !allRequiredSent && uploadAllowed && currentDocument && (
           <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">

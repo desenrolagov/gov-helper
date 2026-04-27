@@ -27,47 +27,52 @@ model User {
 }
 
 model Service {
-  id           String   @id @default(uuid())
-  name         String
-  description  String?  // opcional agora
-  price        Float
-
-  type         String   @default("OUTRO")
-  highlights   Json?    // bullets de conversão
-  documents    Json?    // documentos necessários
-
-  codePrefix   String?  @unique @db.VarChar(10)
-  active       Boolean  @default(true)
-
+  id                     String   @id @default(uuid())
+  name                   String
+  description            String?
+  price                  Float
+  type                   String   @default("OUTRO")
+  highlights             Json?
+  documents              Json?
+  codePrefix             String?  @unique @db.VarChar(10)
+  active                 Boolean  @default(true)
   requiresScheduleReview Boolean @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  orders       Order[]
+  orders Order[]
 }
 
 model Order {
-  id                   String               @id @default(uuid())
-  orderCode            String?              @unique
+  id                   String      @id @default(uuid())
+  orderCode            String?     @unique
   userId               String
   serviceId            String
-  status               OrderStatus          @default(PENDING_PAYMENT)
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
-  legalAcceptedVersion String?              @db.VarChar(30)
+  status               OrderStatus @default(PENDING_PAYMENT)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  legalAcceptedVersion String?     @db.VarChar(30)
   privacyAcceptedAt    DateTime?
   termsAcceptedAt      DateTime?
   totalAmount          Float
-  privacyAccepted      Boolean              @default(false)
-  termsAccepted        Boolean              @default(false)
-  documents            Document[]
-  service              Service              @relation(fields: [serviceId], references: [id])
-  user                 User                 @relation(fields: [userId], references: [id])
-  resultFiles          OrderResultFile[]
-  histories            OrderStatusHistory[]
-  payments             Payment[]
-  uploadedFiles        UploadedFile[]
+  privacyAccepted      Boolean     @default(false)
+  termsAccepted        Boolean     @default(false)
+
+  customerAddress              String?
+  selectedPoupatempoName       String?
+  selectedPoupatempoAddress    String?
+  selectedPoupatempoCity       String?
+  selectedPoupatempoDistanceKm Float?
+  selectedPoupatempoLat        Float?
+  selectedPoupatempoLng        Float?
+
+  documents     Document[]
+  service       Service              @relation(fields: [serviceId], references: [id])
+  user          User                 @relation(fields: [userId], references: [id])
+  resultFiles   OrderResultFile[]
+  histories     OrderStatusHistory[]
+  payments      Payment[]
+  uploadedFiles UploadedFile[]
 
   @@index([userId])
   @@index([serviceId])
