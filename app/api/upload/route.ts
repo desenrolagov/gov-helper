@@ -370,10 +370,17 @@ export async function POST(req: Request) {
       );
     }
 
-    const requiredDocs = await getRequiredDocumentsForServiceDynamic(
-      order.service.id,
-      serviceType
-    );
+const allRequiredDocs = await getRequiredDocumentsForServiceDynamic(
+  order.service.id,
+  serviceType
+);
+
+const isRgService =
+  serviceType === "RG" ||
+  order.service.name?.toLowerCase().includes("rg") ||
+  order.service.name?.toLowerCase().includes("identidade");
+
+const requiredDocs = isRgService ? allRequiredDocs.slice(0, 2) : allRequiredDocs;
 
     const uploadedFilesBefore = await prisma.uploadedFile.findMany({
       where: { orderId },
@@ -482,13 +489,33 @@ export async function POST(req: Request) {
       (doc) => !uploadedTypes.includes(doc.key)
     );
 
-    if (pendingDocuments.length > 0) {
-      await updateOrderStatusIfNeeded(orderId, "AWAITING_DOCUMENTS");
-    }
+if (pendingDocuments.length > 0) {
+  await updateOrderStatusIfNeeded(orderId, "AWAITING_DOCUMENTS");
+}
 
-    const syncResult = await syncOrderToProcessingIfReady(orderId);
+const hasAllRequiredDocuments = pendingDocuments.length === 0;
 
-    const hasAllRequiredDocuments = pendingDocuments.length === 0;
+let syncResult = {
+  status: currentStatus,
+  movedToProcessing: false,
+  withinBusinessHours: true,
+};
+
+if (hasAllRequiredDocuments && isRgService) {
+  const changed = await updateOrderStatusIfNeeded(
+    orderId,
+    "WAITING_OPERATOR_SCHEDULE_REVIEW"
+  );
+
+  syncResult = {
+    status: "WAITING_OPERATOR_SCHEDULE_REVIEW",
+    movedToProcessing: changed,
+    withinBusinessHours: true,
+  };
+} else {
+  syncResult = await syncOrderToProcessingIfReady(orderId);
+}
+
     const waitingForBusinessHours =
       hasAllRequiredDocuments &&
       !syncResult.withinBusinessHours &&
