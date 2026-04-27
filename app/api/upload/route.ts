@@ -495,7 +495,11 @@ if (pendingDocuments.length > 0) {
 
 const hasAllRequiredDocuments = pendingDocuments.length === 0;
 
-let syncResult = {
+let syncResult: {
+  status: OrderStatus;
+  movedToProcessing: boolean;
+  withinBusinessHours: boolean;
+} = {
   status: currentStatus,
   movedToProcessing: false,
   withinBusinessHours: true,
