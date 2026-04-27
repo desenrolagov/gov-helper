@@ -192,17 +192,7 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Não autenticado." },
-        { status: 401 }
-      );
-    }
-
-    if (user.role !== "CLIENT") {
-      return NextResponse.json(
-        { error: "Somente clientes podem enviar arquivos." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
 
     const formData = await req.formData();
@@ -247,10 +237,37 @@ export async function POST(req: Request) {
       );
     }
 
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        role: true,
+        lgpdAccepted: true,
+        lgpdAcceptedAt: true,
+        termsAcceptedAt: true,
+        privacyAcceptedAt: true,
+        legalAcceptedVersion: true,
+      },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado." },
+        { status: 404 }
+      );
+    }
+
+    if (dbUser.role !== "CLIENT") {
+      return NextResponse.json(
+        { error: "Somente clientes podem enviar arquivos." },
+        { status: 403 }
+      );
+    }
+
     const order = await prisma.order.findFirst({
       where: {
         id: orderId,
-        userId: user.id,
+        userId: dbUser.id,
       },
       select: {
         id: true,
@@ -286,25 +303,6 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Serviço do pedido não encontrado." },
         { status: 400 }
-      );
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: {
-        id: true,
-        lgpdAccepted: true,
-        lgpdAcceptedAt: true,
-        termsAcceptedAt: true,
-        privacyAcceptedAt: true,
-        legalAcceptedVersion: true,
-      },
-    });
-
-    if (!dbUser) {
-      return NextResponse.json(
-        { error: "Usuário não encontrado." },
-        { status: 404 }
       );
     }
 
@@ -399,7 +397,7 @@ export async function POST(req: Request) {
     const existingSameType = await prisma.uploadedFile.findFirst({
       where: {
         orderId,
-        userId: user.id,
+        userId: dbUser.id,
         type,
       },
       select: {
@@ -442,7 +440,7 @@ export async function POST(req: Request) {
     } else {
       savedFile = await prisma.uploadedFile.create({
         data: {
-          userId: user.id,
+          userId: dbUser.id,
           orderId,
           type,
           originalName: file.name,
@@ -508,18 +506,21 @@ export async function POST(req: Request) {
 
     const responseMessage = existingSameType
       ? "Documento atualizado com sucesso."
-      : hasAllRequiredDocuments && syncResult.withinBusinessHours
-      ? "Todos os documentos obrigatórios foram enviados. Seu pedido foi encaminhado para análise."
-      : hasAllRequiredDocuments && !syncResult.withinBusinessHours
-      ? "Recebemos todos os documentos obrigatórios. Como o envio ocorreu fora do horário comercial, seu pedido ficará na fila e será assumido pela equipe no próximo período de atendimento."
-      : "Documento enviado com sucesso.";
+      : hasAllRequiredDocuments &&
+          syncResult.status === "WAITING_OPERATOR_SCHEDULE_REVIEW"
+        ? "Todos os documentos obrigatórios foram enviados. Agora nossa equipe irá localizar a unidade Poupatempo e horários disponíveis."
+        : hasAllRequiredDocuments && syncResult.withinBusinessHours
+          ? "Todos os documentos obrigatórios foram enviados. Seu pedido foi encaminhado para análise."
+          : hasAllRequiredDocuments && !syncResult.withinBusinessHours
+            ? "Recebemos todos os documentos obrigatórios. Como o envio ocorreu fora do horário comercial, seu pedido ficará na fila e será assumido pela equipe no próximo período de atendimento."
+            : "Documento enviado com sucesso.";
 
     try {
       await createAuditLog({
         action: existingSameType ? "DOCUMENT_UPDATED" : "DOCUMENT_UPLOADED",
         entityType: "uploaded_file",
         entityId: savedFile.id,
-        userId: user.id,
+        userId: dbUser.id,
         orderId,
         message: existingSameType
           ? "Documento do cliente atualizado."
