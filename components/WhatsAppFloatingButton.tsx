@@ -141,7 +141,7 @@ export default function WhatsAppFloatingButton({
         aria-label="Falar no WhatsApp"
         className="group inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent-green)] text-white shadow-2xl shadow-green-950/30 transition hover:scale-105 hover:bg-[var(--accent-green-hover)] sm:h-auto sm:w-auto sm:gap-3 sm:px-5 sm:py-4"
       >
-        <span className="text-2xl leading-none">☘</span>
+        <span className="text-2xl leading-none">💬</span>
 
         <span className="hidden text-left sm:block">
           <span className="block text-sm font-black">Falar no WhatsApp</span>

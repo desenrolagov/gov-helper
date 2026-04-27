@@ -70,10 +70,6 @@ export default async function HomePage() {
     services[0] ||
     null;
 
-  const secondaryServices = services.filter(
-    (service: Service) => service.id !== featuredService?.id
-  );
-
   const primaryHref = featuredService
     ? `/continue?serviceId=${featuredService.id}`
     : "/services";
@@ -91,17 +87,17 @@ export default async function HomePage() {
           <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <section>
               <div className="inline-flex rounded-full border border-green-400/30 bg-green-400/10 px-4 py-1 text-xs font-bold text-green-300">
-                Assessoria privada para regularização documental
+                Atendimento privado, rápido e 100% online
               </div>
 
               <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-                Regularize seu CPF sem dor de cabeça e sem filas
+                Regularize seu CPF sem sair de casa
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-white/75">
-                Nós organizamos seu atendimento do cadastro até a finalização,
-                com pagamento via Pix, envio de documentos e acompanhamento do
-                pedido em um só lugar.
+                Evite bloqueios no banco, dificuldades com emprego,
+                financiamentos e cadastros. A DesenrolaGov organiza seu
+                atendimento do início ao fim, sem filas e sem burocracia.
               </p>
 
               <div className="mt-6 grid gap-3 text-sm font-semibold text-white/90 sm:grid-cols-3">
@@ -109,16 +105,11 @@ export default async function HomePage() {
                   ✔ Cadastro rápido
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                  ✔ Pagamento via Pix
+                  ✔ Pagamento seguro
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                  ✔ Acompanhamento online
+                  ✔ Suporte online
                 </div>
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-sm leading-6 text-red-100">
-                A DesenrolaGov é uma assessoria privada e não possui vínculo com
-                a Receita Federal, gov.br ou qualquer órgão público.
               </div>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -126,26 +117,31 @@ export default async function HomePage() {
                   href={primaryHref}
                   className="inline-flex w-full items-center justify-center rounded-2xl bg-[var(--accent-green)] px-6 py-4 text-base font-black text-white shadow-lg shadow-green-900/30 transition hover:scale-[1.02] hover:bg-[var(--accent-green-hover)] sm:w-auto"
                 >
-                  Resolver meu CPF agora
+                  Regularizar meu CPF agora
                 </Link>
 
                 <Link
                   href={user ? "/orders" : "/login"}
                   className="inline-flex w-full items-center justify-center rounded-2xl border border-white/20 bg-white/5 px-6 py-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white sm:w-auto"
                 >
-                  {user ? "Acompanhar pedido" : "Já tenho conta"}
+                  {user ? "Acompanhar pedido" : "Já tenho atendimento"}
                 </Link>
               </div>
 
-              <p className="mt-3 text-xs text-white/50">
-                ✔ Processo rápido • ✔ Pagamento seguro • ✔ Sem burocracia
+              <p className="mt-3 text-xs text-white/60">
+                Leva menos de 2 minutos para iniciar.
               </p>
+
+              <div className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-sm leading-6 text-red-100">
+                A DesenrolaGov é uma assessoria privada e não possui vínculo com
+                a Receita Federal, gov.br ou qualquer órgão público.
+              </div>
             </section>
 
             <aside className="rounded-[2rem] bg-white p-6 text-[var(--text-dark)] shadow-2xl sm:p-8">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-bold text-slate-500">
-                  Serviço em destaque
+                  Serviço principal
                 </p>
 
                 <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
@@ -159,43 +155,38 @@ export default async function HomePage() {
                     {featuredService.name}
                   </h2>
 
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    Cuidamos do processo para você de forma simples, organizada
+                    e com acompanhamento online.
+                  </p>
+
                   <div className="mt-4 space-y-2 text-sm text-slate-700">
                     {featuredHighlights.map((item) => (
                       <p key={item}>• {item}</p>
                     ))}
                   </div>
 
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-slate-50 p-5">
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Valor
-                      </p>
-                      <p className="mt-2 text-3xl font-black text-slate-950">
-                        {formatCurrency(Number(featuredService.price))}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Etapas
-                      </p>
-                      <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                        <li>• Cadastro</li>
-                        <li>• Pagamento</li>
-                        <li>• Envio de documentos</li>
-                      </ul>
-                    </div>
+                  <div className="mt-6 rounded-2xl bg-slate-50 p-5">
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                      Valor do atendimento
+                    </p>
+                    <p className="mt-2 text-4xl font-black text-slate-950">
+                      {formatCurrency(Number(featuredService.price))}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-500">
+                      Pagamento via Pix com confirmação rápida.
+                    </p>
                   </div>
 
                   <Link
                     href={`/continue?serviceId=${featuredService.id}`}
                     className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-slate-950 px-6 py-4 text-sm font-black text-white hover:bg-slate-800"
                   >
-                    Continuar agora
+                    Começar meu atendimento
                   </Link>
 
                   <p className="mt-3 text-center text-xs text-slate-500">
-                    Pagamento via Pix com confirmação rápida.
+                    Atendimento privado, seguro e sem vínculo com o governo.
                   </p>
                 </>
               ) : (
@@ -209,16 +200,45 @@ export default async function HomePage() {
 
         <section className="bg-white px-4 py-12 text-[var(--text-dark)] sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
+            <div className="text-center">
+              <p className="text-sm font-bold text-[var(--accent-green)]">
+                CPF irregular pode atrapalhar sua vida
+              </p>
+              <h2 className="mt-2 text-3xl font-black text-slate-950">
+                Resolva antes que vire um problema maior
+              </h2>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-4">
+              {[
+                "Dificuldade para abrir conta",
+                "Problemas em financiamentos",
+                "Bloqueios em cadastros",
+                "Dúvidas com documentos",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center font-bold text-slate-800"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white px-4 pb-12 text-[var(--text-dark)] sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
                 <p className="text-sm font-bold text-[var(--accent-green)]">
-                  1. Escolha o serviço
+                  1. Preencha seus dados
                 </p>
                 <h3 className="mt-2 text-xl font-black text-slate-950">
                   Comece em poucos cliques
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Selecione o atendimento desejado e avance para a próxima etapa.
+                  Você informa os dados necessários para iniciar seu atendimento.
                 </p>
               </div>
 
@@ -227,22 +247,22 @@ export default async function HomePage() {
                   2. Faça o pagamento
                 </p>
                 <h3 className="mt-2 text-xl font-black text-slate-950">
-                  Pix e confirmação rápida
+                  Pix com confirmação rápida
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Após a confirmação válida, o sistema libera a etapa de envio.
+                  Após a confirmação, liberamos a próxima etapa do processo.
                 </p>
               </div>
 
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
                 <p className="text-sm font-bold text-[var(--accent-green)]">
-                  3. Acompanhe tudo
+                  3. Acompanhe online
                 </p>
                 <h3 className="mt-2 text-xl font-black text-slate-950">
-                  Pedido organizado
+                  Tudo em um só lugar
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Documentos, status e resultado ficam centralizados na sua área.
+                  Você acompanha documentos, status e retorno pela plataforma.
                 </p>
               </div>
             </div>
@@ -253,17 +273,12 @@ export default async function HomePage() {
           <div className="mx-auto max-w-7xl rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
             <div className="text-center">
               <p className="text-sm font-bold text-[var(--accent-green)]">
-                Clientes atendidos pela nossa equipe
+                Avaliações de clientes
               </p>
 
               <h2 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">
                 Atendimento simples, organizado e acompanhado
               </h2>
-
-              <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                A DesenrolaGov ajuda clientes que querem economizar tempo e
-                evitar dúvidas durante o processo documental.
-              </p>
             </div>
 
             <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -296,107 +311,29 @@ export default async function HomePage() {
         </section>
 
         <section className="px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-              <div>
-                <p className="text-sm font-bold text-green-300">
-                  Dúvidas frequentes
-                </p>
-                <h2 className="mt-2 text-3xl font-black">
-                  O que você precisa saber antes de contratar
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-white/70">
-                  Respostas simples para as principais dúvidas antes de iniciar
-                  seu atendimento.
-                </p>
-              </div>
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="text-3xl font-black sm:text-4xl">
+              Comece agora seu atendimento
+            </h2>
 
-              <div className="space-y-3">
-                {[
-                  [
-                    "Preciso ir até algum órgão?",
-                    "Não. O atendimento é feito online pela plataforma, seguindo as etapas do pedido.",
-                  ],
-                  [
-                    "Quanto tempo leva?",
-                    "O prazo pode variar conforme análise, documentação enviada e etapa operacional.",
-                  ],
-                  [
-                    "É seguro?",
-                    "Os documentos devem ser enviados pela plataforma e usados apenas para execução do serviço contratado.",
-                  ],
-                  [
-                    "A DesenrolaGov é do governo?",
-                    "Não. Somos uma assessoria privada e não temos vínculo com órgãos públicos.",
-                  ],
-                ].map(([question, answer]) => (
-                  <details
-                    key={question}
-                    className="rounded-2xl border border-white/10 bg-white/10 p-5"
-                  >
-                    <summary className="cursor-pointer font-black text-white">
-                      {question}
-                    </summary>
-                    <p className="mt-3 text-sm leading-6 text-white/70">
-                      {answer}
-                    </p>
-                  </details>
-                ))}
-              </div>
-            </div>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/70">
+              Regularize sua situação com suporte privado, atendimento online e
+              processo organizado.
+            </p>
+
+            <Link
+              href={primaryHref}
+              className="mt-8 inline-flex w-full items-center justify-center rounded-2xl bg-[var(--accent-green)] px-6 py-4 text-base font-black text-white shadow-lg shadow-green-900/30 transition hover:scale-[1.02] hover:bg-[var(--accent-green-hover)] sm:w-auto"
+            >
+              Regularizar meu CPF agora
+            </Link>
+
+            <p className="mt-4 text-xs text-white/50">
+              A DesenrolaGov é uma assessoria privada e não possui vínculo com
+              órgãos públicos.
+            </p>
           </div>
         </section>
-
-        {secondaryServices.length > 0 ? (
-          <section className="px-4 py-12 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-7xl">
-              <div className="mb-6">
-                <p className="text-sm font-bold text-green-300">
-                  Outros serviços
-                </p>
-                <h2 className="mt-2 text-3xl font-black">
-                  Mais opções disponíveis
-                </h2>
-              </div>
-
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {secondaryServices.map((service: Service) => {
-                  const serviceHighlights = normalizeHighlights(
-                    service.highlights
-                  );
-
-                  return (
-                    <div
-                      key={service.id}
-                      className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl"
-                    >
-                      <h3 className="text-xl font-black text-slate-950">
-                        {service.name}
-                      </h3>
-
-                      <div className="mt-4 space-y-2 text-sm text-slate-600">
-                        {serviceHighlights.map((item) => (
-                          <p key={item}>• {item}</p>
-                        ))}
-                      </div>
-
-                      <div className="mt-5 text-2xl font-black text-slate-950">
-                        {formatCurrency(Number(service.price))}
-                      </div>
-
-                      <Link
-                        href={`/continue?serviceId=${service.id}`}
-                        className="mt-5 inline-flex w-full items-center justify-center rounded-2xl bg-[var(--accent-green)] px-5 py-3 text-sm font-bold text-white hover:bg-[var(--accent-green-hover)]"
-                      >
-                        Iniciar agora
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        ) : null}
       </main>
     </div>
   );
