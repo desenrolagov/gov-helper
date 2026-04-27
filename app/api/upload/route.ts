@@ -12,7 +12,6 @@ import type { OrderStatus } from "@/lib/order-flow";
 import { canUploadForOrderStatus } from "@/lib/order-status";
 import {
   getRequiredDocumentsForServiceDynamic,
-  isDocumentAllowedForServiceDynamic,
   isValidDocumentType,
   resolveServiceTypeFromService,
 } from "@/lib/service-documents";
@@ -352,19 +351,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const serviceType = resolveServiceTypeFromService(order.service);
-
-const isAllowed = requiredDocs.some((doc) => doc.key === type);
-
-    if (!isAllowed) {
-      return NextResponse.json(
-        {
-          error:
-            "Este tipo de documento não faz parte dos documentos aceitos para este serviço.",
-        },
-        { status: 400 }
-      );
-    }
+const serviceType = resolveServiceTypeFromService(order.service);
 
 const allRequiredDocs = await getRequiredDocumentsForServiceDynamic(
   order.service.id,
@@ -377,6 +364,18 @@ const isRgService =
   order.service.name?.toLowerCase().includes("identidade");
 
 const requiredDocs = isRgService ? allRequiredDocs.slice(0, 2) : allRequiredDocs;
+
+const isAllowed = requiredDocs.some((doc) => doc.key === type);
+
+if (!isAllowed) {
+      return NextResponse.json(
+        {
+          error:
+            "Este tipo de documento não faz parte dos documentos aceitos para este serviço.",
+        },
+        { status: 400 }
+      );
+    }
 
     const uploadedFilesBefore = await prisma.uploadedFile.findMany({
       where: { orderId },
