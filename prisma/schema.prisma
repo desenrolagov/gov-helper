@@ -36,7 +36,7 @@ model Service {
   highlights   Json?    // bullets de conversão
   documents    Json?    // documentos necessários
 
-  codePrefix   String?  @db.VarChar(10)
+  codePrefix   String?  @unique @db.VarChar(10)
   active       Boolean  @default(true)
 
   requiresScheduleReview Boolean @default(false)
