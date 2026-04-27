@@ -517,7 +517,13 @@ if (hasAllRequiredDocuments && isRgService) {
     withinBusinessHours: true,
   };
 } else {
-  syncResult = await syncOrderToProcessingIfReady(orderId);
+  const processingResult = await syncOrderToProcessingIfReady(orderId);
+
+  syncResult = {
+    status: processingResult.status || currentStatus,
+    movedToProcessing: processingResult.movedToProcessing,
+    withinBusinessHours: processingResult.withinBusinessHours,
+  };
 }
 
     const waitingForBusinessHours =
