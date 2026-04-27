@@ -76,32 +76,20 @@ const DEFAULT_DOCUMENTS_BY_TYPE: Record<ServiceType, ServiceDocument[]> = {
       description: "Conta recente ou documento equivalente.",
     },
   ],
-  RG: [
-    {
-      key: "CPF",
-      label: "CPF",
-      required: true,
-      description: "CPF legível.",
-    },
-    {
-      key: "CERTIDAO_CIVIL",
-      label: "Certidão civil",
-      required: true,
-      description: "Nascimento ou casamento, conforme o caso.",
-    },
-    {
-      key: "COMPROVANTE_ENDERECO",
-      label: "Comprovante de endereço",
-      required: true,
-      description: "Conta recente ou documento equivalente.",
-    },
-    {
-      key: "DOCUMENTO_FOTO",
-      label: "Documento com foto",
-      required: false,
-      description: "Se houver documento anterior disponível.",
-    },
-  ],
+RG: [
+  {
+    key: "CPF",
+    label: "CPF ou certidão de nascimento",
+    required: true,
+    description: "Envie o CPF ou a certidão de nascimento/casamento legível.",
+  },
+  {
+    key: "COMPROVANTE_ENDERECO",
+    label: "Comprovante de residência",
+    required: true,
+    description: "Conta recente de água, luz, telefone, internet ou documento equivalente.",
+  },
+],
   CNH: [
     {
       key: "DOCUMENTO_FOTO",
