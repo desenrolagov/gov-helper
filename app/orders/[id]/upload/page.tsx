@@ -13,7 +13,7 @@ import {
   type ServiceDocument,
 } from "@/lib/service-documents";
 
-type AllowedUploadStatus = "PAID" | "AWAITING_DOCUMENTS";
+type AllowedUploadStatus = "PAID" | "AWAITING_DOCUMENTS" | "PROCESSING";
 
 type UploadedFileItem = {
   id: string;
@@ -40,7 +40,7 @@ type OrderData = {
 };
 
 function canUploadForStatus(status?: string): status is AllowedUploadStatus {
-  return status === "PAID" || status === "AWAITING_DOCUMENTS";
+return status === "PAID" || status === "AWAITING_DOCUMENTS" || status === "PROCESSING";
 }
 
 function getStatusLabel(status?: string) {
