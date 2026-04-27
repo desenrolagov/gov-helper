@@ -2,6 +2,7 @@ export type OrderStatus =
   | "PENDING_PAYMENT"
   | "PAID"
   | "AWAITING_DOCUMENTS"
+  | "WAITING_OPERATOR_SCHEDULE_REVIEW"
   | "PROCESSING"
   | "COMPLETED"
   | "CANCELLED";
@@ -12,6 +13,7 @@ export const VALID_ORDER_STATUSES: OrderStatus[] = [
   "PENDING_PAYMENT",
   "PAID",
   "AWAITING_DOCUMENTS",
+  "WAITING_OPERATOR_SCHEDULE_REVIEW",
   "PROCESSING",
   "COMPLETED",
   "CANCELLED",
@@ -26,13 +28,23 @@ export const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
   "PENDING_PAYMENT",
   "PAID",
   "AWAITING_DOCUMENTS",
+  "WAITING_OPERATOR_SCHEDULE_REVIEW",
   "PROCESSING",
 ];
 
 export const ALLOWED_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PENDING_PAYMENT: ["PAID", "CANCELLED"],
   PAID: ["AWAITING_DOCUMENTS", "PROCESSING", "CANCELLED"],
-  AWAITING_DOCUMENTS: ["PROCESSING", "CANCELLED"],
+  AWAITING_DOCUMENTS: [
+    "WAITING_OPERATOR_SCHEDULE_REVIEW",
+    "PROCESSING",
+    "CANCELLED",
+  ],
+  WAITING_OPERATOR_SCHEDULE_REVIEW: [
+    "PROCESSING",
+    "AWAITING_DOCUMENTS",
+    "CANCELLED",
+  ],
   PROCESSING: ["COMPLETED", "AWAITING_DOCUMENTS", "CANCELLED"],
   COMPLETED: [],
   CANCELLED: [],
@@ -60,7 +72,9 @@ export function canTransitionOrderStatus(
   return ALLOWED_STATUS_TRANSITIONS[currentStatus]?.includes(nextStatus) ?? false;
 }
 
-export function canCreateCheckoutForOrderStatus(status: OrderStatus | string): boolean {
+export function canCreateCheckoutForOrderStatus(
+  status: OrderStatus | string
+): boolean {
   return status === "PENDING_PAYMENT";
 }
 
@@ -69,7 +83,11 @@ export function canUploadForOrderStatus(status: OrderStatus | string): boolean {
 }
 
 export function canDeliverFinalResult(status: OrderStatus | string): boolean {
-  return status === "PROCESSING" || status === "COMPLETED";
+  return (
+    status === "WAITING_OPERATOR_SCHEDULE_REVIEW" ||
+    status === "PROCESSING" ||
+    status === "COMPLETED"
+  );
 }
 
 export function canExposeFinalResultToClient(status: OrderStatus | string): boolean {
@@ -93,6 +111,12 @@ export function getOrderStatusMeta(status: OrderStatus) {
     case "AWAITING_DOCUMENTS":
       return {
         label: "Aguardando documentos",
+        tone: "amber" as OrderTone,
+      };
+
+    case "WAITING_OPERATOR_SCHEDULE_REVIEW":
+      return {
+        label: "Aguardando unidade e horário",
         tone: "amber" as OrderTone,
       };
 
@@ -180,15 +204,22 @@ export function getAvailableOrderTransitions(
 
   return candidates.filter((nextStatus) => {
     if (
-      ["PAID", "AWAITING_DOCUMENTS", "PROCESSING", "COMPLETED"].includes(
-        nextStatus
-      ) &&
+      [
+        "PAID",
+        "AWAITING_DOCUMENTS",
+        "WAITING_OPERATOR_SCHEDULE_REVIEW",
+        "PROCESSING",
+        "COMPLETED",
+      ].includes(nextStatus) &&
       !hasPaid
     ) {
       return false;
     }
 
-    if (nextStatus === "PROCESSING" && !hasUploadedFiles) {
+    if (
+      ["WAITING_OPERATOR_SCHEDULE_REVIEW", "PROCESSING"].includes(nextStatus) &&
+      !hasUploadedFiles
+    ) {
       return false;
     }
 
@@ -267,6 +298,22 @@ export function getOrderFlow(
         secondaryAction: {
           label: "Ver detalhes do pedido",
           href: `/orders/${options.orderId}`,
+        } satisfies FlowAction,
+      };
+
+    case "WAITING_OPERATOR_SCHEDULE_REVIEW":
+      return {
+        tone: "amber" as OrderTone,
+        clientMessage:
+          "Documentos recebidos com sucesso. Agora nossa equipe irá localizar o Poupatempo mais próximo e verificar os horários disponíveis para atendimento presencial com foto e biometria.",
+        nextStepLabel: "Aguardar posicionamento do operador",
+        primaryAction: {
+          label: "Ver detalhes do pedido",
+          href: `/orders/${options.orderId}`,
+        } satisfies FlowAction,
+        secondaryAction: {
+          label: "Meus pedidos",
+          href: `/orders`,
         } satisfies FlowAction,
       };
 

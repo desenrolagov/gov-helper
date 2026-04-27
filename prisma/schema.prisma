@@ -39,6 +39,8 @@ model Service {
   codePrefix   String?  @db.VarChar(10)
   active       Boolean  @default(true)
 
+  requiresScheduleReview Boolean @default(false)
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -204,6 +206,7 @@ enum OrderStatus {
   PENDING_PAYMENT
   PAID
   AWAITING_DOCUMENTS
+  WAITING_OPERATOR_SCHEDULE_REVIEW
   PROCESSING
   COMPLETED
   CANCELLED

@@ -87,7 +87,9 @@ export async function syncOrderToProcessingIfReady(
         select: {
           id: true,
           name: true,
+          type: true,
           codePrefix: true,
+          requiresScheduleReview: true,
         },
       },
       uploadedFiles: {
@@ -212,6 +214,34 @@ export async function syncOrderToProcessingIfReady(
       hasAllRequiredDocs: true,
       withinBusinessHours: false,
       movedToProcessing: false,
+      serviceType,
+    };
+  }
+
+  const serviceName = order.service.name.toLowerCase();
+
+  const requiresScheduleReview =
+    order.service.requiresScheduleReview ||
+    serviceType === "RG" ||
+    order.service.type === "RG" ||
+    order.service.codePrefix === "RG" ||
+    serviceName.includes("rg") ||
+    serviceName.includes("poupatempo") ||
+    serviceName.includes("poupa tempo");
+
+  if (requiresScheduleReview) {
+    const movedToScheduleReview = await updateOrderStatusIfNeeded(
+      orderId,
+      "WAITING_OPERATOR_SCHEDULE_REVIEW"
+    );
+
+    return {
+      found: true,
+      status: "WAITING_OPERATOR_SCHEDULE_REVIEW",
+      hasPaid: true,
+      hasAllRequiredDocs: true,
+      withinBusinessHours: true,
+      movedToProcessing: movedToScheduleReview,
       serviceType,
     };
   }
