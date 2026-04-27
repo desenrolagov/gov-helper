@@ -23,10 +23,6 @@ type OrderResponse = {
   service?: {
     name?: string | null;
   } | null;
-  payments?: Array<{
-    status: string;
-    createdAt?: string;
-  }>;
 };
 
 function formatCurrency(value?: number) {
@@ -45,13 +41,13 @@ function getStatusLabel(status?: string) {
     case "AWAITING_DOCUMENTS":
       return "Aguardando documentos";
     case "PROCESSING":
-      return "Em andamento";
+      return "Em análise da equipe";
     case "COMPLETED":
       return "Concluído";
     case "CANCELLED":
       return "Cancelado";
     default:
-      return "Status desconhecido";
+      return "Carregando status";
   }
 }
 
@@ -87,14 +83,29 @@ export default function PaymentClient() {
         const data = await res.json().catch(() => null);
 
         if (!res.ok) {
+          if (success) {
+            setError("");
+            setLoading(false);
+
+            setTimeout(() => {
+              router.replace("/orders");
+            }, 1800);
+
+            return;
+          }
+
           setError(data?.error || "Erro ao carregar pedido.");
           setOrder(null);
+          setLoading(false);
           return;
         }
 
+        setError("");
         setOrder(data);
       } catch {
-        setError("Erro ao carregar pedido.");
+        if (!success) {
+          setError("Erro ao carregar pedido.");
+        }
         setOrder(null);
       } finally {
         setLoading(false);
@@ -102,7 +113,7 @@ export default function PaymentClient() {
     }
 
     void load();
-  }, [orderId]);
+  }, [orderId, success, router]);
 
   useEffect(() => {
     if (!order || redirectingRef.current) return;
@@ -172,6 +183,27 @@ export default function PaymentClient() {
     );
   }
 
+  if (success && !order) {
+    return (
+      <main className="min-h-screen bg-[var(--primary-blue)] px-4 py-8 text-white">
+        <div className="mx-auto max-w-2xl rounded-3xl border border-green-400/30 bg-green-400/10 p-6 shadow-xl">
+          <h1 className="text-3xl font-black">Pagamento identificado</h1>
+          <p className="mt-3 text-sm leading-6 text-green-100">
+            Estamos atualizando seu pedido. Você será direcionado para a área de
+            pedidos em instantes.
+          </p>
+
+          <Link
+            href="/orders"
+            className="mt-6 inline-flex rounded-2xl bg-[var(--accent-green)] px-5 py-3 text-sm font-black text-white"
+          >
+            Ver meus pedidos
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[var(--primary-blue)] px-4 py-8 text-white">
       <div className="mx-auto max-w-6xl">
@@ -196,7 +228,7 @@ export default function PaymentClient() {
               órgãos públicos.
             </p>
 
-            {success ? (
+            {success && !error ? (
               <div className="mt-6 rounded-2xl border border-green-400/30 bg-green-400/10 px-4 py-3 text-sm text-green-200">
                 Pagamento identificado. Estamos atualizando seu pedido.
               </div>
@@ -227,9 +259,7 @@ export default function PaymentClient() {
                 </h2>
               </div>
 
-              {order?.orderCode ? (
-                <OrderCodeBadge code={order.orderCode} />
-              ) : null}
+              {order?.orderCode ? <OrderCodeBadge code={order.orderCode} /> : null}
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm font-semibold text-slate-500">Valor</p>
@@ -254,17 +284,11 @@ export default function PaymentClient() {
                 />
                 <span>
                   Aceito os{" "}
-                  <Link
-                    href="/terms"
-                    className="font-bold text-slate-950 underline"
-                  >
+                  <Link href="/terms" className="font-bold text-slate-950 underline">
                     Termos de Uso
                   </Link>{" "}
                   e a{" "}
-                  <Link
-                    href="/privacy"
-                    className="font-bold text-slate-950 underline"
-                  >
+                  <Link href="/privacy" className="font-bold text-slate-950 underline">
                     Política de Privacidade
                   </Link>
                   .
