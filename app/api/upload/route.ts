@@ -354,11 +354,7 @@ export async function POST(req: Request) {
 
     const serviceType = resolveServiceTypeFromService(order.service);
 
-    const isAllowed = await isDocumentAllowedForServiceDynamic(
-      order.service.id,
-      serviceType,
-      type
-    );
+const isAllowed = requiredDocs.some((doc) => doc.key === type);
 
     if (!isAllowed) {
       return NextResponse.json(
