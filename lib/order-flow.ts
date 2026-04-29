@@ -273,21 +273,22 @@ export function getOrderFlow(
         } satisfies FlowAction,
       };
 
-    case "PAID":
-      return {
-        tone: "blue" as OrderTone,
-        clientMessage:
-          "Seu pagamento foi aprovado. Agora envie os documentos necessários para continuar o atendimento.",
-        nextStepLabel: "Enviar documentos",
-        primaryAction: {
-          label: "Enviar documentos",
-          href: `/orders/${options.orderId}/upload`,
-        } satisfies FlowAction,
-        secondaryAction: {
-          label: "Ver detalhes do pedido",
-          href: `/orders/${options.orderId}`,
-        } satisfies FlowAction,
-      };
+case "PAID":
+  return {
+    tone: "blue" as OrderTone,
+    clientMessage: isMEI
+      ? "Seu pagamento foi aprovado. Agora preencha o formulário para nossa equipe iniciar a abertura do MEI."
+      : "Seu pagamento foi aprovado. Agora envie os documentos necessários para continuar o atendimento.",
+    nextStepLabel: isMEI ? "Preencher formulário" : "Enviar documentos",
+    primaryAction: {
+      label: isMEI ? "Preencher formulário" : "Enviar documentos",
+      href: `/orders/${options.orderId}/upload`,
+    } satisfies FlowAction,
+    secondaryAction: {
+      label: "Ver detalhes do pedido",
+      href: `/orders/${options.orderId}`,
+    } satisfies FlowAction,
+  };
 
 case "AWAITING_DOCUMENTS":
   return {
