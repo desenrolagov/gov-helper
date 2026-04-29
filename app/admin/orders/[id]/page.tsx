@@ -246,18 +246,26 @@ export default async function AdminOrderDetailsPage({ params }: any) {
 
   const { id } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { id },
-    include: {
-      user: true,
-      service: true,
-      meiApplication: true,
-      uploadedFiles: { orderBy: { createdAt: "desc" } },
-      resultFiles: { orderBy: { createdAt: "desc" } },
-      payments: { orderBy: { createdAt: "desc" } },
-      histories: { orderBy: { createdAt: "desc" } },
-    },
-  });
+const order = await prisma.order.findUnique({
+  where: { id },
+  include: {
+    user: true,
+    service: true,
+    uploadedFiles: { orderBy: { createdAt: "desc" } },
+    resultFiles: { orderBy: { createdAt: "desc" } },
+    payments: { orderBy: { createdAt: "desc" } },
+    histories: { orderBy: { createdAt: "desc" } },
+  },
+});
+
+const meiApplicationResult = await prisma.$queryRaw<any[]>`
+  SELECT *
+  FROM "MeiApplication"
+  WHERE "orderId" = ${id}
+  LIMIT 1
+`;
+
+const meiApplication = meiApplicationResult[0] || null;
 
   if (!order) {
     redirect("/admin/orders");
@@ -358,7 +366,7 @@ export default async function AdminOrderDetailsPage({ params }: any) {
           <div className="space-y-6">
             <OperatorScheduleReviewCard order={order} />
 
-            <MeiApplicationCard meiApplication={order.meiApplication} />
+              <MeiApplicationCard meiApplication={meiApplication} />
 
             <div className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl">
               <h2 className="text-lg font-black">Documentos do cliente</h2>
