@@ -118,6 +118,7 @@ export default function OrderUploadPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [orderLoading, setOrderLoading] = useState(true);
   const [order, setOrder] = useState<OrderData | null>(null);
   const [progress, setProgress] = useState(0);
   const [meiSent, setMeiSent] = useState(false);
@@ -176,12 +177,18 @@ export default function OrderUploadPage() {
   const allRequiredSent =
     !isMEI && requiredDocuments.length === 2 && uploadedRequiredCount >= 2;
 
-  async function loadOrder() {
+async function loadOrder() {
+  try {
+    setOrderLoading(true);
+
     const res = await fetch(`/api/orders/${orderId}`, {
       cache: "no-store",
     });
 
-    if (!res.ok) return;
+    if (!res.ok) {
+      setError("Não foi possível carregar o pedido.");
+      return;
+    }
 
     const data: OrderData = await res.json();
     setOrder(data);
@@ -202,10 +209,16 @@ export default function OrderUploadPage() {
     );
 
     const sentCount = docs.filter((doc) => uploaded.has(doc.key)).length;
-    const progressCalc = docs.length ? Math.round((sentCount / docs.length) * 100) : 0;
+
+    const progressCalc = docs.length
+      ? Math.round((sentCount / docs.length) * 100)
+      : 0;
 
     setProgress(progressCalc);
+  } finally {
+    setOrderLoading(false);
   }
+}
 
   useEffect(() => {
     loadOrder();
