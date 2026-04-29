@@ -1,3 +1,4 @@
+
 "use client";
 
 import dynamic from "next/dynamic";
@@ -22,6 +23,7 @@ type Props = {
   selectedName?: string | null;
   selectedAddress?: string | null;
   selectedDistanceKm?: number | null;
+  onSelected?: (unit: NearbyUnit) => void;
 };
 
 export default function PoupatempoLocator({
@@ -29,6 +31,7 @@ export default function PoupatempoLocator({
   selectedName,
   selectedAddress,
   selectedDistanceKm,
+  onSelected,
 }: Props) {
   const [address, setAddress] = useState("");
   const [units, setUnits] = useState<NearbyUnit[]>([]);
@@ -71,6 +74,7 @@ export default function PoupatempoLocator({
   async function chooseUnit(unit: NearbyUnit) {
     try {
       setSavingId(unit.id);
+      onSelected?.(unit);
       setError("");
 
       const res = await fetch(`/api/orders/${orderId}/poupatempo`, {
@@ -97,6 +101,7 @@ export default function PoupatempoLocator({
       }
 
       setSelected(unit);
+      onSelected?.(unit);
     } finally {
       setSavingId("");
     }

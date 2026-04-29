@@ -143,22 +143,23 @@ export default function OrderUploadPage() {
     notes: "",
   });
 
-  const [rgForm, setRgForm] = useState({
-    fullName: "",
-    cpf: "",
-    birthDate: "",
-    phone: "",
-    email: "",
-    zipCode: "",
-    street: "",
-    number: "",
-    district: "",
-    city: "",
-    state: "",
-    requestType: "",
-    govBrAccess: "",
-    notes: "",
-  });
+const [rgForm, setRgForm] = useState({
+  fullName: "",
+  cpf: "",
+  birthDate: "",
+  phone: "",
+  email: "",
+  requestType: "",
+  govBrAccess: "",
+  notes: "",
+});
+
+const [selectedRgPoupatempo, setSelectedRgPoupatempo] = useState<{
+  name: string;
+  address: string;
+  city: string;
+  distanceKm: number;
+} | null>(null);
 
   const serviceType = useMemo(
     () => resolveServiceTypeFromService(order?.service),
@@ -197,19 +198,27 @@ export default function OrderUploadPage() {
 
   const whatsappNumber = "5517999999999";
 
-  const rgWhatsappMessage = encodeURIComponent(
-    `Olá, preenchi o formulário de RG na DesenrolaGov.
+const rgWhatsappMessage = encodeURIComponent(
+  `Olá, preenchi o formulário de RG na DesenrolaGov.
 
 Nome: ${rgForm.fullName}
 CPF: ${rgForm.cpf}
 WhatsApp: ${rgForm.phone}
-CEP: ${rgForm.zipCode}
-Cidade: ${rgForm.city}
+Unidade escolhida: ${
+    selectedRgPoupatempo?.name ||
+    order?.selectedPoupatempoName ||
+    "Não informada"
+  }
+Endereço da unidade: ${
+    selectedRgPoupatempo?.address ||
+    order?.selectedPoupatempoAddress ||
+    "Não informado"
+  }
 Tipo de solicitação: ${rgForm.requestType}
 Acesso GOV.BR: ${rgForm.govBrAccess}
 
 Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo meu próprio celular.`
-  );
+);
 
   const rgWhatsappUrl = `https://wa.me/${whatsappNumber}?text=${rgWhatsappMessage}`;
 
@@ -284,7 +293,6 @@ Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo me
     if (!rgForm.fullName.trim()) return setError("Informe seu nome completo.");
     if (!rgForm.cpf.trim()) return setError("Informe seu CPF.");
     if (!rgForm.phone.trim()) return setError("Informe seu WhatsApp.");
-    if (!rgForm.zipCode.trim()) return setError("Informe seu CEP.");
     if (!rgForm.requestType.trim()) return setError("Informe o tipo de solicitação.");
     if (!rgForm.govBrAccess.trim()) return setError("Informe se consegue acessar o GOV.BR.");
 
@@ -519,8 +527,8 @@ Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo me
             </h1>
 
             <p className="mt-2 text-sm text-slate-600">
-              Depois de preencher, você escolherá a unidade mais próxima e será direcionado
-              para atendimento em tempo real com um especialista.
+              Depois de preencher, você escolherá a unidade mais próxima e será
+              direcionado para atendimento em tempo real com um especialista.
             </p>
 
             <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-xs font-semibold text-blue-800">
@@ -529,49 +537,86 @@ Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo me
             </div>
 
             <div className="mt-5 grid gap-3">
-              <input value={rgForm.fullName} onChange={(e) => updateRgForm("fullName", e.target.value)} placeholder="Nome completo" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
-              <input value={rgForm.cpf} onChange={(e) => updateRgForm("cpf", e.target.value)} placeholder="CPF" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
-              <input value={rgForm.birthDate} onChange={(e) => updateRgForm("birthDate", e.target.value)} type="date" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
-              <input value={rgForm.phone} onChange={(e) => updateRgForm("phone", e.target.value)} placeholder="WhatsApp" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
-              <input value={rgForm.email} onChange={(e) => updateRgForm("email", e.target.value)} placeholder="E-mail" type="email" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input
+                value={rgForm.fullName}
+                onChange={(e) => updateRgForm("fullName", e.target.value)}
+                placeholder="Nome completo"
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
+              />
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <input value={rgForm.zipCode} onChange={(e) => updateRgForm("zipCode", e.target.value)} placeholder="CEP" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
-                <input value={rgForm.state} onChange={(e) => updateRgForm("state", e.target.value)} placeholder="Estado" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
-              </div>
+              <input
+                value={rgForm.cpf}
+                onChange={(e) => updateRgForm("cpf", e.target.value)}
+                placeholder="CPF"
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
+              />
 
-              <input value={rgForm.street} onChange={(e) => updateRgForm("street", e.target.value)} placeholder="Rua / Avenida" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input
+                value={rgForm.birthDate}
+                onChange={(e) => updateRgForm("birthDate", e.target.value)}
+                type="date"
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
+              />
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <input value={rgForm.number} onChange={(e) => updateRgForm("number", e.target.value)} placeholder="Número" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
-                <input value={rgForm.district} onChange={(e) => updateRgForm("district", e.target.value)} placeholder="Bairro" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
-              </div>
+              <input
+                value={rgForm.phone}
+                onChange={(e) => updateRgForm("phone", e.target.value)}
+                placeholder="WhatsApp"
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
+              />
 
-              <input value={rgForm.city} onChange={(e) => updateRgForm("city", e.target.value)} placeholder="Cidade" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input
+                value={rgForm.email}
+                onChange={(e) => updateRgForm("email", e.target.value)}
+                placeholder="E-mail"
+                type="email"
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
+              />
 
-              <select value={rgForm.requestType} onChange={(e) => updateRgForm("requestType", e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500">
+              <select
+                value={rgForm.requestType}
+                onChange={(e) => updateRgForm("requestType", e.target.value)}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
+              >
                 <option value="">Tipo de solicitação</option>
                 <option value="Primeira via do RG">Primeira via do RG</option>
                 <option value="Segunda via do RG">Segunda via do RG</option>
-                <option value="Renovação / atualização do RG">Renovação / atualização do RG</option>
+                <option value="Renovação / atualização do RG">
+                  Renovação / atualização do RG
+                </option>
               </select>
 
-              <select value={rgForm.govBrAccess} onChange={(e) => updateRgForm("govBrAccess", e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500">
+              <select
+                value={rgForm.govBrAccess}
+                onChange={(e) => updateRgForm("govBrAccess", e.target.value)}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
+              >
                 <option value="">Você consegue acessar sua conta GOV.BR?</option>
                 <option value="Sim, consigo acessar">Sim, consigo acessar</option>
-                <option value="Tenho dificuldade para acessar">Tenho dificuldade para acessar</option>
+                <option value="Tenho dificuldade para acessar">
+                  Tenho dificuldade para acessar
+                </option>
                 <option value="Esqueci minha senha">Esqueci minha senha</option>
                 <option value="Nunca usei o GOV.BR">Nunca usei o GOV.BR</option>
               </select>
 
-              <textarea value={rgForm.notes} onChange={(e) => updateRgForm("notes", e.target.value)} placeholder="Observações para o atendente" rows={4} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <textarea
+                value={rgForm.notes}
+                onChange={(e) => updateRgForm("notes", e.target.value)}
+                placeholder="Observações para o atendente"
+                rows={4}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
+              />
             </div>
 
             {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
             {success && <p className="mt-3 text-sm font-bold text-green-600">{success}</p>}
 
             {!rgFormSent && (
-              <button onClick={handleSubmitRgForm} className="mt-5 w-full rounded-xl bg-green-500 p-3 font-black text-white">
+              <button
+                onClick={handleSubmitRgForm}
+                className="mt-5 w-full rounded-xl bg-green-500 p-3 font-black text-white"
+              >
                 Buscar Poupatempo mais próximo
               </button>
             )}
@@ -583,54 +628,74 @@ Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo me
                   selectedName={order?.selectedPoupatempoName}
                   selectedAddress={order?.selectedPoupatempoAddress}
                   selectedDistanceKm={order?.selectedPoupatempoDistanceKm}
+                  onSelected={(unit) => setSelectedRgPoupatempo(unit)}
                 />
 
-                <a href={rgWhatsappUrl} target="_blank" rel="noopener noreferrer" className="mt-5 block w-full rounded-xl bg-green-500 p-3 text-center font-black text-white">
-                  Iniciar atendimento em tempo real
-                </a>
+                {(selectedRgPoupatempo || order?.selectedPoupatempoName) && (
+                  <a
+                    href={rgWhatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-5 block w-full rounded-xl bg-green-500 p-3 text-center font-black text-white"
+                  >
+                    🔒 Finalizar meu agendamento com especialista
+                  </a>
+                )}
               </div>
             )}
           </div>
         )}
 
-        {!isMEI && !isRG && (isWaiting || allRequiredSent) && (
-          <WaitingBlock />
-        )}
+        {!isMEI && !isRG && (isWaiting || allRequiredSent) && <WaitingBlock />}
 
-        {!isMEI && !isRG && !isWaiting && !allRequiredSent && uploadAllowed && currentDocument && (
-          <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
-            <p className="text-xs font-black uppercase tracking-wide text-blue-700">
-              Etapa {currentStep}/2
-            </p>
+        {!isMEI &&
+          !isRG &&
+          !isWaiting &&
+          !allRequiredSent &&
+          uploadAllowed &&
+          currentDocument && (
+            <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
+              <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+                Etapa {currentStep}/2
+              </p>
 
-            <h1 className="mt-2 text-2xl font-black">
-              Envie: {currentDocument.label}
-            </h1>
+              <h1 className="mt-2 text-2xl font-black">
+                Envie: {currentDocument.label}
+              </h1>
 
-            <p className="mt-2 text-sm text-slate-600">
-              Envie o documento solicitado para nossa equipe seguir com seu atendimento.
-            </p>
+              <p className="mt-2 text-sm text-slate-600">
+                Envie o documento solicitado para nossa equipe seguir com seu atendimento.
+              </p>
 
-            <label className="mt-5 block rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-5 text-center">
-              <input type="file" accept="image/*,.pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="hidden" />
+              <label className="mt-5 block rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-5 text-center">
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
 
-              <span className="block text-sm font-black text-slate-900">
-                {file ? file.name : "Clique para selecionar o arquivo"}
-              </span>
+                <span className="block text-sm font-black text-slate-900">
+                  {file ? file.name : "Clique para selecionar o arquivo"}
+                </span>
 
-              <span className="mt-1 block text-xs text-slate-500">
-                Aceitamos imagem ou PDF.
-              </span>
-            </label>
+                <span className="mt-1 block text-xs text-slate-500">
+                  Aceitamos imagem ou PDF.
+                </span>
+              </label>
 
-            {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
-            {success && <p className="mt-3 text-sm font-bold text-green-600">{success}</p>}
+              {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
+              {success && <p className="mt-3 text-sm font-bold text-green-600">{success}</p>}
 
-            <button onClick={handleUpload} disabled={loading || !file} className="mt-5 w-full rounded-xl bg-green-500 p-3 font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-300">
-              {loading ? "Enviando..." : `Enviar documento ${currentStep}/2`}
-            </button>
-          </div>
-        )}
+              <button
+                onClick={handleUpload}
+                disabled={loading || !file}
+                className="mt-5 w-full rounded-xl bg-green-500 p-3 font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                {loading ? "Enviando..." : `Enviar documento ${currentStep}/2`}
+              </button>
+            </div>
+          )}
 
         {!uploadAllowed && !isWaiting && (
           <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
