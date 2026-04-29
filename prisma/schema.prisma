@@ -36,7 +36,7 @@ model Service {
   documents              Json?
   codePrefix             String?  @unique @db.VarChar(10)
   active                 Boolean  @default(true)
-  requiresScheduleReview Boolean @default(false)
+  requiresScheduleReview Boolean  @default(false)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 

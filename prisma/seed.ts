@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function upsertService(data: {
+type ServiceSeed = {
   name: string;
   description: string;
   price: number;
@@ -13,13 +13,35 @@ async function upsertService(data: {
   requiresScheduleReview: boolean;
   highlights: string[];
   documents: string[];
-}) {
+};
+
+async function upsertService(data: ServiceSeed) {
   await prisma.service.upsert({
     where: {
       codePrefix: data.codePrefix,
     },
-    update: data,
-    create: data,
+    update: {
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      type: data.type,
+      codePrefix: data.codePrefix,
+      active: data.active,
+      requiresScheduleReview: data.requiresScheduleReview,
+      highlights: data.highlights,
+      documents: data.documents,
+    },
+    create: {
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      type: data.type,
+      codePrefix: data.codePrefix,
+      active: data.active,
+      requiresScheduleReview: data.requiresScheduleReview,
+      highlights: data.highlights,
+      documents: data.documents,
+    },
   });
 }
 
@@ -58,12 +80,29 @@ async function main() {
     documents: ["Documento com foto", "Comprovante de residência", "CPF"],
   });
 
-  console.log("✅ Serviços CPF e RG atualizados com sucesso!");
+  await upsertService({
+    name: "Abertura de MEI com assessoria",
+    description:
+      "Assessoria privada para abertura de MEI, com suporte no preenchimento dos dados, escolha da atividade e orientação inicial.",
+    price: 49.9,
+    type: "MEI",
+    codePrefix: "MEI",
+    active: true,
+    requiresScheduleReview: false,
+    highlights: [
+      "Abertura do MEI com orientação",
+      "Ajuda na escolha da atividade",
+      "Entrega do CNPJ e certificado MEI",
+    ],
+    documents: [],
+  });
+
+  console.log("✅ Serviços CPF, RG e MEI atualizados com sucesso!");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("❌ Erro ao rodar seed:", e);
     process.exit(1);
   })
   .finally(async () => {

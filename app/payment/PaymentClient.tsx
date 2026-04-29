@@ -22,6 +22,7 @@ type OrderResponse = {
   totalAmount?: number;
   service?: {
     name?: string | null;
+    type?: string | null;
   } | null;
 };
 
@@ -83,17 +84,6 @@ export default function PaymentClient() {
         const data = await res.json().catch(() => null);
 
         if (!res.ok) {
-          if (success) {
-            setError("");
-            setLoading(false);
-
-            setTimeout(() => {
-              router.replace("/orders");
-            }, 1800);
-
-            return;
-          }
-
           setError(data?.error || "Erro ao carregar pedido.");
           setOrder(null);
           setLoading(false);
@@ -103,9 +93,7 @@ export default function PaymentClient() {
         setError("");
         setOrder(data);
       } catch {
-        if (!success) {
-          setError("Erro ao carregar pedido.");
-        }
+        setError("Erro ao carregar pedido.");
         setOrder(null);
       } finally {
         setLoading(false);
@@ -113,16 +101,21 @@ export default function PaymentClient() {
     }
 
     void load();
-  }, [orderId, success, router]);
+  }, [orderId]);
 
   useEffect(() => {
     if (!order || redirectingRef.current) return;
 
-    if (order.status === "PAID" || order.status === "AWAITING_DOCUMENTS") {
+    if (
+      success ||
+      order.status === "PAID" ||
+      order.status === "AWAITING_DOCUMENTS" ||
+      order.status === "PROCESSING"
+    ) {
       redirectingRef.current = true;
       router.replace(`/orders/${order.id}/upload`);
     }
-  }, [order, router]);
+  }, [order, success, router]);
 
   async function handleCheckout() {
     try {
@@ -183,27 +176,6 @@ export default function PaymentClient() {
     );
   }
 
-  if (success && !order) {
-    return (
-      <main className="min-h-screen bg-[var(--primary-blue)] px-4 py-8 text-white">
-        <div className="mx-auto max-w-2xl rounded-3xl border border-green-400/30 bg-green-400/10 p-6 shadow-xl">
-          <h1 className="text-3xl font-black">Pagamento identificado</h1>
-          <p className="mt-3 text-sm leading-6 text-green-100">
-            Estamos atualizando seu pedido. Você será direcionado para a área de
-            pedidos em instantes.
-          </p>
-
-          <Link
-            href="/orders"
-            className="mt-6 inline-flex rounded-2xl bg-[var(--accent-green)] px-5 py-3 text-sm font-black text-white"
-          >
-            Ver meus pedidos
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-[var(--primary-blue)] px-4 py-8 text-white">
       <div className="mx-auto max-w-6xl">
@@ -220,7 +192,12 @@ export default function PaymentClient() {
             <ul className="mt-5 space-y-3 text-sm text-white/80">
               <li>✔ Pagamento seguro</li>
               <li>✔ Liberação imediata do atendimento</li>
-              <li>✔ Próxima etapa: envio de documentos</li>
+              <li>
+                ✔ Próxima etapa:{" "}
+                {order?.service?.type === "MEI"
+                  ? "preencher dados para abertura do MEI"
+                  : "envio de documentos"}
+              </li>
             </ul>
 
             <p className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-100">
@@ -230,7 +207,7 @@ export default function PaymentClient() {
 
             {success && !error ? (
               <div className="mt-6 rounded-2xl border border-green-400/30 bg-green-400/10 px-4 py-3 text-sm text-green-200">
-                Pagamento identificado. Estamos atualizando seu pedido.
+                Pagamento identificado. Redirecionando para a próxima etapa...
               </div>
             ) : null}
 
