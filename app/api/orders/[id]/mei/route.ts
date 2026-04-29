@@ -74,55 +74,74 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     const birthDate = body.birthDate ? new Date(body.birthDate) : null;
+    const hasGovBrAccount =
+      typeof body.hasGovBrAccount === "boolean" ? body.hasGovBrAccount : null;
 
-    await (prisma as any).meiApplication.upsert({
-      where: {
-        orderId,
-      },
-      update: {
-        fullName,
-        cpf,
-        birthDate,
-        phone,
-        email,
-        addressZipCode: body.addressZipCode || null,
-        addressStreet: body.addressStreet || null,
-        addressNumber: body.addressNumber || null,
-        addressDistrict: body.addressDistrict || null,
-        addressCity: body.addressCity || null,
-        addressState: body.addressState || null,
-        addressComplement: body.addressComplement || null,
-        businessActivity,
-        fantasyName: body.fantasyName || null,
-        hasGovBrAccount:
-          typeof body.hasGovBrAccount === "boolean"
-            ? body.hasGovBrAccount
-            : null,
-        notes: body.notes || null,
-      },
-      create: {
-        orderId,
-        fullName,
-        cpf,
-        birthDate,
-        phone,
-        email,
-        addressZipCode: body.addressZipCode || null,
-        addressStreet: body.addressStreet || null,
-        addressNumber: body.addressNumber || null,
-        addressDistrict: body.addressDistrict || null,
-        addressCity: body.addressCity || null,
-        addressState: body.addressState || null,
-        addressComplement: body.addressComplement || null,
-        businessActivity,
-        fantasyName: body.fantasyName || null,
-        hasGovBrAccount:
-          typeof body.hasGovBrAccount === "boolean"
-            ? body.hasGovBrAccount
-            : null,
-        notes: body.notes || null,
-      },
-    });
+    await prisma.$executeRaw`
+      INSERT INTO "MeiApplication" (
+        "id",
+        "orderId",
+        "fullName",
+        "cpf",
+        "birthDate",
+        "phone",
+        "email",
+        "addressZipCode",
+        "addressStreet",
+        "addressNumber",
+        "addressDistrict",
+        "addressCity",
+        "addressState",
+        "addressComplement",
+        "businessActivity",
+        "fantasyName",
+        "hasGovBrAccount",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      )
+      VALUES (
+        gen_random_uuid(),
+        ${orderId},
+        ${fullName},
+        ${cpf},
+        ${birthDate},
+        ${phone},
+        ${email},
+        ${body.addressZipCode || null},
+        ${body.addressStreet || null},
+        ${body.addressNumber || null},
+        ${body.addressDistrict || null},
+        ${body.addressCity || null},
+        ${body.addressState || null},
+        ${body.addressComplement || null},
+        ${businessActivity},
+        ${body.fantasyName || null},
+        ${hasGovBrAccount},
+        ${body.notes || null},
+        NOW(),
+        NOW()
+      )
+      ON CONFLICT ("orderId")
+      DO UPDATE SET
+        "fullName" = EXCLUDED."fullName",
+        "cpf" = EXCLUDED."cpf",
+        "birthDate" = EXCLUDED."birthDate",
+        "phone" = EXCLUDED."phone",
+        "email" = EXCLUDED."email",
+        "addressZipCode" = EXCLUDED."addressZipCode",
+        "addressStreet" = EXCLUDED."addressStreet",
+        "addressNumber" = EXCLUDED."addressNumber",
+        "addressDistrict" = EXCLUDED."addressDistrict",
+        "addressCity" = EXCLUDED."addressCity",
+        "addressState" = EXCLUDED."addressState",
+        "addressComplement" = EXCLUDED."addressComplement",
+        "businessActivity" = EXCLUDED."businessActivity",
+        "fantasyName" = EXCLUDED."fantasyName",
+        "hasGovBrAccount" = EXCLUDED."hasGovBrAccount",
+        "notes" = EXCLUDED."notes",
+        "updatedAt" = NOW()
+    `;
 
     await prisma.order.update({
       where: {
