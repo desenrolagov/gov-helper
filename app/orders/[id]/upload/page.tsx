@@ -618,17 +618,25 @@ if (orderLoading) {
           </div>
         )}
 
-            {!uploadAllowed && !isWaiting && (
-         <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
+{!uploadAllowed && !isWaiting && (
+  <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
     <h2 className="text-xl font-black">
-      {isMEI ? "Seu pedido foi recebido" : "Upload indisponível"}
+      {isMEI ? "Estamos confirmando seu pedido" : "Upload indisponível"}
     </h2>
+
     <p className="mt-2 text-sm text-slate-600">
       {isMEI
-        ? "Assim que o pagamento for confirmado, o formulário de abertura do MEI será liberado automaticamente."
+        ? "Seu pedido foi recebido. Assim que o pagamento for confirmado, o formulário de abertura do MEI será liberado automaticamente nesta tela."
         : "O envio de documentos será liberado após a confirmação do pagamento."}
-          </p>
-            </div>
+    </p>
+
+    {isMEI && (
+      <div className="mt-4 rounded-2xl bg-green-50 p-4 text-sm text-green-800">
+        Você não precisa enviar documentos por upload para abertura de MEI.
+        A próxima etapa será apenas preencher o formulário.
+      </div>
+    )}
+  </div>
 )}
       </div>
     </main>
