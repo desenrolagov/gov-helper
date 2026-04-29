@@ -24,6 +24,12 @@ function formatDateTime(value: Date | string) {
   }).format(new Date(value));
 }
 
+function formatDateOnly(value: Date | string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+  }).format(new Date(value));
+}
+
 function getStatusTimelineMeta(status: string) {
   switch (status) {
     case "PENDING_PAYMENT":
@@ -113,37 +119,119 @@ function OperatorScheduleReviewCard({ order }: { order: any }) {
         unidade do Poupatempo mais próxima do cliente e informar o melhor horário
         disponível para foto e biometria.
       </p>
+    </div>
+  );
+}
 
-      <div className="mt-4 rounded-2xl bg-white p-4 text-sm text-slate-700">
-        <p className="font-black text-slate-950">Checklist:</p>
-        <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>Conferir endereço/cidade do cliente.</li>
-          <li>Buscar unidade Poupatempo mais próxima.</li>
-          <li>Verificar horários disponíveis.</li>
-          <li>Enviar retorno ao cliente pela plataforma ou WhatsApp.</li>
-        </ul>
+function MeiApplicationCard({ meiApplication }: { meiApplication: any }) {
+  if (!meiApplication) return null;
+
+  return (
+    <div className="rounded-3xl border border-blue-100 bg-white p-5 text-slate-900 shadow-xl">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+            Formulário do cliente
+          </p>
+          <h2 className="mt-1 text-xl font-black">Dados para abertura do MEI</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Informações preenchidas pelo cliente após a confirmação do pagamento.
+          </p>
+        </div>
+
+        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-black text-green-700">
+          Recebido
+        </span>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-        <p className="text-sm font-black text-slate-950">
-          Modelo de mensagem para o cliente:
-        </p>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">Nome completo</p>
+          <p className="mt-1 font-black">{meiApplication.fullName}</p>
+        </div>
 
-        <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-700">
-          <p>Olá, identificamos a melhor opção para seu atendimento:</p>
-          <p className="mt-2 font-bold">Poupatempo São José do Rio Preto</p>
-          <p>📍 Centro</p>
-          <p>🕒 Horário disponível: informar horário confirmado</p>
-          <p className="mt-2">
-            Compareça com os documentos originais para foto e biometria.
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">CPF</p>
+          <p className="mt-1 font-black">{meiApplication.cpf}</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">Telefone / WhatsApp</p>
+          <p className="mt-1 font-black">{meiApplication.phone}</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">E-mail</p>
+          <p className="mt-1 font-black">{meiApplication.email}</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">Nascimento</p>
+          <p className="mt-1 font-black">
+            {meiApplication.birthDate
+              ? formatDateOnly(meiApplication.birthDate)
+              : "Não informado"}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">Conta gov.br</p>
+          <p className="mt-1 font-black">
+            {meiApplication.hasGovBrAccount === true
+              ? "Sim"
+              : meiApplication.hasGovBrAccount === false
+                ? "Não"
+                : "Não informado"}
           </p>
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-slate-500">
-        Após orientar o cliente, avance o pedido para “Em andamento” ou envie o
-        resultado final quando aplicável.
-      </p>
+      <div className="mt-4 rounded-2xl border border-slate-200 p-4">
+        <p className="text-xs font-bold text-slate-500">Endereço</p>
+        <p className="mt-2 font-bold">
+          {meiApplication.addressStreet || "Rua não informada"},{" "}
+          {meiApplication.addressNumber || "S/N"}
+        </p>
+        <p className="text-sm text-slate-600">
+          {meiApplication.addressDistrict || "Bairro não informado"} -{" "}
+          {meiApplication.addressCity || "Cidade não informada"} /{" "}
+          {meiApplication.addressState || "UF"}
+        </p>
+        <p className="text-sm text-slate-600">
+          CEP: {meiApplication.addressZipCode || "Não informado"}
+        </p>
+
+        {meiApplication.addressComplement && (
+          <p className="mt-1 text-sm text-slate-600">
+            Complemento: {meiApplication.addressComplement}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl bg-blue-50 p-4">
+          <p className="text-xs font-bold text-blue-700">Atividade desejada</p>
+          <p className="mt-1 font-black text-slate-900">
+            {meiApplication.businessActivity}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-blue-50 p-4">
+          <p className="text-xs font-bold text-blue-700">Nome fantasia</p>
+          <p className="mt-1 font-black text-slate-900">
+            {meiApplication.fantasyName || "Não informado"}
+          </p>
+        </div>
+      </div>
+
+      {meiApplication.notes && (
+        <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">Observações</p>
+          <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+            {meiApplication.notes}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -163,6 +251,7 @@ export default async function AdminOrderDetailsPage({ params }: any) {
     include: {
       user: true,
       service: true,
+      meiApplication: true,
       uploadedFiles: { orderBy: { createdAt: "desc" } },
       resultFiles: { orderBy: { createdAt: "desc" } },
       payments: { orderBy: { createdAt: "desc" } },
@@ -268,6 +357,8 @@ export default async function AdminOrderDetailsPage({ params }: any) {
         <section className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-6">
             <OperatorScheduleReviewCard order={order} />
+
+            <MeiApplicationCard meiApplication={order.meiApplication} />
 
             <div className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl">
               <h2 className="text-lg font-black">Documentos do cliente</h2>
