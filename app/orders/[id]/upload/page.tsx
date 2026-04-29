@@ -122,6 +122,7 @@ export default function OrderUploadPage() {
   const [order, setOrder] = useState<OrderData | null>(null);
   const [progress, setProgress] = useState(0);
   const [meiSent, setMeiSent] = useState(false);
+  const [rgFormSent, setRgFormSent] = useState(false);
 
   const [meiForm, setMeiForm] = useState({
     fullName: "",
@@ -142,6 +143,23 @@ export default function OrderUploadPage() {
     notes: "",
   });
 
+  const [rgForm, setRgForm] = useState({
+    fullName: "",
+    cpf: "",
+    birthDate: "",
+    phone: "",
+    email: "",
+    zipCode: "",
+    street: "",
+    number: "",
+    district: "",
+    city: "",
+    state: "",
+    requestType: "",
+    govBrAccess: "",
+    notes: "",
+  });
+
   const serviceType = useMemo(
     () => resolveServiceTypeFromService(order?.service),
     [order?.service]
@@ -151,9 +169,9 @@ export default function OrderUploadPage() {
   const isRG = serviceType === "RG";
 
   const requiredDocuments = useMemo(() => {
-    if (isMEI) return [];
+    if (isMEI || isRG) return [];
     return getRequiredDocumentsForService(serviceType).slice(0, 2);
-  }, [serviceType, isMEI]);
+  }, [serviceType, isMEI, isRG]);
 
   const uploadedTypes = useMemo(() => {
     return new Set(
@@ -175,50 +193,73 @@ export default function OrderUploadPage() {
   const uploadAllowed = canUploadForStatus(order?.status);
   const isWaiting = order?.status === "WAITING_OPERATOR_SCHEDULE_REVIEW";
   const allRequiredSent =
-    !isMEI && requiredDocuments.length === 2 && uploadedRequiredCount >= 2;
+    !isMEI && !isRG && requiredDocuments.length === 2 && uploadedRequiredCount >= 2;
 
-async function loadOrder() {
-  try {
-    setOrderLoading(true);
+  const whatsappNumber = "5517999999999";
 
-    const res = await fetch(`/api/orders/${orderId}`, {
-      cache: "no-store",
-    });
+  const rgWhatsappMessage = encodeURIComponent(
+    `Olá, preenchi o formulário de RG na DesenrolaGov.
 
-    if (!res.ok) {
-      setError("Não foi possível carregar o pedido.");
-      return;
+Nome: ${rgForm.fullName}
+CPF: ${rgForm.cpf}
+WhatsApp: ${rgForm.phone}
+CEP: ${rgForm.zipCode}
+Cidade: ${rgForm.city}
+Tipo de solicitação: ${rgForm.requestType}
+Acesso GOV.BR: ${rgForm.govBrAccess}
+
+Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo meu próprio celular.`
+  );
+
+  const rgWhatsappUrl = `https://wa.me/${whatsappNumber}?text=${rgWhatsappMessage}`;
+
+  async function loadOrder() {
+    try {
+      setOrderLoading(true);
+
+      const res = await fetch(`/api/orders/${orderId}`, {
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        setError("Não foi possível carregar o pedido.");
+        return;
+      }
+
+      const data: OrderData = await res.json();
+      setOrder(data);
+
+      const currentServiceType = resolveServiceTypeFromService(data.service);
+
+      if (currentServiceType === "MEI") {
+        setProgress(meiSent ? 100 : 0);
+        return;
+      }
+
+      if (currentServiceType === "RG") {
+        setProgress(rgFormSent ? 70 : 20);
+        return;
+      }
+
+      const docs = getRequiredDocumentsForService(currentServiceType).slice(0, 2);
+
+      const uploaded = new Set(
+        (data.uploadedFiles || [])
+          .map((file) => file.type)
+          .filter(Boolean) as string[]
+      );
+
+      const sentCount = docs.filter((doc) => uploaded.has(doc.key)).length;
+
+      const progressCalc = docs.length
+        ? Math.round((sentCount / docs.length) * 100)
+        : 0;
+
+      setProgress(progressCalc);
+    } finally {
+      setOrderLoading(false);
     }
-
-    const data: OrderData = await res.json();
-    setOrder(data);
-
-    const currentServiceType = resolveServiceTypeFromService(data.service);
-
-    if (currentServiceType === "MEI") {
-      setProgress(meiSent ? 100 : 0);
-      return;
-    }
-
-    const docs = getRequiredDocumentsForService(currentServiceType).slice(0, 2);
-
-    const uploaded = new Set(
-      (data.uploadedFiles || [])
-        .map((file) => file.type)
-        .filter(Boolean) as string[]
-    );
-
-    const sentCount = docs.filter((doc) => uploaded.has(doc.key)).length;
-
-    const progressCalc = docs.length
-      ? Math.round((sentCount / docs.length) * 100)
-      : 0;
-
-    setProgress(progressCalc);
-  } finally {
-    setOrderLoading(false);
   }
-}
 
   useEffect(() => {
     loadOrder();
@@ -230,6 +271,27 @@ async function loadOrder() {
       ...current,
       [field]: value,
     }));
+  }
+
+  function updateRgForm(field: keyof typeof rgForm, value: string) {
+    setRgForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function handleSubmitRgForm() {
+    if (!rgForm.fullName.trim()) return setError("Informe seu nome completo.");
+    if (!rgForm.cpf.trim()) return setError("Informe seu CPF.");
+    if (!rgForm.phone.trim()) return setError("Informe seu WhatsApp.");
+    if (!rgForm.zipCode.trim()) return setError("Informe seu CEP.");
+    if (!rgForm.requestType.trim()) return setError("Informe o tipo de solicitação.");
+    if (!rgForm.govBrAccess.trim()) return setError("Informe se consegue acessar o GOV.BR.");
+
+    setError("");
+    setSuccess("Dados preenchidos. Agora escolha o Poupatempo mais próximo.");
+    setRgFormSent(true);
+    setProgress(70);
   }
 
   async function handleUpload() {
@@ -345,26 +407,26 @@ async function loadOrder() {
     }
   }
 
-if (orderLoading) {
-  return (
-    <main className="min-h-screen bg-[var(--primary-blue)] px-4 pb-24 pt-6 text-white">
-      <div className="mx-auto max-w-3xl">
-        <p className="text-sm font-bold">Carregando pedido...</p>
+  if (orderLoading) {
+    return (
+      <main className="min-h-screen bg-[var(--primary-blue)] px-4 pb-24 pt-6 text-white">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-sm font-bold">Carregando pedido...</p>
 
-        <div className="mt-4 h-2 rounded-full bg-white/20">
-          <div className="h-full w-1/3 animate-pulse rounded-full bg-green-400" />
-        </div>
+          <div className="mt-4 h-2 rounded-full bg-white/20">
+            <div className="h-full w-1/3 animate-pulse rounded-full bg-green-400" />
+          </div>
 
-        <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
-          <h2 className="text-xl font-black">Carregando informações</h2>
-          <p className="mt-2 text-sm text-slate-600">
-            Aguarde enquanto buscamos os dados do seu pedido.
-          </p>
+          <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
+            <h2 className="text-xl font-black">Carregando informações</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Aguarde enquanto buscamos os dados do seu pedido.
+            </p>
+          </div>
         </div>
-      </div>
-    </main>
-  );
-}
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[var(--primary-blue)] px-4 pb-24 pt-6 text-white">
@@ -388,9 +450,15 @@ if (orderLoading) {
           />
         </div>
 
-        {!isMEI && (
+        {!isMEI && !isRG && (
           <p className="mt-2 text-xs font-semibold text-white/80">
             {Math.min(uploadedRequiredCount, 2)}/2 documentos enviados
+          </p>
+        )}
+
+        {isRG && (
+          <p className="mt-2 text-xs font-semibold text-white/80">
+            {rgFormSent ? "Escolha a unidade e inicie o atendimento" : "Preencha o formulário para iniciar"}
           </p>
         )}
 
@@ -418,163 +486,118 @@ if (orderLoading) {
             </p>
 
             <div className="mt-5 grid gap-3">
-              <input
-                value={meiForm.fullName}
-                onChange={(e) => updateMeiForm("fullName", e.target.value)}
-                placeholder="Nome completo"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <input
-                value={meiForm.cpf}
-                onChange={(e) => updateMeiForm("cpf", e.target.value)}
-                placeholder="CPF"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <input
-                value={meiForm.birthDate}
-                onChange={(e) => updateMeiForm("birthDate", e.target.value)}
-                type="date"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <input
-                value={meiForm.phone}
-                onChange={(e) => updateMeiForm("phone", e.target.value)}
-                placeholder="Telefone / WhatsApp"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <input
-                value={meiForm.email}
-                onChange={(e) => updateMeiForm("email", e.target.value)}
-                placeholder="E-mail"
-                type="email"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <input
-                  value={meiForm.addressZipCode}
-                  onChange={(e) => updateMeiForm("addressZipCode", e.target.value)}
-                  placeholder="CEP"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-                />
-
-                <input
-                  value={meiForm.addressState}
-                  onChange={(e) => updateMeiForm("addressState", e.target.value)}
-                  placeholder="Estado"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <input
-                value={meiForm.addressStreet}
-                onChange={(e) => updateMeiForm("addressStreet", e.target.value)}
-                placeholder="Rua / Avenida"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <input
-                  value={meiForm.addressNumber}
-                  onChange={(e) => updateMeiForm("addressNumber", e.target.value)}
-                  placeholder="Número"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-                />
-
-                <input
-                  value={meiForm.addressDistrict}
-                  onChange={(e) => updateMeiForm("addressDistrict", e.target.value)}
-                  placeholder="Bairro"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <input
-                value={meiForm.addressCity}
-                onChange={(e) => updateMeiForm("addressCity", e.target.value)}
-                placeholder="Cidade"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <input
-                value={meiForm.addressComplement}
-                onChange={(e) => updateMeiForm("addressComplement", e.target.value)}
-                placeholder="Complemento (opcional)"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <input
-                value={meiForm.businessActivity}
-                onChange={(e) => updateMeiForm("businessActivity", e.target.value)}
-                placeholder="Atividade que deseja exercer (ex: manicure, vendedor, eletricista)"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <input
-                value={meiForm.fantasyName}
-                onChange={(e) => updateMeiForm("fantasyName", e.target.value)}
-                placeholder="Nome fantasia (opcional)"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
-
-              <select
-                value={meiForm.hasGovBrAccount}
-                onChange={(e) => updateMeiForm("hasGovBrAccount", e.target.value)}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              >
-                <option value="">Possui conta gov.br?</option>
-                <option value="SIM">Sim</option>
-                <option value="NAO">Não</option>
-              </select>
-
-              <textarea
-                value={meiForm.notes}
-                onChange={(e) => updateMeiForm("notes", e.target.value)}
-                placeholder="Observações ou dúvidas"
-                rows={4}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
+              <input value={meiForm.fullName} onChange={(e) => updateMeiForm("fullName", e.target.value)} placeholder="Nome completo" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input value={meiForm.cpf} onChange={(e) => updateMeiForm("cpf", e.target.value)} placeholder="CPF" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input value={meiForm.birthDate} onChange={(e) => updateMeiForm("birthDate", e.target.value)} type="date" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input value={meiForm.phone} onChange={(e) => updateMeiForm("phone", e.target.value)} placeholder="Telefone / WhatsApp" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input value={meiForm.email} onChange={(e) => updateMeiForm("email", e.target.value)} placeholder="E-mail" type="email" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input value={meiForm.businessActivity} onChange={(e) => updateMeiForm("businessActivity", e.target.value)} placeholder="Atividade que deseja exercer como MEI" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <textarea value={meiForm.notes} onChange={(e) => updateMeiForm("notes", e.target.value)} placeholder="Observações ou dúvidas" rows={4} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
             </div>
 
             <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-xs text-slate-600">
-              A DesenrolaGov é uma assessoria privada e não possui vínculo com
-              órgãos do governo. A abertura do MEI pode ser feita gratuitamente
-              no site oficial.
+              A DesenrolaGov é uma assessoria privada e não possui vínculo com órgãos do governo.
             </div>
 
             {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
             {success && <p className="mt-3 text-sm font-bold text-green-600">{success}</p>}
 
-            <button
-              onClick={handleSubmitMei}
-              disabled={loading}
-              className="mt-5 w-full rounded-xl bg-green-500 p-3 font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
+            <button onClick={handleSubmitMei} disabled={loading} className="mt-5 w-full rounded-xl bg-green-500 p-3 font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-300">
               {loading ? "Enviando..." : "Enviar dados do MEI"}
             </button>
           </div>
         )}
 
-        {!isMEI && (isWaiting || allRequiredSent) && (
-          <>
-            <WaitingBlock />
+        {isRG && uploadAllowed && !isWaiting && (
+          <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
+            <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+              Pré-agendamento RG
+            </p>
 
-            {isRG && (
-              <PoupatempoLocator
-                orderId={orderId}
-                selectedName={order?.selectedPoupatempoName}
-                selectedAddress={order?.selectedPoupatempoAddress}
-                selectedDistanceKm={order?.selectedPoupatempoDistanceKm}
-              />
+            <h1 className="mt-2 text-2xl font-black">
+              Preencha seus dados para localizar o Poupatempo
+            </h1>
+
+            <p className="mt-2 text-sm text-slate-600">
+              Depois de preencher, você escolherá a unidade mais próxima e será direcionado
+              para atendimento em tempo real com um especialista.
+            </p>
+
+            <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-xs font-semibold text-blue-800">
+              Por segurança, a DesenrolaGov nunca solicita senha do GOV.BR.
+              O atendente irá orientar você a agendar pelo seu próprio celular.
+            </div>
+
+            <div className="mt-5 grid gap-3">
+              <input value={rgForm.fullName} onChange={(e) => updateRgForm("fullName", e.target.value)} placeholder="Nome completo" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input value={rgForm.cpf} onChange={(e) => updateRgForm("cpf", e.target.value)} placeholder="CPF" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input value={rgForm.birthDate} onChange={(e) => updateRgForm("birthDate", e.target.value)} type="date" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input value={rgForm.phone} onChange={(e) => updateRgForm("phone", e.target.value)} placeholder="WhatsApp" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              <input value={rgForm.email} onChange={(e) => updateRgForm("email", e.target.value)} placeholder="E-mail" type="email" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input value={rgForm.zipCode} onChange={(e) => updateRgForm("zipCode", e.target.value)} placeholder="CEP" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+                <input value={rgForm.state} onChange={(e) => updateRgForm("state", e.target.value)} placeholder="Estado" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              </div>
+
+              <input value={rgForm.street} onChange={(e) => updateRgForm("street", e.target.value)} placeholder="Rua / Avenida" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input value={rgForm.number} onChange={(e) => updateRgForm("number", e.target.value)} placeholder="Número" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+                <input value={rgForm.district} onChange={(e) => updateRgForm("district", e.target.value)} placeholder="Bairro" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+              </div>
+
+              <input value={rgForm.city} onChange={(e) => updateRgForm("city", e.target.value)} placeholder="Cidade" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+
+              <select value={rgForm.requestType} onChange={(e) => updateRgForm("requestType", e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500">
+                <option value="">Tipo de solicitação</option>
+                <option value="Primeira via do RG">Primeira via do RG</option>
+                <option value="Segunda via do RG">Segunda via do RG</option>
+                <option value="Renovação / atualização do RG">Renovação / atualização do RG</option>
+              </select>
+
+              <select value={rgForm.govBrAccess} onChange={(e) => updateRgForm("govBrAccess", e.target.value)} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500">
+                <option value="">Você consegue acessar sua conta GOV.BR?</option>
+                <option value="Sim, consigo acessar">Sim, consigo acessar</option>
+                <option value="Tenho dificuldade para acessar">Tenho dificuldade para acessar</option>
+                <option value="Esqueci minha senha">Esqueci minha senha</option>
+                <option value="Nunca usei o GOV.BR">Nunca usei o GOV.BR</option>
+              </select>
+
+              <textarea value={rgForm.notes} onChange={(e) => updateRgForm("notes", e.target.value)} placeholder="Observações para o atendente" rows={4} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
+            </div>
+
+            {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
+            {success && <p className="mt-3 text-sm font-bold text-green-600">{success}</p>}
+
+            {!rgFormSent && (
+              <button onClick={handleSubmitRgForm} className="mt-5 w-full rounded-xl bg-green-500 p-3 font-black text-white">
+                Buscar Poupatempo mais próximo
+              </button>
             )}
-          </>
+
+            {rgFormSent && (
+              <div className="mt-5">
+                <PoupatempoLocator
+                  orderId={orderId}
+                  selectedName={order?.selectedPoupatempoName}
+                  selectedAddress={order?.selectedPoupatempoAddress}
+                  selectedDistanceKm={order?.selectedPoupatempoDistanceKm}
+                />
+
+                <a href={rgWhatsappUrl} target="_blank" rel="noopener noreferrer" className="mt-5 block w-full rounded-xl bg-green-500 p-3 text-center font-black text-white">
+                  Iniciar atendimento em tempo real
+                </a>
+              </div>
+            )}
+          </div>
         )}
 
-        {!isMEI && !isWaiting && !allRequiredSent && uploadAllowed && currentDocument && (
+        {!isMEI && !isRG && (isWaiting || allRequiredSent) && (
+          <WaitingBlock />
+        )}
+
+        {!isMEI && !isRG && !isWaiting && !allRequiredSent && uploadAllowed && currentDocument && (
           <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
             <p className="text-xs font-black uppercase tracking-wide text-blue-700">
               Etapa {currentStep}/2
@@ -589,12 +612,7 @@ if (orderLoading) {
             </p>
 
             <label className="mt-5 block rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-5 text-center">
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="hidden"
-              />
+              <input type="file" accept="image/*,.pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="hidden" />
 
               <span className="block text-sm font-black text-slate-900">
                 {file ? file.name : "Clique para selecionar o arquivo"}
@@ -608,36 +626,27 @@ if (orderLoading) {
             {error && <p className="mt-3 text-sm font-bold text-red-600">{error}</p>}
             {success && <p className="mt-3 text-sm font-bold text-green-600">{success}</p>}
 
-            <button
-              onClick={handleUpload}
-              disabled={loading || !file}
-              className="mt-5 w-full rounded-xl bg-green-500 p-3 font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
+            <button onClick={handleUpload} disabled={loading || !file} className="mt-5 w-full rounded-xl bg-green-500 p-3 font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-300">
               {loading ? "Enviando..." : `Enviar documento ${currentStep}/2`}
             </button>
           </div>
         )}
 
-{!uploadAllowed && !isWaiting && (
-  <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
-    <h2 className="text-xl font-black">
-      {isMEI ? "Estamos confirmando seu pedido" : "Upload indisponível"}
-    </h2>
+        {!uploadAllowed && !isWaiting && (
+          <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
+            <h2 className="text-xl font-black">
+              {isMEI || isRG ? "Estamos confirmando seu pedido" : "Upload indisponível"}
+            </h2>
 
-    <p className="mt-2 text-sm text-slate-600">
-      {isMEI
-        ? "Seu pedido foi recebido. Assim que o pagamento for confirmado, o formulário de abertura do MEI será liberado automaticamente nesta tela."
-        : "O envio de documentos será liberado após a confirmação do pagamento."}
-    </p>
-
-    {isMEI && (
-      <div className="mt-4 rounded-2xl bg-green-50 p-4 text-sm text-green-800">
-        Você não precisa enviar documentos por upload para abertura de MEI.
-        A próxima etapa será apenas preencher o formulário.
-      </div>
-    )}
-  </div>
-)}
+            <p className="mt-2 text-sm text-slate-600">
+              {isMEI
+                ? "Seu pedido foi recebido. Assim que o pagamento for confirmado, o formulário de abertura do MEI será liberado automaticamente nesta tela."
+                : isRG
+                  ? "Seu pedido foi recebido. Assim que o pagamento for confirmado, o formulário de pré-agendamento do RG será liberado automaticamente nesta tela."
+                  : "O envio de documentos será liberado após a confirmação do pagamento."}
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );
