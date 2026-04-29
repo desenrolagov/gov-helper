@@ -1,3 +1,4 @@
+import { createSession } from "@/lib/auth";
 import {
   buildRateLimitKey,
   createRateLimitResponse,
@@ -40,10 +41,7 @@ export async function POST(req: NextRequest) {
           .flat()
           .filter(Boolean)[0] || "Dados inválidos.";
 
-      return NextResponse.json(
-        { error: firstError },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
     const {
@@ -54,6 +52,8 @@ export async function POST(req: NextRequest) {
       privacyAccepted,
       lgpdAccepted,
     } = validation.data;
+
+    const normalizedEmail = email.trim().toLowerCase();
 
     if (!termsAccepted || !privacyAccepted || !lgpdAccepted) {
       return NextResponse.json(
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: { id: true },
     });
 
@@ -87,9 +87,10 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: name.trim(),
+        email: normalizedEmail,
         password: hashedPassword,
+        role: "CLIENT",
         lgpdAccepted: true,
         lgpdAcceptedAt: acceptedAt,
         termsAcceptedAt: acceptedAt,
@@ -100,6 +101,7 @@ export async function POST(req: NextRequest) {
         id: true,
         name: true,
         email: true,
+        role: true,
       },
     });
 
@@ -118,9 +120,15 @@ export async function POST(req: NextRequest) {
       console.error("Erro ao registrar aceite legal:", logError);
     }
 
+    await createSession({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
     return NextResponse.json(
       {
-        message: "Conta criada com sucesso.",
+        message: "Conta criada e login realizado com sucesso.",
         user,
       },
       { status: 201 }

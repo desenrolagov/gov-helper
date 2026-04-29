@@ -78,11 +78,12 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Conta criada com sucesso. Redirecionando para o login...");
+setSuccess("Conta criada com sucesso. Redirecionando...");
 
-      setTimeout(() => {
-        router.push("/login");
-      }, 1200);
+setTimeout(() => {
+  router.push("/orders");
+  router.refresh();
+}, 800);
     } catch (error) {
       console.error("Erro no cadastro:", error);
       setError("Erro inesperado ao criar conta. Tente novamente.");
