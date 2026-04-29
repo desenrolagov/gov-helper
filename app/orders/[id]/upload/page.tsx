@@ -345,6 +345,27 @@ async function loadOrder() {
     }
   }
 
+if (orderLoading) {
+  return (
+    <main className="min-h-screen bg-[var(--primary-blue)] px-4 pb-24 pt-6 text-white">
+      <div className="mx-auto max-w-3xl">
+        <p className="text-sm font-bold">Carregando pedido...</p>
+
+        <div className="mt-4 h-2 rounded-full bg-white/20">
+          <div className="h-full w-1/3 animate-pulse rounded-full bg-green-400" />
+        </div>
+
+        <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
+          <h2 className="text-xl font-black">Carregando informações</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Aguarde enquanto buscamos os dados do seu pedido.
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+}
+
   return (
     <main className="min-h-screen bg-[var(--primary-blue)] px-4 pb-24 pt-6 text-white">
       <div className="mx-auto max-w-3xl">
@@ -597,18 +618,18 @@ async function loadOrder() {
           </div>
         )}
 
-        {!uploadAllowed && !isWaiting && (
-          <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
-            <h2 className="text-xl font-black">
-              {isMEI ? "Formulário indisponível" : "Upload indisponível"}
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              {isMEI
-                ? "O formulário será liberado após a confirmação do pagamento."
-                : "O envio de documentos será liberado após a confirmação do pagamento."}
-            </p>
-          </div>
-        )}
+            {!uploadAllowed && !isWaiting && (
+         <div className="mt-5 rounded-3xl bg-white p-5 text-slate-950">
+    <h2 className="text-xl font-black">
+      {isMEI ? "Seu pedido foi recebido" : "Upload indisponível"}
+    </h2>
+    <p className="mt-2 text-sm text-slate-600">
+      {isMEI
+        ? "Assim que o pagamento for confirmado, o formulário de abertura do MEI será liberado automaticamente."
+        : "O envio de documentos será liberado após a confirmação do pagamento."}
+          </p>
+            </div>
+)}
       </div>
     </main>
   );

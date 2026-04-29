@@ -271,23 +271,30 @@ const meiApplication = meiApplicationResult[0] || null;
     redirect("/admin/orders");
   }
 
-  const totalUploads = order.uploadedFiles.length;
-  const totalResults = order.resultFiles.length;
-  const paid = order.payments.some((p: any) => p.status === "PAID");
+const totalUploads = order.uploadedFiles.length;
+const totalResults = order.resultFiles.length;
+const paid = order.payments.some((p: any) => p.status === "PAID");
 
-  const timelineItems = order.histories.map((history: any) => {
-    const meta = getStatusTimelineMeta(history.status);
+const serviceName = order.service.name.toLowerCase();
+const orderCode = order.orderCode?.toLowerCase() || "";
 
-    return {
-      id: history.id,
-      title: meta.title,
-      description: meta.description,
-      timestamp: formatDateTime(history.createdAt),
-      sortDate: history.createdAt,
-      tone: meta.tone,
-      badge: meta.badge,
-    };
-  });
+const isMEI = serviceName.includes("mei") || orderCode.startsWith("mei");
+const isRG = serviceName.includes("rg") || orderCode.startsWith("rg");
+const isCPF = serviceName.includes("cpf") || orderCode.startsWith("cpf");
+
+const timelineItems = order.histories.map((history: any) => {
+  const meta = getStatusTimelineMeta(history.status);
+
+  return {
+    id: history.id,
+    title: meta.title,
+    description: meta.description,
+    timestamp: formatDateTime(history.createdAt),
+    sortDate: history.createdAt,
+    tone: meta.tone,
+    badge: meta.badge,
+  };
+});
 
   return (
     <div className="min-h-screen bg-[var(--primary-blue)] text-white">
@@ -369,72 +376,60 @@ const meiApplication = meiApplicationResult[0] || null;
               <MeiApplicationCard meiApplication={meiApplication} />
 
             <div className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl">
-              <h2 className="text-lg font-black">Documentos do cliente</h2>
+{isMEI ? (
+  <div className="rounded-3xl border border-green-200 bg-green-50 p-5 text-slate-900 shadow-xl">
+    <p className="text-xs font-black uppercase tracking-wide text-green-700">
+      Fluxo MEI
+    </p>
 
-              {order.uploadedFiles.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-500">
-                  Nenhum documento enviado
-                </p>
-              ) : (
-                <div className="mt-4 space-y-3">
-                  {order.uploadedFiles.map((file: any) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center justify-between gap-4 rounded-2xl border p-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="break-all text-sm font-bold">
-                          {file.originalName}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          Tipo: {file.type || "Documento"}
-                        </p>
-                      </div>
+    <h2 className="mt-2 text-lg font-black">
+      Sem upload de documentos pelo cliente
+    </h2>
 
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="shrink-0 text-sm font-bold text-[var(--accent-green)]"
-                      >
-                        Abrir
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              )}
+    <p className="mt-2 text-sm text-green-800">
+      Para abertura de MEI, o cliente envia os dados pelo formulário. O próximo
+      passo é o admin processar a abertura e enviar o certificado MEI na entrega
+      final.
+    </p>
+  </div>
+) : (
+  <div className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl">
+    <h2 className="text-lg font-black">Documentos do cliente</h2>
+
+    {order.uploadedFiles.length === 0 ? (
+      <p className="mt-3 text-sm text-slate-500">
+        Nenhum documento enviado
+      </p>
+    ) : (
+      <div className="mt-4 space-y-3">
+        {order.uploadedFiles.map((file: any) => (
+          <div
+            key={file.id}
+            className="flex items-center justify-between gap-4 rounded-2xl border p-3"
+          >
+            <div className="min-w-0">
+              <p className="break-all text-sm font-bold">
+                {file.originalName}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Tipo: {file.type || "Documento"}
+              </p>
             </div>
 
-            <div className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl">
-              <h2 className="text-lg font-black">Resultado final</h2>
-
-              {order.resultFiles.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-500">
-                  Nenhum resultado enviado
-                </p>
-              ) : (
-                <div className="mt-4 space-y-3">
-                  {order.resultFiles.map((file: any) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center justify-between rounded-2xl border p-3"
-                    >
-                      <span className="text-sm font-medium">
-                        {file.originalName}
-                      </span>
-
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-sm font-bold text-[var(--accent-green)]"
-                      >
-                        Ver
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <a
+              href={file.url}
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 text-sm font-bold text-[var(--accent-green)]"
+            >
+              Abrir
+            </a>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
               <Link
                 href={`/admin/orders/${order.id}/upload-result`}

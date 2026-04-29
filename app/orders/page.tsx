@@ -134,11 +134,13 @@ export default async function OrdersPage() {
             {validOrders.map((order) => {
               const status = order.status as OrderStatus;
 
-              const flow = getOrderFlow(status, {
-                orderId: order.id,
-                filesCount: order.uploadedFiles.length,
-                resultFilesCount: order.resultFiles.length,
-              });
+                  const flow = getOrderFlow(status, {
+                    orderId: order.id,
+                    filesCount: order.uploadedFiles.length,
+                    resultFilesCount: order.resultFiles.length,
+                   serviceName: order.service.name,
+                   orderCode: order.orderCode,
+                    });
 
               return (
                 <section

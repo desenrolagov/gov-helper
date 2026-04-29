@@ -241,6 +241,8 @@ type GetOrderFlowOptions = {
   orderId: string;
   filesCount?: number;
   resultFilesCount?: number;
+  serviceName?: string;
+  orderCode?: string | null;
 };
 
 export function getOrderFlow(
@@ -249,6 +251,10 @@ export function getOrderFlow(
 ) {
   const filesCount = options.filesCount ?? 0;
   const resultFilesCount = options.resultFilesCount ?? 0;
+  const serviceName = options.serviceName?.toLowerCase() || "";
+  const orderCode = options.orderCode?.toLowerCase() || "";
+
+  const isMEI = serviceName.includes("mei") || orderCode.startsWith("mei");
 
   switch (status) {
     case "PENDING_PAYMENT":
@@ -283,23 +289,26 @@ export function getOrderFlow(
         } satisfies FlowAction,
       };
 
-    case "AWAITING_DOCUMENTS":
-      return {
-        tone: "amber" as OrderTone,
-        clientMessage:
-          filesCount > 0
-            ? "Recebemos parte dos documentos. Finalize o envio para liberar a análise."
-            : "Estamos aguardando o envio dos documentos obrigatórios para iniciar a análise.",
-        nextStepLabel: "Concluir envio dos documentos",
-        primaryAction: {
-          label: "Continuar envio",
-          href: `/orders/${options.orderId}/upload`,
-        } satisfies FlowAction,
-        secondaryAction: {
-          label: "Ver detalhes do pedido",
-          href: `/orders/${options.orderId}`,
-        } satisfies FlowAction,
-      };
+case "AWAITING_DOCUMENTS":
+  return {
+    tone: "amber" as OrderTone,
+    clientMessage: isMEI
+      ? "Estamos aguardando o preenchimento do formulário para iniciar a análise."
+      : filesCount > 0
+        ? "Recebemos parte dos documentos. Finalize o envio para liberar a análise."
+        : "Estamos aguardando o envio dos documentos obrigatórios para iniciar a análise.",
+    nextStepLabel: isMEI
+      ? "Concluir preenchimento do formulário"
+      : "Concluir envio dos documentos",
+    primaryAction: {
+      label: isMEI ? "Preencher formulário" : "Continuar envio",
+      href: `/orders/${options.orderId}/upload`,
+    } satisfies FlowAction,
+    secondaryAction: {
+      label: "Ver detalhes do pedido",
+      href: `/orders/${options.orderId}`,
+    } satisfies FlowAction,
+  };
 
     case "WAITING_OPERATOR_SCHEDULE_REVIEW":
       return {
