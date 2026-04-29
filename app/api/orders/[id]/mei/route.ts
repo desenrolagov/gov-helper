@@ -75,7 +75,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     const birthDate = body.birthDate ? new Date(body.birthDate) : null;
 
-    await prisma.meiApplication.upsert({
+    await (prisma as any).meiApplication.upsert({
       where: {
         orderId,
       },
