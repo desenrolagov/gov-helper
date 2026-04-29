@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 type Order = {
   id: string;
-  orderCode?: string;
+  orderCode?: string | null;
   status: string;
   totalAmount: number;
   createdAt: string;
@@ -21,30 +21,58 @@ type Order = {
 export default function AdminOrdersClient() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   async function loadOrders() {
-    const res = await fetch("/api/admin/orders", {
-      cache: "no-store",
-    });
+    try {
+      setLoading(true);
 
-    const data = await res.json();
-    setOrders(data);
+      const res = await fetch("/api/admin/orders", {
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+
+      if (Array.isArray(data)) {
+        setOrders(data);
+        return;
+      }
+
+      if (Array.isArray(data.orders)) {
+        setOrders(data.orders);
+        return;
+      }
+
+      setOrders([]);
+    } catch (error) {
+      console.error("Erro ao carregar pedidos:", error);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
     loadOrders();
   }, []);
 
-  const filtered = orders.filter((order) => {
-    const term = searchTerm.toLowerCase();
+  const filtered = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
 
-    return (
-      order.user.name.toLowerCase().includes(term) ||
-      order.user.email.toLowerCase().includes(term) ||
-      order.service.name.toLowerCase().includes(term) ||
-      (order.orderCode || "").toLowerCase().includes(term)
-    );
-  });
+    if (!term) {
+      return orders;
+    }
+
+    return orders.filter((order) => {
+      return (
+        order.user?.name?.toLowerCase().includes(term) ||
+        order.user?.email?.toLowerCase().includes(term) ||
+        order.service?.name?.toLowerCase().includes(term) ||
+        order.status?.toLowerCase().includes(term) ||
+        (order.orderCode || "").toLowerCase().includes(term)
+      );
+    });
+  }, [orders, searchTerm]);
 
   function formatCurrency(value: number) {
     return new Intl.NumberFormat("pt-BR", {
@@ -62,8 +90,6 @@ export default function AdminOrdersClient() {
 
   return (
     <div className="space-y-6">
-      
-      {/* BUSCA */}
       <div className="rounded-3xl bg-white p-4 shadow-xl">
         <input
           placeholder="Buscar cliente, e-mail, serviço ou código"
@@ -73,8 +99,11 @@ export default function AdminOrdersClient() {
         />
       </div>
 
-      {/* LISTA */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="rounded-3xl bg-white p-6 text-center text-slate-500 shadow-xl">
+          Carregando pedidos...
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="rounded-3xl bg-white p-6 text-center text-slate-500 shadow-xl">
           Nenhum pedido encontrado
         </div>
@@ -84,7 +113,6 @@ export default function AdminOrdersClient() {
             key={order.id}
             className="rounded-3xl bg-white p-6 text-slate-900 shadow-xl"
           >
-            {/* STATUS + CÓDIGO */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
                 {order.status}
@@ -97,21 +125,14 @@ export default function AdminOrdersClient() {
               )}
             </div>
 
-            {/* CLIENTE */}
-            <h2 className="mt-4 text-lg font-black">
-              {order.user.name}
-            </h2>
+            <h2 className="mt-4 text-lg font-black">{order.user.name}</h2>
 
-            <p className="text-sm text-slate-600">
-              {order.service.name}
-            </p>
+            <p className="text-sm text-slate-600">{order.service.name}</p>
 
-            {/* INFO */}
             <p className="mt-2 text-sm text-slate-600">
               {formatCurrency(order.totalAmount)} • {formatDate(order.createdAt)}
             </p>
 
-            {/* AÇÃO */}
             <div className="mt-4">
               <Link
                 href={`/admin/orders/${order.id}`}
