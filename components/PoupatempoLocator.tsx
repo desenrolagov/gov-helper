@@ -168,8 +168,7 @@ export default function PoupatempoLocator({
           <PoupatempoMap customerLocation={customerLocation} units={units} />
 
           <div className="mt-4 space-y-3">
-            {units.map((unit, index) => (
-              <div
+                {(selected ? [selected] : units).map((unit, index) => (              <div
                 key={unit.id}
                 className="rounded-2xl border border-slate-200 p-4"
               >
