@@ -551,19 +551,31 @@ Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo me
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
               />
 
-              <input
+            <div className="relative">
+                <input
+                type="date"
                 value={rgForm.birthDate}
                 onChange={(e) => updateRgForm("birthDate", e.target.value)}
-                type="date"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
+                className="peer w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 pt-6 pb-2 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white"
+                  />
 
-              <input
-                value={rgForm.phone}
-                onChange={(e) => updateRgForm("phone", e.target.value)}
-                placeholder="WhatsApp"
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500"
-              />
+                  <label className="absolute left-4 top-2 text-[11px] font-bold uppercase tracking-wide text-slate-500 transition peer-focus:text-blue-600">
+                  Data de nascimento
+                  </label>
+                    </div>
+
+                   <div className="flex overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 focus-within:border-blue-500">
+                     <div className="flex items-center bg-white px-3 text-sm font-bold text-slate-700 border-r">
+                     +55
+                    </div>
+
+                    <input
+                      value={rgForm.phone}
+                      onChange={(e) => updateRgForm("phone", e.target.value)}
+                     placeholder="(DDD) 90000-0000"
+                    className="w-full bg-transparent px-4 py-3 text-sm font-semibold text-slate-900 outline-none"
+                     />
+                </div>
 
               <input
                 value={rgForm.email}

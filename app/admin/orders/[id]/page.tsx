@@ -236,6 +236,118 @@ function MeiApplicationCard({ meiApplication }: { meiApplication: any }) {
   );
 }
 
+function RgApplicationCard({
+  rgApplication,
+  order,
+}: {
+  rgApplication: any;
+  order: any;
+}) {
+  if (!rgApplication) return null;
+
+  return (
+    <div className="rounded-3xl border border-blue-100 bg-white p-5 text-slate-900 shadow-xl">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+            Pré-agendamento RG
+          </p>
+          <h2 className="mt-1 text-xl font-black">Formulário recebido</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Dados preenchidos pelo cliente e unidade Poupatempo escolhida.
+          </p>
+        </div>
+
+        <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-black text-green-700">
+          Recebido
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">Nome completo</p>
+          <p className="mt-1 font-black">{rgApplication.fullName}</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">CPF</p>
+          <p className="mt-1 font-black">{rgApplication.cpf}</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">WhatsApp</p>
+          <p className="mt-1 font-black">{rgApplication.phone}</p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">E-mail</p>
+          <p className="mt-1 font-black">
+            {rgApplication.email || "Não informado"}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">Nascimento</p>
+          <p className="mt-1 font-black">
+            {rgApplication.birthDate
+              ? formatDateOnly(rgApplication.birthDate)
+              : "Não informado"}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">Tipo de solicitação</p>
+          <p className="mt-1 font-black">{rgApplication.requestType}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-2xl bg-blue-50 p-4">
+        <p className="text-xs font-bold text-blue-700">Acesso GOV.BR</p>
+        <p className="mt-1 font-black text-slate-900">
+          {rgApplication.govBrAccess}
+        </p>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-slate-200 p-4">
+        <p className="text-xs font-bold text-slate-500">
+          Poupatempo escolhido
+        </p>
+
+        <p className="mt-2 font-black">
+          {order.selectedPoupatempoName || "Unidade não informada"}
+        </p>
+
+        <p className="mt-1 text-sm text-slate-600">
+          {order.selectedPoupatempoAddress || "Endereço não informado"}
+        </p>
+
+        {order.selectedPoupatempoCity && (
+          <p className="mt-1 text-sm text-slate-600">
+            Cidade: {order.selectedPoupatempoCity}
+          </p>
+        )}
+
+        {order.selectedPoupatempoDistanceKm !== null &&
+          order.selectedPoupatempoDistanceKm !== undefined && (
+            <p className="mt-1 text-sm text-slate-600">
+              Distância aproximada:{" "}
+              {Number(order.selectedPoupatempoDistanceKm).toFixed(1)} km
+            </p>
+          )}
+      </div>
+
+      {rgApplication.notes && (
+        <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+          <p className="text-xs font-bold text-slate-500">Observações</p>
+          <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+            {rgApplication.notes}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default async function AdminOrderDetailsPage({ params }: any) {
   const session = await verifySession();
   const user = await getCurrentUser();
@@ -264,6 +376,15 @@ const meiApplicationResult = await prisma.$queryRaw<any[]>`
   WHERE "orderId" = ${id}
   LIMIT 1
 `;
+
+const rgApplicationResult = await prisma.$queryRaw<any[]>`
+  SELECT *
+  FROM "RgApplication"
+  WHERE "orderId" = ${id}
+  LIMIT 1
+`;
+
+const rgApplication = rgApplicationResult[0] || null;
 
 const meiApplication = meiApplicationResult[0] || null;
 
@@ -375,21 +496,25 @@ const timelineItems = order.histories.map((history: any) => {
 
               <MeiApplicationCard meiApplication={meiApplication} />
 
+              <RgApplicationCard rgApplication={rgApplication} order={order} />
+
             <div className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl">
-{isMEI ? (
+{isMEI || isRG ? (
   <div className="rounded-3xl border border-green-200 bg-green-50 p-5 text-slate-900 shadow-xl">
     <p className="text-xs font-black uppercase tracking-wide text-green-700">
-      Fluxo MEI
+      {isRG ? "Fluxo RG" : "Fluxo MEI"}
     </p>
 
     <h2 className="mt-2 text-lg font-black">
-      Sem upload de documentos pelo cliente
+      {isRG
+        ? "Sem upload de documentos no fluxo RG"
+        : "Sem upload de documentos pelo cliente"}
     </h2>
 
     <p className="mt-2 text-sm text-green-800">
-      Para abertura de MEI, o cliente envia os dados pelo formulário. O próximo
-      passo é o admin processar a abertura e enviar o certificado MEI na entrega
-      final.
+      {isRG
+        ? "Para RG, o cliente preenche o formulário, escolhe a unidade do Poupatempo e finaliza o atendimento via WhatsApp com especialista."
+        : "Para abertura de MEI, o cliente envia os dados pelo formulário. O próximo passo é o admin processar a abertura e enviar o certificado MEI na entrega final."}
     </p>
   </div>
 ) : (
@@ -431,12 +556,12 @@ const timelineItems = order.histories.map((history: any) => {
   </div>
 )}
 
-              <Link
-                href={`/admin/orders/${order.id}/upload-result`}
-                className="mt-4 inline-flex rounded-2xl bg-[var(--accent-green)] px-4 py-2 text-sm font-bold text-white"
-              >
-                Enviar resultado final
-              </Link>
+<Link
+  href={`/admin/orders/${order.id}/upload-result`}
+  className="mt-4 inline-flex rounded-2xl bg-[var(--accent-green)] px-4 py-2 text-sm font-bold text-white"
+>
+  Enviar resultado final
+</Link>
             </div>
           </div>
 
