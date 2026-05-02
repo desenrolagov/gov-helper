@@ -106,7 +106,10 @@ export default async function OrderPage({ params }: OrderPageProps) {
   const status = order.status as OrderStatus;
   const isWaitingScheduleReview =
     status === "WAITING_OPERATOR_SCHEDULE_REVIEW";
-
+    const serviceName = order.service.name.toLowerCase();
+    const orderCode = order.orderCode?.toLowerCase() || "";
+    const isRG = serviceName.includes("rg") || orderCode.startsWith("rg");
+    
   if (canCreateCheckoutForOrderStatus(status)) {
     redirect(`/payment?orderId=${order.id}`);
   }
@@ -147,18 +150,39 @@ export default async function OrderPage({ params }: OrderPageProps) {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                {flow.clientMessage}
+              {isRG && status === "AWAITING_DOCUMENTS"
+               ? "Preencha o formulário de pré-agendamento, escolha a unidade do Poupatempo e finalize com um especialista pelo WhatsApp."
+             : isRG && status === "WAITING_OPERATOR_SCHEDULE_REVIEW"
+               ? "Recebemos seu formulário e a unidade escolhida. Agora nossa equipe irá finalizar o atendimento com você pelo WhatsApp."
+             : flow.clientMessage}
               </p>
             </div>
 
             <div className="w-full lg:max-w-xs">
-              <OrderActionButton
-                status={status}
-                orderId={order.id}
-                filesCount={order.uploadedFiles.length}
-                resultFilesCount={order.resultFiles.length}
-                className="w-full bg-[var(--accent-green)] text-white hover:bg-[var(--accent-green-hover)]"
-              />
+            {isRG && status === "AWAITING_DOCUMENTS" ? (
+                  <Link
+              href={`/orders/${order.id}/upload`}
+               className="inline-flex w-full items-center justify-center rounded-2xl bg-orange-500 px-4 py-3 text-sm font-black text-white hover:bg-orange-600"
+                     >
+                   Continuar pré-agendamento
+                     </Link>
+                          ) : isRG && status === "WAITING_OPERATOR_SCHEDULE_REVIEW" ? (
+                    <Link
+                   href={`https://wa.me/5517999999999`}
+                   target="_blank"
+                     className="inline-flex w-full items-center justify-center rounded-2xl bg-green-500 px-4 py-3 text-sm font-black text-white hover:bg-green-600"
+                         >
+                     Falar com especialista
+                      </Link>
+                          ) : (
+                     <OrderActionButton
+                       status={status}
+                       orderId={order.id}
+                       filesCount={order.uploadedFiles.length}
+                       resultFilesCount={order.resultFiles.length}
+                       className="w-full bg-[var(--accent-green)] text-white hover:bg-[var(--accent-green-hover)]"
+                         />
+                        )}
             </div>
           </div>
 
@@ -213,43 +237,77 @@ export default async function OrderPage({ params }: OrderPageProps) {
         </section>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl">
-            <h2 className="text-lg font-black text-slate-950">
-              Documentos enviados por você
-            </h2>
+        <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl">
+        <h2 className="text-lg font-black text-slate-950">
+       {isRG ? "Pré-agendamento RG" : "Documentos enviados por você"}
+           </h2>
 
-            {order.uploadedFiles.length === 0 ? (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-                Você ainda não enviou documentos para este pedido.
-              </div>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {order.uploadedFiles.map((file) => (
-                  <div
-                    key={file.id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                  >
-                    <p className="text-sm font-bold text-slate-950">
-                      {file.originalName}
-                    </p>
+              {isRG ? (
+              <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+               {status === "WAITING_OPERATOR_SCHEDULE_REVIEW" ? (
+               <>
+              <p className="font-black">✅ Formulário recebido</p>
+              <p className="mt-2">
+            Seu formulário de RG foi enviado com sucesso. Nossa equipe irá seguir
+            com a finalização do atendimento pelo WhatsApp.
+                </p>
 
-                    <p className="mt-1 text-xs text-slate-500">
-                      Enviado em {formatDate(file.createdAt)}
-                    </p>
+           {order.selectedPoupatempoName && (
+            <div className="mt-4 rounded-2xl bg-white p-4">
+              <p className="text-xs font-black uppercase text-blue-700">
+                Unidade escolhida
+              </p>
+              <p className="mt-1 font-black text-slate-950">
+                {order.selectedPoupatempoName}
+              </p>
+              <p className="mt-1 text-slate-600">
+                {order.selectedPoupatempoAddress || "Endereço não informado"}
+              </p>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="font-black">Pré-agendamento pendente</p>
+          <p className="mt-2">
+            Continue o formulário para escolher a unidade do Poupatempo e iniciar
+            o atendimento com especialista.
+          </p>
+        </>
+      )}
+    </div>
+  ) : order.uploadedFiles.length === 0 ? (
+    <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
+      Você ainda não enviou documentos para este pedido.
+    </div>
+  ) : (
+    <div className="mt-4 space-y-3">
+      {order.uploadedFiles.map((file) => (
+        <div
+          key={file.id}
+          className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+        >
+          <p className="text-sm font-bold text-slate-950">
+            {file.originalName}
+          </p>
 
-                    <a
-                      href={file.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-3 inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-white"
-                    >
-                      Visualizar arquivo
-                    </a>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <p className="mt-1 text-xs text-slate-500">
+            Enviado em {formatDate(file.createdAt)}
+          </p>
+
+          <a
+            href={file.url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex items-center justify-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-white"
+          >
+            Visualizar arquivo
+                      </a>
+                     </div>
+                 ))}
+               </div>
+                   )}
+                </section>
 
           <section className="rounded-3xl bg-white p-6 text-[var(--text-dark)] shadow-xl">
             <h2 className="text-lg font-black text-slate-950">
