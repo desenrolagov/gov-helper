@@ -255,6 +255,7 @@ export function getOrderFlow(
   const orderCode = options.orderCode?.toLowerCase() || "";
 
   const isMEI = serviceName.includes("mei") || orderCode.startsWith("mei");
+  const isRG = serviceName.includes("rg") || orderCode.startsWith("rg");
 
   switch (status) {
     case "PENDING_PAYMENT":
@@ -278,10 +279,16 @@ case "PAID":
     tone: "blue" as OrderTone,
     clientMessage: isMEI
       ? "Seu pagamento foi aprovado. Agora preencha o formulário para nossa equipe iniciar a abertura do MEI."
-      : "Seu pagamento foi aprovado. Agora envie os documentos necessários para continuar o atendimento.",
-    nextStepLabel: isMEI ? "Preencher formulário" : "Enviar documentos",
+      : isRG
+        ? "Seu pagamento foi aprovado. Agora preencha o formulário de pré-agendamento do RG e escolha a unidade do Poupatempo."
+        : "Seu pagamento foi aprovado. Agora envie os documentos necessários para continuar o atendimento.",
+    nextStepLabel: isMEI
+      ? "Preencher formulário"
+      : isRG
+        ? "Preencher pré-agendamento"
+        : "Enviar documentos",
     primaryAction: {
-      label: isMEI ? "Preencher formulário" : "Enviar documentos",
+      label: isMEI || isRG ? "Preencher formulário" : "Enviar documentos",
       href: `/orders/${options.orderId}/upload`,
     } satisfies FlowAction,
     secondaryAction: {
@@ -295,14 +302,18 @@ case "AWAITING_DOCUMENTS":
     tone: "amber" as OrderTone,
     clientMessage: isMEI
       ? "Estamos aguardando o preenchimento do formulário para iniciar a análise."
-      : filesCount > 0
-        ? "Recebemos parte dos documentos. Finalize o envio para liberar a análise."
-        : "Estamos aguardando o envio dos documentos obrigatórios para iniciar a análise.",
+      : isRG
+        ? "Estamos aguardando o formulário de pré-agendamento do RG para iniciar o atendimento."
+        : filesCount > 0
+          ? "Recebemos parte dos documentos. Finalize o envio para liberar a análise."
+          : "Estamos aguardando o envio dos documentos obrigatórios para iniciar a análise.",
     nextStepLabel: isMEI
       ? "Concluir preenchimento do formulário"
-      : "Concluir envio dos documentos",
+      : isRG
+        ? "Concluir pré-agendamento"
+        : "Concluir envio dos documentos",
     primaryAction: {
-      label: isMEI ? "Preencher formulário" : "Continuar envio",
+      label: isMEI || isRG ? "Preencher formulário" : "Continuar envio",
       href: `/orders/${options.orderId}/upload`,
     } satisfies FlowAction,
     secondaryAction: {
@@ -311,21 +322,21 @@ case "AWAITING_DOCUMENTS":
     } satisfies FlowAction,
   };
 
-    case "WAITING_OPERATOR_SCHEDULE_REVIEW":
-      return {
-        tone: "amber" as OrderTone,
-        clientMessage:
-          "Documentos recebidos com sucesso. Agora nossa equipe irá localizar o Poupatempo mais próximo e verificar os horários disponíveis para atendimento presencial com foto e biometria.",
-        nextStepLabel: "Aguardar posicionamento do operador",
-        primaryAction: {
-          label: "Ver detalhes do pedido",
-          href: `/orders/${options.orderId}`,
-        } satisfies FlowAction,
-        secondaryAction: {
-          label: "Meus pedidos",
-          href: `/orders`,
-        } satisfies FlowAction,
-      };
+case "WAITING_OPERATOR_SCHEDULE_REVIEW":
+  return {
+    tone: "amber" as OrderTone,
+    clientMessage:
+      "Formulário recebido com sucesso. Agora nossa equipe irá orientar você pelo WhatsApp para finalizar o agendamento no seu próprio celular.",
+    nextStepLabel: "Aguardar orientação do especialista",
+    primaryAction: {
+      label: "Ver detalhes do pedido",
+      href: `/orders/${options.orderId}`,
+    } satisfies FlowAction,
+    secondaryAction: {
+      label: "Meus pedidos",
+      href: `/orders`,
+    } satisfies FlowAction,
+  };
 
     case "PROCESSING":
       return {

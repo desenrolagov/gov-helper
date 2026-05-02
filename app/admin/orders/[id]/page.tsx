@@ -56,14 +56,14 @@ function getStatusTimelineMeta(status: string) {
         badge: "Documentos",
       };
 
-    case "WAITING_OPERATOR_SCHEDULE_REVIEW":
-      return {
-        title: "Aguardando unidade Poupatempo",
-        description:
-          "Documentos recebidos. O operador deve localizar a unidade e horários disponíveis.",
-        tone: "blue" as const,
-        badge: "Poupatempo",
-      };
+        case "WAITING_OPERATOR_SCHEDULE_REVIEW":
+         return {
+         title: "Formulário RG recebido",
+           description:
+              "O cliente preencheu o formulário, escolheu a unidade Poupatempo e deve ser orientado pelo WhatsApp.",
+              tone: "blue" as const,
+               badge: "Pré-agendamento",
+               };
 
     case "PROCESSING":
       return {
@@ -111,13 +111,14 @@ function OperatorScheduleReviewCard({ order }: { order: any }) {
       </p>
 
       <h2 className="mt-2 text-xl font-black text-slate-950">
-        Localizar Poupatempo e horário
+        Orientar cliente pelo WhatsApp
       </h2>
 
       <p className="mt-2 text-sm leading-6 text-slate-700">
-        Este pedido já recebeu os documentos. Agora o operador deve verificar a
-        unidade do Poupatempo mais próxima do cliente e informar o melhor horário
-        disponível para foto e biometria.
+        O cliente já preencheu o formulário e escolheu a unidade do Poupatempo.
+        Agora o atendimento deve seguir pelo WhatsApp, orientando o cliente a
+        finalizar o agendamento pelo próprio celular. Não informe data ou horário
+        manualmente.
       </p>
     </div>
   );

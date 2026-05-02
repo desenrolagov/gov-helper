@@ -37,41 +37,29 @@ function WaitingOperatorScheduleCard() {
   return (
     <section className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-slate-950">
       <div className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black uppercase tracking-wide text-amber-800">
-        Documentos recebidos com sucesso ✅
+        Formulário recebido ✅
       </div>
 
       <h2 className="mt-4 text-2xl font-black text-slate-950">
-        Agora vamos localizar o Poupatempo mais próximo
+        Agora vamos te orientar pelo WhatsApp
       </h2>
 
       <p className="mt-3 text-sm leading-6 text-slate-700">
-        Nossa equipe irá verificar as unidades próximas ao seu endereço e os
-        horários disponíveis para atendimento presencial com foto e biometria.
+        Recebemos seu pré-agendamento e a unidade escolhida. Nossa equipe irá
+        acompanhar você pelo WhatsApp para finalizar o agendamento pelo seu
+        próprio celular.
       </p>
 
       <div className="mt-5 rounded-2xl border border-amber-200 bg-white p-4">
-        <p className="text-sm font-black text-slate-950">📍 Próxima etapa:</p>
+        <p className="text-sm font-black text-slate-950">📲 Próxima etapa:</p>
         <p className="mt-1 text-sm leading-6 text-slate-700">
-          O operador irá informar a melhor unidade, endereço e horário
-          disponível para o seu atendimento.
+          O especialista irá orientar o passo a passo. A data e o horário oficiais
+          serão escolhidos por você durante o processo no Poupatempo/GOV.BR.
         </p>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-        <p className="text-sm font-black text-slate-950">Exemplo de retorno:</p>
-
-        <div className="mt-3 space-y-1 text-sm text-slate-700">
-          <p className="font-black text-slate-950">
-            Poupatempo São José do Rio Preto
-          </p>
-          <p>📍 Centro</p>
-          <p>🕒 Seg–Sex: 9h às 17h</p>
-          <p>🕒 Sábado: 9h às 13h</p>
-        </div>
-      </div>
-
       <p className="mt-4 text-xs leading-5 text-slate-500">
-        Você receberá o posicionamento pela plataforma e/ou WhatsApp cadastrado.
+        A DesenrolaGov é uma assessoria privada e não possui vínculo com órgãos públicos.
       </p>
     </section>
   );
@@ -317,7 +305,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
             {order.resultFiles.length === 0 ? (
               <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
                 {isWaitingScheduleReview
-                  ? "O operador ainda está verificando a melhor unidade e horário disponível."
+                 ? "Nossa equipe está aguardando a finalização do atendimento pelo WhatsApp."
                   : "O resultado final ainda não foi liberado."}
               </div>
             ) : (
