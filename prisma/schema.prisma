@@ -66,17 +66,52 @@ model Order {
   selectedPoupatempoLat        Float?
   selectedPoupatempoLng        Float?
 
-  documents     Document[]
-  service       Service              @relation(fields: [serviceId], references: [id])
-  user          User                 @relation(fields: [userId], references: [id])
-  resultFiles   OrderResultFile[]
-  histories     OrderStatusHistory[]
-  payments      Payment[]
-  uploadedFiles UploadedFile[]
+  documents      Document[]
+  service        Service              @relation(fields: [serviceId], references: [id])
+  user           User                 @relation(fields: [userId], references: [id])
+  resultFiles    OrderResultFile[]
+  histories      OrderStatusHistory[]
+  payments       Payment[]
+  uploadedFiles  UploadedFile[]
+  meiApplication MeiApplication?
+  rgApplication  RgApplication?
 
   @@index([userId])
   @@index([serviceId])
   @@index([status])
+  @@index([createdAt])
+}
+
+model MeiApplication {
+  id      String @id @default(uuid())
+  orderId String @unique
+
+  fullName  String
+  cpf       String
+  birthDate DateTime?
+  phone     String
+  email     String
+
+  addressZipCode    String?
+  addressStreet     String?
+  addressNumber     String?
+  addressDistrict   String?
+  addressCity       String?
+  addressState      String?
+  addressComplement String?
+
+  businessActivity String
+  fantasyName      String?
+  hasGovBrAccount  Boolean?
+  notes            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([cpf])
   @@index([createdAt])
 }
 
@@ -200,6 +235,30 @@ model LegalAcceptanceLog {
   ip             String?
   userAgent      String?
   user           User     @relation(fields: [userId], references: [id])
+}
+
+model RgApplication {
+  id      String @id @default(uuid())
+  orderId String @unique
+
+  fullName  String
+  cpf       String
+  birthDate DateTime?
+  phone     String
+  email     String?
+
+  requestType String
+  govBrAccess String
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([cpf])
+  @@index([createdAt])
 }
 
 enum Role {
