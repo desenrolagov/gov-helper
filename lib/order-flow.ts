@@ -40,11 +40,12 @@ export const ALLOWED_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
     "PROCESSING",
     "CANCELLED",
   ],
-  WAITING_OPERATOR_SCHEDULE_REVIEW: [
-    "PROCESSING",
-    "AWAITING_DOCUMENTS",
-    "CANCELLED",
-  ],
+WAITING_OPERATOR_SCHEDULE_REVIEW: [
+  "PROCESSING",
+  "COMPLETED",
+  "AWAITING_DOCUMENTS",
+  "CANCELLED",
+],
   PROCESSING: ["COMPLETED", "AWAITING_DOCUMENTS", "CANCELLED"],
   COMPLETED: [],
   CANCELLED: [],
@@ -116,7 +117,7 @@ export function getOrderStatusMeta(status: OrderStatus) {
 
     case "WAITING_OPERATOR_SCHEDULE_REVIEW":
       return {
-        label: "Aguardando unidade e horário",
+        label: "Aguardando orientação no WhatsApp",
         tone: "amber" as OrderTone,
       };
 
