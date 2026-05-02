@@ -15,6 +15,7 @@ const VALID_ORDER_STATUSES: OrderStatus[] = [
   "PENDING_PAYMENT",
   "PAID",
   "AWAITING_DOCUMENTS",
+  "WAITING_OPERATOR_SCHEDULE_REVIEW",
   "PROCESSING",
   "COMPLETED",
   "CANCELLED",
@@ -51,19 +52,6 @@ async function ensureAdminSession() {
     ok: true as const,
     session,
   };
-}
-
-async function ensureStatusHistory(orderId: string, status: OrderStatus) {
-  const existing = await prisma.orderStatusHistory.findFirst({
-    where: { orderId, status },
-    select: { id: true },
-  });
-
-  if (!existing) {
-    await prisma.orderStatusHistory.create({
-      data: { orderId, status },
-    });
-  }
 }
 
 export async function GET(_req: NextRequest, context: RouteContext) {
@@ -119,6 +107,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
     return NextResponse.json(order);
   } catch (error) {
     console.error("Erro ao buscar pedido no admin:", error);
+
     return NextResponse.json(
       { error: "Erro ao buscar pedido." },
       { status: 500 }
@@ -133,13 +122,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
     const body = await req.json().catch(() => null);
-    const nextStatus = typeof body?.status === "string" ? body.status.trim() : "";
+    const nextStatus =
+      typeof body?.status === "string" ? body.status.trim() : "";
 
     if (!isValidOrderStatus(nextStatus)) {
-      return NextResponse.json(
-        { error: "Status inválido." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Status inválido." }, { status: 400 });
     }
 
     const order = await prisma.order.findUnique({
@@ -163,27 +150,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     const currentStatus = order.status as OrderStatus;
 
-    if (currentStatus === nextStatus) {
-      await ensureStatusHistory(order.id, nextStatus);
-
-      return NextResponse.json({
-        success: true,
-        unchanged: true,
-        orderId: order.id,
-        status: currentStatus,
-      });
-    }
-
-    if (!canTransitionOrderStatus(currentStatus, nextStatus)) {
-      return NextResponse.json(
-        {
-          error: `Transição inválida: ${currentStatus} → ${nextStatus}.`,
-        },
-        { status: 400 }
-      );
-    }
+    const canCompleteWithoutFiles =
+      currentStatus === "WAITING_OPERATOR_SCHEDULE_REVIEW" &&
+      nextStatus === "COMPLETED";
 
     if (
+      !canCompleteWithoutFiles &&
       (nextStatus === "PROCESSING" || nextStatus === "COMPLETED") &&
       order.uploadedFiles.length <= 0
     ) {
@@ -196,7 +168,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       );
     }
 
-    if (nextStatus === "COMPLETED" && order.resultFiles.length <= 0) {
+    if (
+      !canCompleteWithoutFiles &&
+      nextStatus === "COMPLETED" &&
+      order.resultFiles.length <= 0
+    ) {
       return NextResponse.json(
         {
           error:
@@ -206,35 +182,33 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       );
     }
 
+    if (!canTransitionOrderStatus(currentStatus, nextStatus as OrderStatus)) {
+      return NextResponse.json(
+        {
+          error: `Transição inválida: ${currentStatus} → ${nextStatus}.`,
+        },
+        { status: 400 }
+      );
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id },
-      data: { status: nextStatus },
-      include: {
-        user: true,
-        service: true,
-        uploadedFiles: {
-          orderBy: { createdAt: "desc" },
-        },
-        resultFiles: {
-          orderBy: { createdAt: "desc" },
-        },
-        histories: {
-          orderBy: { createdAt: "desc" },
-        },
-        payments: {
-          orderBy: { createdAt: "desc" },
-        },
+      data: {
+        status: nextStatus as OrderStatus,
       },
     });
 
-    await ensureStatusHistory(updatedOrder.id, nextStatus);
-
-    return NextResponse.json({
-      success: true,
-      order: updatedOrder,
+    await prisma.orderStatusHistory.create({
+      data: {
+        orderId: id,
+        status: nextStatus as OrderStatus,
+      },
     });
+
+    return NextResponse.json(updatedOrder, { status: 200 });
   } catch (error) {
-    console.error("Erro ao atualizar pedido no admin:", error);
+    console.error("Erro ao atualizar pedido:", error);
+
     return NextResponse.json(
       { error: "Erro ao atualizar pedido." },
       { status: 500 }
