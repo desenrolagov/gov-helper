@@ -302,7 +302,7 @@ Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo me
     setProgress(70);
   }
 
-  async function handleFinalizeRg() {
+async function handleFinalizeRg() {
   if (!selectedRgPoupatempo && !order?.selectedPoupatempoName) {
     setError("Escolha uma unidade do Poupatempo para continuar.");
     return;
@@ -321,29 +321,21 @@ Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo me
       body: JSON.stringify(rgForm),
     });
 
-    const data = await res.json();
-
     if (!res.ok) {
+      const data = await res.json();
       setError(data.error || "Erro ao salvar formulário RG.");
       return;
     }
 
-    setRgFormSent(true);
-    setProgress(100);
-
-    await loadOrder();
-    router.refresh();
-
     window.open(rgWhatsappUrl, "_blank", "noopener,noreferrer");
-
-    setTimeout(() => {
-      router.push(`/orders/${orderId}`);
-    }, 800);
+    router.push(`/orders/${orderId}`);
+  } catch (error) {
+    console.error("Erro ao finalizar RG:", error);
+    setError("Erro ao finalizar o pré-agendamento.");
   } finally {
     setLoading(false);
   }
 }
-
   async function handleUpload() {
     if (!currentDocument) {
       setError("Todos os documentos obrigatórios já foram enviados.");
