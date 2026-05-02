@@ -302,6 +302,48 @@ Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo me
     setProgress(70);
   }
 
+  async function handleFinalizeRg() {
+  if (!selectedRgPoupatempo && !order?.selectedPoupatempoName) {
+    setError("Escolha uma unidade do Poupatempo para continuar.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    const res = await fetch(`/api/orders/${orderId}/rg`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(rgForm),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error || "Erro ao salvar formulário RG.");
+      return;
+    }
+
+    setRgFormSent(true);
+    setProgress(100);
+
+    await loadOrder();
+    router.refresh();
+
+    window.open(rgWhatsappUrl, "_blank", "noopener,noreferrer");
+
+    setTimeout(() => {
+      router.push(`/orders/${orderId}`);
+    }, 800);
+  } finally {
+    setLoading(false);
+  }
+}
+
   async function handleUpload() {
     if (!currentDocument) {
       setError("Todos os documentos obrigatórios já foram enviados.");
@@ -644,14 +686,16 @@ Quero iniciar o atendimento em tempo real para finalizar meu agendamento pelo me
                 />
 
                 {(selectedRgPoupatempo || order?.selectedPoupatempoName) && (
-                  <a
-                    href={rgWhatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-5 block w-full rounded-xl bg-green-500 p-3 text-center font-black text-white"
-                  >
-                    🔒 Finalizar meu agendamento com especialista
-                  </a>
+                      <button
+                        type="button"
+                       onClick={handleFinalizeRg}
+                      disabled={loading}
+                     className="mt-5 block w-full rounded-xl bg-green-500 p-3 text-center font-black text-white transition disabled:cursor-not-allowed disabled:bg-slate-300"
+                    >
+                {loading
+             ? "Salvando..."
+            : "🔒 Finalizar meu agendamento com especialista"}
+                </button>
                 )}
               </div>
             )}
