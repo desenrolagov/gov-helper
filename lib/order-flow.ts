@@ -105,32 +105,32 @@ export function getOrderStatusMeta(status: OrderStatus) {
 
     case "PAID":
       return {
-        label: "Pagamento aprovado",
-        tone: "blue" as OrderTone,
+        label: "Pagamento confirmado",
+        tone: "green" as OrderTone,
       };
 
     case "AWAITING_DOCUMENTS":
       return {
         label: "Aguardando documentos",
-        tone: "amber" as OrderTone,
+        tone: "orange" as OrderTone,
       };
 
     case "WAITING_OPERATOR_SCHEDULE_REVIEW":
       return {
         label: "Aguardando orientação no WhatsApp",
-        tone: "amber" as OrderTone,
+        tone: "blue" as OrderTone,
       };
 
     case "PROCESSING":
       return {
         label: "Em andamento",
-        tone: "blue" as OrderTone,
+        tone: "purple" as OrderTone,
       };
 
     case "COMPLETED":
       return {
         label: "Concluído",
-        tone: "emerald" as OrderTone,
+        tone: "green" as OrderTone,
       };
 
     case "CANCELLED":
@@ -141,7 +141,7 @@ export function getOrderStatusMeta(status: OrderStatus) {
 
     default:
       return {
-        label: "Status desconhecido",
+        label: status,
         tone: "gray" as OrderTone,
       };
   }

@@ -114,9 +114,23 @@ export default function AdminOrdersClient() {
             className="rounded-3xl bg-white p-6 text-slate-900 shadow-xl"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-                {order.status}
-              </span>
+{(() => {
+  const statusMeta: Record<string, string> = {
+    PENDING_PAYMENT: "Aguardando pagamento",
+    PAID: "Pagamento confirmado",
+    AWAITING_DOCUMENTS: "Aguardando documentos",
+    WAITING_OPERATOR_SCHEDULE_REVIEW: "Aguardando orientação no WhatsApp",
+    PROCESSING: "Em andamento",
+    COMPLETED: "Concluído",
+    CANCELLED: "Cancelado",
+  };
+
+  return (
+    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+      {statusMeta[order.status] ?? order.status}
+    </span>
+  );
+})()}
 
               {order.orderCode && (
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">

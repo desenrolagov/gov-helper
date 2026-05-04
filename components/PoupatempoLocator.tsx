@@ -141,6 +141,17 @@ export default function PoupatempoLocator({
               Aproximadamente {currentSelectedDistance} km de distância
             </p>
           )}
+          <button
+            type="button"
+                onClick={() => {
+                setSelected(null);
+                setError("");
+                setUnits([]);
+                      }}
+                    className="mt-3 rounded-xl border border-green-300 bg-white px-4 py-2 text-xs font-black text-green-700"
+                     >
+                 Alterar unidade
+          </button>
         </div>
       )}
 
@@ -197,9 +208,11 @@ export default function PoupatempoLocator({
                   disabled={savingId === unit.id}
                   className="mt-4 w-full rounded-2xl bg-green-500 px-4 py-3 text-sm font-black text-white disabled:opacity-60"
                 >
-                  {savingId === unit.id
-                    ? "Salvando..."
-                    : "Escolher esta unidade"}
+                  {selected?.id === unit.id
+                  ? "✅ Unidade selecionada"
+                  : savingId === unit.id
+                   ? "Salvando..."
+                 : "Escolher esta unidade"}
                 </button>
               </div>
             ))}
