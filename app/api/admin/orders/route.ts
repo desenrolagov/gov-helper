@@ -7,17 +7,11 @@ export async function GET() {
     const session = await verifySession();
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Não autenticado." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
     }
 
     if (session.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Acesso negado." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
     }
 
     const orders = await prisma.order.findMany({
@@ -30,6 +24,7 @@ export async function GET() {
             id: true,
             name: true,
             email: true,
+            phone: true,
           },
         },
         service: {
@@ -39,23 +34,29 @@ export async function GET() {
             price: true,
           },
         },
-        uploadedFiles: {
-          orderBy: {
-            createdAt: "desc",
-          },
+        rgApplication: {
           select: {
-            id: true,
-            originalName: true,
-            url: true,
-            createdAt: true,
-            type: true,
+            phone: true,
+          },
+        },
+        meiApplication: {
+          select: {
+            phone: true,
           },
         },
       },
     });
 
-    return NextResponse.json(orders, { status: 200 });
+    const normalizedOrders = orders.map((order) => ({
+      ...order,
+      customerPhone:
+        order.rgApplication?.phone ||
+        order.meiApplication?.phone ||
+        order.user.phone ||
+        null,
+    }));
 
+    return NextResponse.json(normalizedOrders, { status: 200 });
   } catch (error) {
     console.error("❌ Erro REAL ao buscar pedidos do admin:", error);
 

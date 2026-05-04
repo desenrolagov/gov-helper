@@ -47,6 +47,7 @@ type Order = {
   service: {
     name: string;
   };
+ customerPhone?: string | null;
 };
 
 export default function AdminOrdersClient() {
@@ -293,14 +294,25 @@ export default function AdminOrdersClient() {
                 {formatDate(order.createdAt)}
               </p>
 
-              <div className="mt-4">
-                <Link
-                  href={`/admin/orders/${order.id}`}
-                  className="inline-flex items-center justify-center rounded-2xl bg-[var(--accent-green)] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
-                >
-                  Ver pedido
-                </Link>
-              </div>
+                <div className="mt-4 flex items-center gap-2">
+                    <Link
+                       href={`/admin/orders/${order.id}`}
+                       className="inline-flex items-center justify-center rounded-2xl bg-[var(--accent-green)] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                    >
+                       Ver pedido
+                   </Link>
+
+                  {order.customerPhone && (
+                    <a
+                      href={`https://wa.me/55${order.customerPhone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center rounded-2xl bg-green-600 px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                    >
+                        WhatsApp
+                     </a>
+                    )}
+                </div>
             </div>
           );
         })
