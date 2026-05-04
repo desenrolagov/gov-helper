@@ -3,6 +3,40 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
+const statusMeta: Record<
+  string,
+  { label: string; className: string }
+> = {
+  PENDING_PAYMENT: {
+    label: "Aguardando pagamento",
+    className: "bg-yellow-100 text-yellow-700",
+  },
+  PAID: {
+    label: "Pagamento confirmado",
+    className: "bg-green-100 text-green-700",
+  },
+  AWAITING_DOCUMENTS: {
+    label: "Aguardando documentos",
+    className: "bg-orange-100 text-orange-700",
+  },
+  WAITING_OPERATOR_SCHEDULE_REVIEW: {
+    label: "Aguardando WhatsApp",
+    className: "bg-blue-100 text-blue-700",
+  },
+  PROCESSING: {
+    label: "Em andamento",
+    className: "bg-purple-100 text-purple-700",
+  },
+  COMPLETED: {
+    label: "Concluído",
+    className: "bg-green-100 text-green-700",
+  },
+  CANCELLED: {
+    label: "Cancelado",
+    className: "bg-red-100 text-red-700",
+  },
+};
+
 type Order = {
   id: string;
   orderCode?: string | null;
@@ -114,23 +148,21 @@ export default function AdminOrdersClient() {
             className="rounded-3xl bg-white p-6 text-slate-900 shadow-xl"
           >
             <div className="flex flex-wrap items-center gap-2">
-{(() => {
-  const statusMeta: Record<string, string> = {
-    PENDING_PAYMENT: "Aguardando pagamento",
-    PAID: "Pagamento confirmado",
-    AWAITING_DOCUMENTS: "Aguardando documentos",
-    WAITING_OPERATOR_SCHEDULE_REVIEW: "Aguardando orientação no WhatsApp",
-    PROCESSING: "Em andamento",
-    COMPLETED: "Concluído",
-    CANCELLED: "Cancelado",
-  };
+                  {(() => {
+                      const meta =
+                       statusMeta[order.status] || {
+                           label: order.status,
+                            className: "bg-slate-100 text-slate-700",
+                               };
 
-  return (
-    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-      {statusMeta[order.status] ?? order.status}
-    </span>
-  );
-})()}
+                              return (
+                                 <span
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${meta.className}`}
+                                 >
+                        {meta.label}
+                            </span>
+                              );
+                          })()}
 
               {order.orderCode && (
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
