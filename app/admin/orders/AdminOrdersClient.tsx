@@ -85,6 +85,30 @@ export default function AdminOrdersClient() {
     }
   }
 
+  async function updateOrderStatus(orderId: string, status: string) {
+  try {
+    const res = await fetch(`/api/admin/orders/${orderId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Erro ao atualizar status.");
+      return;
+    }
+
+    await loadOrders();
+  } catch (error) {
+    console.error("Erro ao atualizar status:", error);
+    alert("Erro ao atualizar status.");
+  }
+}
+
   useEffect(() => {
     loadOrders();
 
@@ -301,6 +325,45 @@ export default function AdminOrdersClient() {
                     >
                        Ver pedido
                    </Link>
+
+                      {order.status === "AWAITING_DOCUMENTS" && (
+                      <button
+                        onClick={async () => {
+                              await updateOrderStatus(order.id, "PROCESSING");
+
+                                if (order.customerPhone) {
+                                          window.open(
+                                            `https://api.whatsapp.com/send?phone=55${order.customerPhone.replace(/\D/g, "")}&text=${encodeURIComponent(
+                                             `Olá ${order.user.name || ""}, tudo bem? 👋\n\nSeu pedido já entrou em atendimento aqui na DesenrolaGov. Em breve vamos dar continuidade ao seu processo. 🚀`
+                                                     )}`,
+                                                        "_blank"
+                                                      );
+                                                 }
+                                                }}
+                                        className="inline-flex items-center justify-center rounded-2xl bg-purple-600 px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+                                          >
+                                      Iniciar atendimento
+                                          </button>
+                                                 )}
+
+                        {order.status === "PROCESSING" && (
+                            <button
+                                onClick={async () => {
+                                  await updateOrderStatus(order.id, "COMPLETED");
+
+                              if (order.customerPhone) {
+                                   window.open(
+                                      `https://api.whatsapp.com/send?phone=55${order.customerPhone.replace(/\D/g, "")}&text=${encodeURIComponent(
+                                          `Olá ${order.user.name || ""}, tudo bem? ✅\n\nSeu pedido foi concluído com sucesso pela DesenrolaGov.\n\nQualquer dúvida, pode me chamar por aqui.`
+                                      )}`,
+                                      "_blank"
+                                     );
+                                  }
+                                }}
+                          >
+                             Concluir pedido
+                           </button>
+                        )}
 
                   {order.customerPhone && (
                     <a
