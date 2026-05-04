@@ -88,9 +88,27 @@ export default function AdminOrdersClient() {
     }
   }
 
-  useEffect(() => {
+useEffect(() => {
+  loadOrders();
+
+  const interval = setInterval(() => {
     loadOrders();
-  }, []);
+  }, 20000);
+
+  return () => clearInterval(interval);
+}, []);
+
+  const statusCount = useMemo(() => {
+  const count: Record<string, number> = {};
+
+  orders.forEach((order) => {
+    const status = String(order.status).toUpperCase().trim();
+
+    count[status] = (count[status] || 0) + 1;
+  });
+
+  return count;
+}, [orders]);
 
 const filtered = useMemo(() => {
   const term = searchTerm.trim().toLowerCase();
@@ -151,19 +169,24 @@ const filtered = useMemo(() => {
     { label: "WhatsApp", value: "WAITING_OPERATOR_SCHEDULE_REVIEW" },
     { label: "Em andamento", value: "PROCESSING" },
     { label: "Concluídos", value: "COMPLETED" },
-  ].map((btn) => (
-    <button
-      key={btn.value}
-      onClick={() => setStatusFilter(btn.value)}
-      className={`px-3 py-1 rounded-full text-xs font-bold border transition ${
-        statusFilter === btn.value
-          ? "bg-[var(--accent-green)] text-white border-transparent"
-          : "bg-white text-slate-600 border-slate-300"
-      }`}
-    >
-      {btn.label}
-    </button>
-  ))}
+  ].map((btn) => {
+    const total =
+      btn.value === "ALL" ? orders.length : statusCount[btn.value] || 0;
+
+    return (
+      <button
+        key={btn.value}
+        onClick={() => setStatusFilter(btn.value)}
+        className={`px-3 py-1 rounded-full text-xs font-bold border transition ${
+          statusFilter === btn.value
+            ? "bg-[var(--accent-green)] text-white border-transparent"
+            : "bg-white text-slate-600 border-slate-300"
+        }`}
+      >
+        {btn.label} ({total})
+      </button>
+    );
+  })}
 </div>
 
       {loading ? (
