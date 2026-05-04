@@ -55,7 +55,9 @@ type Order = {
 export default function AdminOrdersClient() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
+  
 
   async function loadOrders() {
     try {
@@ -124,14 +126,38 @@ export default function AdminOrdersClient() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl bg-white p-4 shadow-xl">
-        <input
-          placeholder="Buscar cliente, e-mail, serviço ou código"
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[var(--accent-green)]"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+     <div className="rounded-3xl bg-white p-4 shadow-xl">
+  <input
+    placeholder="Buscar cliente, e-mail, serviço ou código"
+    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 outline-none focus:border-[var(--accent-green)]"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+  />
+</div>
+
+{/* 👇 COLE AQUI */}
+<div className="flex flex-wrap gap-2 mt-3">
+  {[
+    { label: "Todos", value: "ALL" },
+    { label: "Pagamento", value: "PENDING_PAYMENT" },
+    { label: "Documentos", value: "AWAITING_DOCUMENTS" },
+    { label: "WhatsApp", value: "WAITING_OPERATOR_SCHEDULE_REVIEW" },
+    { label: "Em andamento", value: "PROCESSING" },
+    { label: "Concluídos", value: "COMPLETED" },
+  ].map((btn) => (
+    <button
+      key={btn.value}
+      onClick={() => setStatusFilter(btn.value)}
+      className={`px-3 py-1 rounded-full text-xs font-bold border transition ${
+        statusFilter === btn.value
+          ? "bg-[var(--accent-green)] text-white border-transparent"
+          : "bg-white text-slate-600 border-slate-300"
+      }`}
+    >
+      {btn.label}
+    </button>
+  ))}
+</div>
 
       {loading ? (
         <div className="rounded-3xl bg-white p-6 text-center text-slate-500 shadow-xl">
