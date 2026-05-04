@@ -92,23 +92,30 @@ export default function AdminOrdersClient() {
     loadOrders();
   }, []);
 
-  const filtered = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
+const filtered = useMemo(() => {
+  const term = searchTerm.trim().toLowerCase();
 
-    if (!term) {
-      return orders;
-    }
-
-    return orders.filter((order) => {
-      return (
+  return orders
+    .filter((order) => {
+      const matchesSearch =
+        !term ||
         order.user?.name?.toLowerCase().includes(term) ||
         order.user?.email?.toLowerCase().includes(term) ||
         order.service?.name?.toLowerCase().includes(term) ||
         order.status?.toLowerCase().includes(term) ||
-        (order.orderCode || "").toLowerCase().includes(term)
-      );
-    });
-  }, [orders, searchTerm]);
+        (order.orderCode || "").toLowerCase().includes(term);
+
+      const matchesStatus =
+        statusFilter === "ALL" ||
+        String(order.status).toUpperCase().trim() === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+}, [orders, searchTerm, statusFilter]);
 
   function formatCurrency(value: number) {
     return new Intl.NumberFormat("pt-BR", {
